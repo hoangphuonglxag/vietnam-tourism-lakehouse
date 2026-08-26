@@ -1,0 +1,22 @@
+@"
+.env
+__pycache__/
+*.pyc
+
+# Local / temporary
+*.log
+*.tmp
+
+# Secrets
+pk.txt
+
+# Large/raw generated datasets
+data/*
+
+# Keep important schema/reference files
+!data/.gitkeep
+!data/provinces.csv
+!data/taxonomy.csv
+!data/places.csv
+!data/place_categories.csv
+"@ | Set-Content .gitignore

@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import requests
 
-from source.pipeline_scope import (
+from script.crawl_data.pipeline_scope import (
     SCOPE_LEGACY_63,
     ensure_scope,
     log_event,

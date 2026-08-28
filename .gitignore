@@ -1,4 +1,4 @@
-@"
+
 .env
 __pycache__/
 *.pyc
@@ -19,4 +19,6 @@ data/*
 !data/taxonomy.csv
 !data/places.csv
 !data/place_categories.csv
-"@ | Set-Content .gitignore
+
+# Python virtual environment
+tourism_lakehouse/

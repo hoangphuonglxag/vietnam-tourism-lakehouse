@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 
-from source.pipeline_scope import (
+from script.crawl_data.pipeline_scope import (
     SCOPE_CURRENT_34,
     ensure_scope,
     log_event,

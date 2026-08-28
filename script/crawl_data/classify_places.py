@@ -2,7 +2,7 @@ import os
 import uuid
 import pandas as pd
 
-from source.pipeline_scope import log_event, utc_now_iso
+from script.crawl_data.pipeline_scope import log_event, utc_now_iso
 
 # ============================================================
 # CONFIG

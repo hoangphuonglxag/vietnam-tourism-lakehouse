@@ -8,7 +8,7 @@ import pandas as pd
 from shapely.geometry import Point
 from shapely.ops import unary_union
 
-from source.pipeline_scope import log_event, utc_now_iso
+from script.crawl_data.pipeline_scope import log_event, utc_now_iso
 
 
 # ============================================================

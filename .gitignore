@@ -12,6 +12,7 @@ pk.txt
 
 # Large/raw generated datasets
 data/*
+!data/google_maps_reviews.csv
 
 # Keep important schema/reference files
 !data/.gitkeep

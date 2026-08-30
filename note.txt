@@ -8,7 +8,7 @@ Crawl Ranh giới Hành chính: Thu thập GeoJSON và Bounding Box cho 34 tỉn
 - Phân loại (Classification): Đã phân loại thành công 6,301/7,155 địa điểm vào các danh mục cụ thể (Công viên, Núi, Di tích, Bảo tàng...) dựa trên Taxonomy tự định nghĩa (`classify_places.py`).
 => Output hiện tại: File `places.csv` đóng vai trò là bảng Dimension (Dim_Place) cốt lõi và sạch sẽ nhất của Lakehouse.
 
-## 2. Các nguồn Data tiếp theo cần thu thập (Next Data Pipelines)
+Checkpoint2 2. Các nguồn Data tiếp theo cần thu thập (Next Data Pipelines)
 Để phục vụ Deep Learning, cần thu thập thêm các luồng dữ liệu (Fact tables) sau:
 Ưu tiên số 1 hiện tại là thu thập dữ liệu hành vi (Reviews/Ratings) từ Google Maps để có metrics đo lường độ phổ biến của địa điểm.
 
@@ -22,50 +22,30 @@ Crawl Ranh giới Hành chính: Thu thập GeoJSON và Bounding Box cho 34 tỉn
 3. **Ancillary POIs (Dịch vụ phụ trợ - Dễ làm nhất):**
    - *Nguồn:* Quay lại tái sử dụng API OSM.
    - *Nhiệm vụ:* Đếm số lượng nhà hàng (`amenity=restaurant`), khách sạn (`tourism=hotel`), trạm xe buýt/ATM trong bán kính 2km quanh mỗi địa điểm trong `places.csv`. Tính thành điểm tiện ích (Accessibility Score).
-4. **Historical Weather Data (Tùy chọn cho nâng cao):**
-   - *Nguồn:* OpenWeatherMap API hoặc VisualCrossing.
-   - *Nhiệm vụ:* Lấy dữ liệu nhiệt độ, lượng mưa trung bình theo tháng của tọa độ đó. Rất quan trọng để dự đoán mùa du lịch.
-
-## 3. Kiến trúc Lakehouse
-flowchart LR
-    subgraph Bronze [Bronze Layer (Raw Data)]
-        OSM_Raw[(OSM JSON/CSV)]
-        GG_Raw[(Google API JSON)]
-        YT_Raw[(Youtube JSON)]
-    end
-
-    subgraph Silver [Silver Layer (Cleansed)]
-        DimPlace[(Dim_Place)]
-        FactReview[(Fact_Reviews)]
-        FactTrend[(Fact_Social_Trend)]
-    end
-
-    subgraph Gold [Gold Layer (Business/ML)]
-        Place360[(Place_360_View)]
-        Sentiment[(Sentiment_Daily)]
-    end
-
-    Bronze -- "Python (Spark/Pandas)" --> Silver
-    Silver -- "dbt (SQL Transformations)" --> Gold
 
 
-**Vai trò của dbt trong dự án:**
-- Thay vì dùng Python Pandas để `merge` hay `groupby` dữ liệu từ Google Maps, OSM và Youtube, bạn load tất cả file từ tầng Silver vào Data Warehouse (ví dụ: BigQuery, Postgres, hoặc DuckDB cho local).
-- Dùng `dbt` viết các file `.sql` để JOIN bảng `Dim_Place` với `Fact_Reviews`, tính điểm trung bình, phân xếp hạng, và tạo ra bảng `Place_360_View` ở tầng Gold để feed thẳng vào mô hình Machine Learning.
-
-## 4. Ý tưởng Ứng dụng & Deep Learning (Use Cases)
-
-Khi Lakehouse đã thành hình, đây là các bài toán đồ án bạn có thể thực hiện:
-
-> [!TIP]
-> Không cần làm tất cả. Hãy chọn 1 trong 3 hướng dưới đây làm bài toán AI trọng tâm cho đồ án của bạn.
-
-### A. Context-Aware Recommender System (Hệ thống gợi ý theo ngữ cảnh)
-- **Input:** Sở thích của user (Ví dụ: Thích thiên nhiên, đi vào tháng 11, thích nơi có nhiều nhà hàng).
-- **Mô hình:** Deep Neural Networks (như Tw o-Tower Model hoặc Graph Neural Networks).
-- **Tính năng:** Máy học sẽ tự động gợi ý địa điểm. Nhờ có tính năng *Context* (thời tiết, khoảng cách), nó sẽ không gợi ý đi leo núi nếu tháng 11 ở địa phương đó thường xuyên có mưa bão.
-
-### B. Tourism Demand Forecasting (Dự báo xu hướng)
-- **Input:** Dữ liệu lượt view Youtube theo thời gian, kết hợp mùa vụ (thời tiết).
-- **Mô hình:** LSTM hoặc Transformer (Time-series forecasting).
-- **Tính năng:** Phát hiện những địa điểm đang nổi lên (Emerging destinations) trước khi chúng đông nghẹt khách. Phục vụ cho bài toán đầu tư và quy hoạch du lịch của 34 tỉnh thành.
+                 INGESTION
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+     OSM Raw                Other APIs
+          │                     │
+          ▼                     ▼
+       BRONZE ◄─────────────────┘
+          │
+          ▼
+       SILVER
+          │
+       Dim_Place
+          │
+     ┌────┼────┬──────┐
+     ▼    ▼    ▼      ▼
+    GMap YT  Weather  OSM POI
+     │    │    │      │
+     └────┴────┴──────┘
+              │
+              ▼
+            GOLD
+              │
+              ▼
+       Deep Learning

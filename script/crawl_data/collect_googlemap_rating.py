@@ -17,11 +17,11 @@ from playwright.sync_api import sync_playwright
 INPUT_FILE = Path("data/places.csv")
 
 OUTPUT_FILE = Path(
-    "data/google_maps_ratings.csv"
+    "data/historical/google_maps_ratings.csv"
 )
 
 ERROR_FILE = Path(
-    "data/google_maps_errors.csv"
+    "data/historical/google_maps_errors.csv"
 )
 
 # ------------------------------------------------------------

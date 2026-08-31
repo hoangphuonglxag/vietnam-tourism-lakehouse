@@ -1,0 +1,2 @@
+CREATE DATABASE lakekeeper;
+CREATE DATABASE airflow;

@@ -7,6 +7,7 @@ numpy==2.2.6
 packaging==26.3
 pandas==2.3.3
 playwright==1.62.0
+pyarrow==25.0.1
 pyee==13.0.1
 pyogrio==0.13.0
 pyproj==3.7.1
@@ -20,8 +21,8 @@ tzdata==2026.3
 urllib3<2.0.0
 
 # --- THÊM CÁC THƯ VIỆN CHO LAKEHOUSE ---
-dbt-core==1.7.10
-dbt-duckdb==1.7.4
-duckdb==0.10.1
-pyiceberg==0.6.0
-s3fs==2023.10.0
+dbt-core>=1.8.0
+dbt-duckdb>=1.8.0
+duckdb>=1.0.0
+pyiceberg>=0.8.0
+s3fs>=2024.6.0

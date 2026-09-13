@@ -9,7 +9,9 @@ __pycache__/
 
 # Secrets
 pk.txt
-
+checkpoint2.txt
+RUNBOOK_INGESTION_BRONZE.txt
+README.md
 # Large/raw generated datasets
 data/*
 

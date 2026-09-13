@@ -1,0 +1,1 @@
+"""Validation primitives for ingestion boundaries."""

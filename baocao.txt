@@ -1,0 +1,377 @@
+BAO CAO PIPELINE TLCN - INGESTION, BRONZE VA LAKEHOUSE
+
+Cap nhat: 2026-09-12
+Workspace: E:\PJ\TLCN
+
+1. TOM TAT
+----------
+He thong gom 3 luong chinh:
+
+A. Reference pipeline:
+   provinces -> candidate places -> validate -> classify -> places.csv
+
+B. Social ingestion:
+   places.csv -> Google Maps ratings/reviews
+              -> YouTube videos -> YouTube comments
+
+C. Lakehouse pipeline:
+   Bronze/CSV -> dbt -> DuckDB -> Iceberg -> Lakekeeper -> MinIO warehouse
+
+Pipeline co the chay binh thuong va dung giua chung. Du lieu da ghi thanh cong
+khong bi xoa. Khi chay lai, checkpoint loc bo item da SUCCESS.
+
+2. KHOI DONG HE THONG
+---------------------
+Mo PowerShell tai thu muc goc:
+
+  docker compose config --quiet
+  docker compose up -d
+  docker compose ps
+
+Service can co:
+  postgres
+  minio
+  lakekeeper
+  airflow-scheduler
+  airflow-webserver
+
+Airflow Webserver:
+  http://localhost:8080
+
+MinIO Console:
+  http://localhost:9001
+
+Thong tin dang nhap doc tu .env. Khong ghi secret vao bao cao, log hoac Git.
+
+3. LUONG 1 - REFERENCE PIPELINE
+-------------------------------
+DAG: tourism_reference_pipeline
+Lich: schedule=None, chi chay khi trigger thu cong.
+
+Thu tu task:
+  crawl_provinces
+    -> quality_gate_provinces
+    -> crawl_candidate_places
+    -> quality_gate_candidates
+    -> validate_places_spatially
+    -> quality_gate_validated_places
+    -> classify_places
+    -> quality_gate_places
+
+Muc dich:
+  - Lay boundary tinh/thanh.
+  - Lay dia diem tu OSM.
+  - Kiem tra dia diem hop le va nam dung pham vi.
+  - Phan loai dia diem.
+  - Tao hoac cap nhat data/reference/places.csv.
+
+Chay bang CLI:
+  docker compose exec -T airflow-scheduler airflow dags unpause tourism_reference_pipeline
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
+  docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_reference_pipeline -o table
+
+Chay tren UI:
+  1. Mo http://localhost:8080.
+  2. Tim tourism_reference_pipeline.
+  3. Unpause neu DAG dang paused.
+  4. Bam Trigger DAG.
+  5. Xem Graph/Grid va log tung task.
+
+Reference phai thanh cong truoc khi chay social neu places.csv chua day du.
+
+4. LUONG 2 - SOCIAL INGESTION
+-----------------------------
+DAG: tourism_social_ingestion
+Lich: 0 3 * * 1
+  Nghia la 03:00 UTC moi thu Hai, tuong duong 10:00 sang gio Viet Nam.
+  Co the trigger thu cong bat ky luc nao.
+
+Dependency:
+  backfill_historical_to_bronze
+    +-- crawl_google_maps_ratings
+    +-- crawl_google_maps_reviews
+    +-- crawl_youtube_videos
+          +-- crawl_youtube_comments
+
+Ratings, reviews va videos chay song song sau backfill.
+Comments cho videos hoan tat moi chay.
+
+Chay toan bo:
+  docker compose exec -T airflow-scheduler airflow dags unpause tourism_social_ingestion
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
+  docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_social_ingestion -o table
+
+Chay tren UI:
+  1. Mo DAG tourism_social_ingestion.
+  2. Unpause neu can.
+  3. Bam Trigger DAG.
+  4. Theo doi task trong Graph/Grid.
+  5. Mo log cua task de xem progress, loi va metrics.
+
+5. CHAY RIENG MOT CRAWLER
+--------------------------
+Chay trong container de dung dung moi truong cua Airflow.
+
+Google Maps ratings:
+  docker compose exec -w /opt/airflow/project -e PYTHONPATH=/opt/airflow/project airflow-scheduler python -m script.crawl_data.jobs.google_maps_ratings
+
+Google Maps reviews:
+  docker compose exec -w /opt/airflow/project -e PYTHONPATH=/opt/airflow/project airflow-scheduler python -m script.crawl_data.jobs.google_maps_reviews
+
+YouTube videos:
+  docker compose exec -w /opt/airflow/project -e PYTHONPATH=/opt/airflow/project airflow-scheduler python -m script.crawl_data.jobs.youtube_videos
+
+YouTube comments:
+  docker compose exec -w /opt/airflow/project -e PYTHONPATH=/opt/airflow/project airflow-scheduler python -m script.crawl_data.jobs.youtube_comments
+
+Cach nay chay truc tiep module, khong tao mot DAG run day du.
+
+Chay test nho bang bien moi truong:
+  GOOGLE_MAPS_RATINGS_LIMIT=1
+  GOOGLE_MAPS_REVIEWS_LIMIT=1
+  YOUTUBE_MAX_PLACES=1
+  YOUTUBE_MAX_VIDEOS=1
+  YOUTUBE_MAX_COMMENTS=1
+
+Vi du PowerShell:
+  docker compose exec -w /opt/airflow/project -e PYTHONPATH=/opt/airflow/project -e GOOGLE_MAPS_RATINGS_LIMIT=1 airflow-scheduler python -m script.crawl_data.jobs.google_maps_ratings
+
+6. DUNG GIUA CHUNG VA RESUME
+-----------------------------
+Co the dung pipeline khi dang chay.
+
+Cach nen dung:
+  - Vao Airflow UI.
+  - Mo task dang chay.
+  - Dung task/run theo chuc nang Stop/Mark Failed cua Airflow.
+
+Khong nen dung docker compose stop airflow-scheduler neu chi muon dung mot task,
+vi lenh nay dung ca scheduler va co the anh huong cac task khac.
+
+Khi nhan SIGTERM, crawler co gang:
+  - Ghi metrics hien tai.
+  - In snapshot vao Airflow log.
+  - Gui Discord [STOPPED].
+  - Thoat voi ma 143.
+
+Item da SUCCESS:
+  - Duoc ghi checkpoint.
+  - Lan chay sau bi bo qua khi TLCN_REFRESH_SUCCESS=false.
+
+Item dang crawl do:
+  - Co the chua co checkpoint SUCCESS.
+  - Lan sau se crawl lai tu dau cua item do.
+  - Khong resume giua chung ben trong mot place/video.
+
+Item FAILED:
+  - Duoc ghi FAILED.
+  - Lan sau co the duoc thu lai.
+
+Khong xoa data/bronze/_state neu muon resume.
+
+7. ALERT DISCORD VA PROGRESS
+----------------------------
+Alert cap task/crawler:
+  - [PROGRESS]: gui theo batch, mac dinh moi 10 item.
+  - [STOPPED]: gui ngay khi task bi dung, kem snapshot.
+
+Airflow callback:
+  - [SUCCESS]: gui khi ca DAG thanh cong.
+  - [FAILED]: gui khi task/DAG that bai.
+
+Airflow log van co progress tung item, vi du:
+  progress: 20/1000
+  success: 19 | failed: 1
+  remaining: 980
+
+Dieu chinh tan suat Discord trong .env:
+  DISCORD_PROGRESS_EVERY=10
+
+Dat 20 neu muon chi gui moi 20 item. Khong nen gui sau moi item khi co hang
+nghin places vi se lam spam kenh Discord.
+
+8. CAU HINH .ENV QUAN TRONG
+----------------------------
+Duong dan:
+  TLCN_DATA_ROOT=data
+  TLCN_BRONZE_ROOT=data/bronze
+  TLCN_HISTORICAL_ROOT=data/historical
+  TLCN_REFERENCE_ROOT=data/reference
+  TLCN_BRONZE_S3_URI=s3://lakehouse/bronze
+
+Gioi han:
+  GOOGLE_MAPS_RATINGS_LIMIT=0
+  GOOGLE_MAPS_REVIEWS_LIMIT=0
+  YOUTUBE_MAX_PLACES=0
+  YOUTUBE_MAX_VIDEOS=5
+  YOUTUBE_MAX_COMMENTS=5
+
+Gia tri 0 thuong co nghia khong gioi han cho limit places; YouTube videos/comments
+van phu thuoc max video/comment moi item.
+
+Resume:
+  TLCN_REFRESH_SUCCESS=false
+
+Khong dat true trong van hanh thuong. true se crawl lai ca item da thanh cong.
+
+Tier:
+  TLCN_CRAWL_TIERS=tier_1,tier_2,tier_3
+
+Sau khi sua .env, nap lai cho Airflow:
+  docker compose up -d --force-recreate airflow-scheduler airflow-webserver
+
+9. LUU TRU BRONZE
+------------------
+Bronze duoc ghi song song vao local va MinIO.
+
+Local:
+  data/bronze/<dataset>/crawl_date=YYYY-MM-DD/part-<run_id>.jsonl
+
+MinIO:
+  bucket bronze/<dataset>/crawl_date=YYYY-MM-DD/part-<run_id>.jsonl
+
+Dataset mau:
+  bronze/google_maps/ratings
+  bronze/google_maps/reviews
+  bronze/google_maps/errors
+  bronze/youtube/videos
+  bronze/youtube/comments
+  bronze/youtube/crawl_log
+  bronze/youtube/comments_crawl_log
+  bronze/osm/candidate_places_raw
+  bronze/osm/candidate_places_validated
+  bronze/places
+  bronze/reference/provinces
+  bronze/reference/place_categories
+  bronze/reference/taxonomy
+
+Bucket lakehouse la bucket chung, phan tach bang prefix:
+  lakehouse/bronze/ raw Bronze
+  lakehouse/raw/    raw input cho cac layer lakehouse
+  lakehouse/iceberg/ du lieu Iceberg neu duoc su dung
+
+Record Bronze co metadata:
+  run_id
+  source
+  source_id
+  source_url
+  ingested_at_utc
+  pipeline_version
+  crawler_version
+  attempt
+  record_status
+
+Record khong dat quality gate duoc ghi vao:
+  data/bronze/quarantine/<dataset>/...
+
+10. STATE, METRICS VA BACKFILL MARKER
+-------------------------------------
+Checkpoint:
+  data/bronze/_state/*.jsonl
+  Luu SUCCESS/FAILED theo place_id hoac video_id.
+
+Metrics:
+  data/bronze/_metrics/*.json
+  Luu tong so item, success, failed, skipped, duration va success_rate.
+
+Backfill marker:
+  data/bronze/_backfill/*.json
+  Danh dau CSV lich su da backfill de tranh nap lap.
+
+Backfill historical thuoc social DAG, khong thuoc reference DAG.
+
+Reference DAG khong tu dong nap toan bo data/historical.
+
+11. CAC FILE/DIR CHINH
+-----------------------
+.env
+  Cau hinh secrets, endpoint, limit, tier, timeout va webhook.
+
+ docker-compose.yml
+  Tao va ket noi Postgres, MinIO, Lakekeeper, Airflow.
+  Tao bucket warehouse va bronze.
+
+airflow/dags/tourism_reference.py
+  Dieu phoi reference pipeline.
+
+airflow/dags/tourism_social.py
+  Dieu phoi backfill va social crawlers.
+
+airflow/dags/tourism_lakehouse_test.py
+  Dieu phoi dbt -> Iceberg -> validate.
+
+script/crawl_data/config.py
+  Tap trung duong dan data, input CSV va runtime config.
+
+script/crawl_data/ingestion.py
+  BronzeWriter validate/ghi JSONL local + MinIO.
+  CheckpointStore ghi state resume.
+
+script/crawl_data/backfill_historical.py
+  Nap CSV lich su vao Bronze, dung marker tranh nap lap.
+
+script/crawl_data/jobs/google_maps_ratings.py
+  Crawl rating theo place_id.
+
+script/crawl_data/jobs/google_maps_reviews.py
+  Crawl review theo place_id.
+
+script/crawl_data/jobs/youtube_videos.py
+  Crawl video theo place_id.
+
+script/crawl_data/jobs/youtube_comments.py
+  Crawl comment theo video_id.
+
+script/crawl_data/metrics/ingestion.py
+  Ghi metrics cua tung run.
+
+script/crawl_data/alerts/discord.py
+  Gui progress/stopped va Airflow success/failure alert.
+
+script/crawl_data/quality_gate.py
+  Kiem tra chat luong dau vao giua cac buoc reference.
+
+script/crawl_data/region_priority.py
+  Loc place theo tier khu vuc.
+
+script/crawl_data/crawlers/
+  Logic crawl rieng cho Google Maps, YouTube va cac nguon.
+
+12. KIEM TRA SAU KHI CHAY
+--------------------------
+Kiem tra service:
+  docker compose ps
+
+Kiem tra DAG:
+  docker compose exec -T airflow-scheduler airflow dags list
+
+Kiem tra local Bronze:
+  Get-ChildItem data/bronze -Recurse -Filter *.jsonl
+
+Kiem tra metrics:
+  Get-ChildItem data/bronze/_metrics -Filter *.json
+
+Kiem tra checkpoint:
+  Get-ChildItem data/bronze/_state -Filter *.jsonl
+
+Kiem tra log:
+  docker compose logs airflow-scheduler --tail=100
+
+Kiem tra MinIO:
+  Mo http://localhost:9001 -> bucket bronze
+
+13. QUY TRINH KHUYEN NGHI
+--------------------------
+Lan dau hoac places.csv thay doi:
+  1. Chay tourism_reference_pipeline.
+  2. Kiem tra quality gate va places.csv.
+  3. Chay tourism_social_ingestion voi limit nho.
+  4. Kiem tra Bronze local, MinIO, metrics va Discord.
+  5. Tang limit hoac chay full.
+
+Van hanh dinh ky:
+  1. Social DAG tu dong chay moi thu Hai.
+  2. Theo doi Airflow va Discord.
+  3. Neu can thi dung task dang chay.
+  4. Trigger lai run moi de resume phan con lai.
+  5. Chi dung refresh_success=true khi co chu y crawl lai item thanh cong.

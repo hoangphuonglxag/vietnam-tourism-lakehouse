@@ -1,13 +1,15 @@
+import os
+
 from pyiceberg.catalog import load_catalog
 
 
 CATALOG_NAME = "lakekeeper"
 
-LAKEKEEPER_URI = "http://localhost:8181/catalog"
+LAKEKEEPER_URI = os.getenv("LAKEKEEPER_URI", "http://localhost:8181/catalog")
 
-WAREHOUSE = "tourism_warehouse"
+WAREHOUSE = os.getenv("ICEBERG_WAREHOUSE", "tourism_warehouse")
 
-NAMESPACE = "main"
+NAMESPACE = os.getenv("ICEBERG_NAMESPACE", "main")
 
 
 def get_catalog():
@@ -23,10 +25,10 @@ def get_catalog():
             "warehouse": WAREHOUSE,
 
             # MinIO
-            "s3.endpoint": "http://localhost:9000",
-            "s3.access-key-id": "lakehouse_admin",
-            "s3.secret-access-key": "minIO123",
-            "s3.region": "us-east-1",
+            "s3.endpoint": os.getenv("S3_ENDPOINT", "http://localhost:9000"),
+            "s3.access-key-id": os.getenv("MINIO_ROOT_USER", "lakehouse_admin"),
+            "s3.secret-access-key": os.getenv("MINIO_ROOT_PASSWORD", "minIO123"),
+            "s3.region": os.getenv("AWS_REGION", "us-east-1"),
         },
     )
 

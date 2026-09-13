@@ -1,0 +1,735 @@
+TLCN - RUNBOOK INGESTION VA BRONZE
+===================================
+
+Muc tieu
+--------
+Chay luong ingestion va luu du lieu append-only vao data/bronze/:
+
+  reference: provinces -> candidate_places_raw -> validated -> places
+  social:    Google Maps ratings/reviews, YouTube videos/comments
+
+Bronze la lop luu tru dau vao. Khong xoa hoac ghi de partition cu.
+
+1. Kiem tra cau hinh truoc khi chay
+------------------------------------
+File cau hinh: .env
+Docker Compose doc .env tu dong.
+
+Che do test hien tai:
+  TLCN_TEST_MODE=true
+  GOOGLE_MAPS_RATINGS_LIMIT=1
+  GOOGLE_MAPS_REVIEWS_LIMIT=1
+  YOUTUBE_MAX_PLACES=1
+  YOUTUBE_MAX_VIDEOS=1
+  YOUTUBE_MAX_COMMENTS=1
+
+Che do nay chi chay mau nho. Giu nguyen khi smoke test.
+
+2. Khoi dong services
+---------------------
+Mo PowerShell tai thu muc E:\PJ\TLCN:
+
+  docker compose config --quiet
+  docker compose up -d
+  docker compose ps
+
+Can thay cac service healthy/up:
+  postgres, minio, lakekeeper,
+  airflow-scheduler, airflow-webserver
+
+Mo Airflow:
+  http://localhost:8080
+
+Tai khoan mac dinh trong .env:
+  username: airflow
+  password: airflow
+
+3. Bat DAG can chay
+--------------------
+DAG moi tao mac dinh dang paused. Chi unpause DAG muon dung:
+
+  docker compose exec -T airflow-scheduler airflow dags unpause tourism_reference_pipeline
+  docker compose exec -T airflow-scheduler airflow dags unpause tourism_social_ingestion
+
+Khong can bat tourism_lakehouse_test khi chi muon ingestion/Bronze.
+
+4. Chay reference pipeline truoc
+---------------------------------
+Reference tao danh sach places cho social:
+
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
+
+Theo doi:
+
+  docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_reference_pipeline -o table
+
+DAG reference gom:
+  crawl_provinces
+  quality_gate_provinces
+  crawl_candidate_places
+  quality_gate_candidates
+  validate_places_spatially
+  quality_gate_validated_places
+  classify_places
+  quality_gate_places
+
+Run phai co state success truoc khi chay social.
+
+5. Chay social Bronze pipeline
+------------------------------
+Sau khi reference success:
+
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
+
+DAG social gom:
+  backfill_historical_to_bronze
+  crawl_google_maps_ratings
+  crawl_google_maps_reviews
+  crawl_youtube_videos
+  crawl_youtube_comments
+
+YouTube comments chi chay sau youtube videos.
+Social dang duoc dat lich hang tuan: 03:00 UTC thu Hai
+(tuc 10:00 gio Viet Nam thu Hai).
+
+6. Kiem tra ket qua Bronze va metrics
+-------------------------------------
+Tren may host:
+
+  Get-ChildItem data\bronze -Recurse -Filter *.jsonl
+  Get-ChildItem data\bronze\_metrics -Filter *.json
+  Get-ChildItem data\bronze\_state -Filter *.jsonl
+
+Metrics nam tai:
+  data/bronze/_metrics/
+
+Checkpoint nam tai:
+  data/bronze/_state/
+
+Moi run thanh cong tao partition dang:
+  data/bronze/<dataset>/crawl_date=YYYY-MM-DD/part-<run_id>.jsonl
+
+Discord chi gui mot thong bao khi DAG success hoac failure. Metrics chi tiet nam trong JSON va Airflow task log.
+
+7. Chuyen tu test sang chay du lieu lon
+----------------------------------------
+Chi chuyen sau khi test reference va social pass:
+
+  TLCN_TEST_MODE=false
+  TEST_PROVINCE=
+  GOOGLE_MAPS_RATINGS_LIMIT=0
+  GOOGLE_MAPS_REVIEWS_LIMIT=0
+  YOUTUBE_MAX_PLACES=0
+  YOUTUBE_MAX_VIDEOS=5
+  YOUTUBE_MAX_COMMENTS=5
+
+TLCN_CRAWL_TIERS quyet dinh nhom tinh:
+  tier_1,tier_2,tier_3  = tat ca
+  tier_1                = chi khu vuc uu tien cao
+  tier_1,tier_2         = bo tier_3
+
+Sau khi sua .env, nap lai environment cho Airflow:
+
+  docker compose up -d --force-recreate airflow-scheduler airflow-webserver
+
+Khong dat TLCN_REFRESH_SUCCESS=true trong chay thuong. Gia tri false giup bo qua item da thanh cong nhờ checkpoint.
+
+8. Neu dung dot ngot thi sao?
+-------------------------------
+BronzeWriter ghi file JSONL theo run_id va khong ghi de file da ton tai.
+Checkpoint ghi trang thai tung place/video vao data/bronze/_state/.
+
+Neu container, may, browser hoac task bi dung:
+  - Partition da ghi van duoc giu lai.
+  - Item da checkpoint SUCCESS se duoc bo qua o run sau.
+  - Item dang chay do dang co the bi danh dau FAILED hoac chua co SUCCESS.
+  - Chay lai DAG se tiep tuc phan con lai; khong can xoa Bronze.
+  - Mot run cu co the failed trong Airflow, nhung du lieu Bronze da ghi truoc do van ton tai.
+
+Neu muon dung co chu dinh:
+  - Dung task/DAG tren Airflow UI, hoac
+  - docker compose stop airflow-scheduler
+
+Voi Google Maps reviews, job ghi progress sau moi place. Khi process nhan
+SIGTERM, job co gang gui Discord summary STOPPED gom processed, success,
+failed va remaining truoc khi thoat. Neu kill cung luc voi loi container/mat
+may, khong dam bao gui duoc alert; xem file metrics gan nhat.
+
+Khong dung git reset, xoa data/bronze, hoac xoa file _state de 'lam sach' khi chua kiem tra metrics.
+
+9. Cach xu ly run bi queued
+----------------------------
+Kiem tra DAG co dang paused khong:
+
+  docker compose exec -T airflow-scheduler airflow dags list --output json
+
+Neu is_paused=true:
+
+  docker compose exec -T airflow-scheduler airflow dags unpause <dag_id>
+
+Neu scheduler healthy nhung run queued qua lau:
+
+  docker compose restart airflow-scheduler
+
+Xem log:
+
+  docker compose logs airflow-scheduler --tail=100
+
+Thoi gian tren Airflow la UTC. Vi du 14:50 UTC = 21:50 gio Viet Nam.
+
+10. Xu ly loi va retry
+----------------------
+Xem task log trong Airflow UI truoc.
+Discord chi la thong bao ngan; chi tiet xem:
+  - Airflow task log
+  - data/bronze/_metrics/*.json
+  - data/bronze/_state/*.jsonl
+
+Khong gui webhook test lien tuc. Neu webhook/API key da bi chia se, can rotate lai sau khi test.
+
+11. Lenh dung nhanh
+--------------------
+Xem service:
+  docker compose ps
+
+Xem DAG:
+  docker compose exec -T airflow-scheduler airflow dags list
+
+Trigger reference:
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
+
+Trigger social:
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
+
+Dung toan bo stack:
+  docker compose stop
+
+Xoa container nhung giu volume:
+  docker compose down
+
+Khong dung docker compose down -v neu muon giu PostgreSQL/MinIO data.
+
+12. Trang thai da lam trong workspace
+--------------------------------------
+- Gom cau hinh crawler va Bronze qua .env/config.py.
+- Them BronzeWriter append-only voi metadata, quarantine, partition theo crawl_date.
+- Reference outputs duoc ghi them vao Bronze.
+- Social jobs ghi Google Maps va YouTube vao Bronze.
+- Them checkpoint va metrics JSON.
+- Them region_crawl_policy.csv va loc theo tier.
+- Them Discord alert cho DAG success/failure.
+- Sua loi PYTHONPATH voi Bash strict mode trong Airflow DAG.
+- Da test Google Maps ratings 1 place thanh cong.
+- Da trigger reference pipeline thanh cong sau khi sua PYTHONPATH.
+
+Luu y bao mat
+-------------
+Khong commit .env. Khong dua API key, database password hoac Discord webhook vao log/public repository.
+Neu secret da xuat hien trong chat/log, rotate secret sau khi ket thuc kiem thu.
+Updated todo list
+
+Mình sẽ gom lại thành một hướng dẫn chạy thực tế theo hai cách: Airflow Webserver và CLI/script, sau đó map các file ingestion theo luồng từ input → crawl → checkpoint/metrics → Bronze local/MinIO → lakehouse. Mình sẽ dựa trên cấu hình hiện tại sau khi đã tách bucket `bronze` khỏi `warehouse`.
+
+Read 
+
+Read 
+
+Read 
+
+Read 
+
+Read 
+
+Read 
+
+## 1. Kiến trúc pipeline
+
+Luồng chính:
+
+```text
+Reference pipeline
+provinces
+  -> candidate places
+  -> validate
+  -> classify
+  -> places.csv
+  -> Bronze reference
+
+Social pipeline
+places.csv
+  -> Google Maps ratings
+  -> Google Maps reviews
+  -> YouTube videos
+  -> YouTube comments
+  -> Bronze local + MinIO bucket bronze
+```
+
+Sau đó, nếu cần lakehouse:
+
+```text
+Bronze/data
+  -> dbt
+  -> DuckDB
+  -> Iceberg
+  -> MinIO bucket warehouse
+```
+
+`warehouse` dành cho Iceberg. `bronze` dành cho raw JSONL từ crawler.
+
+## 2. Khởi động hệ thống
+
+Mở PowerShell tại thư mục project:
+
+```powershell
+docker compose config --quiet
+docker compose up -d
+docker compose ps
+```
+
+Các service cần hoạt động:
+
+```text
+postgres
+minio
+lakekeeper
+airflow-scheduler
+airflow-webserver
+```
+
+Airflow Webserver:
+
+```text
+http://localhost:8080
+```
+
+MinIO Console:
+
+```text
+http://localhost:9001
+```
+
+Bucket:
+
+```text
+bronze    raw crawler data
+warehouse Iceberg/lakehouse data
+```
+
+## 3. Chạy bằng Airflow Webserver
+
+### Bước 1: Chạy Reference DAG
+
+Reference tạo danh sách places đầu vào cho social crawler.
+
+Trong Airflow:
+
+1. Mở `http://localhost:8080`.
+2. Bật DAG `tourism_reference_pipeline` nếu đang paused.
+3. Bấm **Trigger DAG**.
+4. Mở Graph/Grid để theo dõi các task.
+5. Chỉ chạy social sau khi DAG này thành công.
+
+Reference gồm:
+
+```text
+crawl_provinces
+  -> quality_gate_provinces
+  -> crawl_candidate_places
+  -> quality_gate_candidates
+  -> validate_places_spatially
+  -> quality_gate_validated_places
+  -> classify_places
+  -> quality_gate_places
+```
+
+### Bước 2: Chạy Social DAG
+
+Bật và trigger:
+
+```text
+tourism_social_ingestion
+```
+
+Dependency:
+
+```text
+backfill_historical_to_bronze
+  ├── crawl_google_maps_ratings
+  ├── crawl_google_maps_reviews
+  └── crawl_youtube_videos
+          └── crawl_youtube_comments
+```
+
+Ratings, reviews và videos chạy song song sau backfill. Comments chờ videos hoàn tất.
+
+Social DAG hiện có lịch:
+
+```text
+0 3 * * 1
+```
+
+Tức **03:00 UTC mỗi thứ Hai**, tương đương **10:00 sáng thứ Hai giờ Việt Nam**.
+
+Có thể trigger thủ công bất kỳ lúc nào bằng nút **Trigger DAG**.
+
+## 4. Chạy một task riêng bằng Airflow CLI
+
+Ví dụ chạy riêng YouTube comments:
+
+```powershell
+docker compose exec -T airflow-scheduler `
+  airflow tasks test `
+  tourism_social_ingestion `
+  crawl_youtube_comments `
+  2026-09-12
+```
+
+Chạy riêng ratings:
+
+```powershell
+docker compose exec -T airflow-scheduler `
+  airflow tasks test `
+  tourism_social_ingestion `
+  crawl_google_maps_ratings `
+  2026-09-12
+```
+
+Chạy riêng reviews:
+
+```powershell
+docker compose exec -T airflow-scheduler `
+  airflow tasks test `
+  tourism_social_ingestion `
+  crawl_google_maps_reviews `
+  2026-09-12
+```
+
+`airflow tasks test` bỏ qua dependency DAG, phù hợp để test một task riêng.
+
+## 5. Chạy trực tiếp crawler bằng script
+
+Các job nằm trong thư mục `jobs`.
+
+Ví dụ ratings:
+
+```powershell
+docker compose exec -w /opt/airflow/project `
+  -e PYTHONPATH=/opt/airflow/project `
+  airflow-scheduler `
+  python -m script.crawl_data.jobs.google_maps_ratings
+```
+
+Reviews:
+
+```powershell
+docker compose exec -w /opt/airflow/project `
+  -e PYTHONPATH=/opt/airflow/project `
+  airflow-scheduler `
+  python -m script.crawl_data.jobs.google_maps_reviews
+```
+
+YouTube videos:
+
+```powershell
+docker compose exec -w /opt/airflow/project `
+  -e PYTHONPATH=/opt/airflow/project `
+  airflow-scheduler `
+  python -m script.crawl_data.jobs.youtube_videos
+```
+
+YouTube comments:
+
+```powershell
+docker compose exec -w /opt/airflow/project `
+  -e PYTHONPATH=/opt/airflow/project `
+  airflow-scheduler `
+  python -m script.crawl_data.jobs.youtube_comments
+```
+
+Cách này chỉ chạy crawler, không tạo DAG run hoàn chỉnh trong Airflow.
+
+## 6. Chạy smoke test nhỏ
+
+Trong `.env`:
+
+```dotenv
+GOOGLE_MAPS_RATINGS_LIMIT=1
+GOOGLE_MAPS_REVIEWS_LIMIT=1
+YOUTUBE_MAX_PLACES=1
+YOUTUBE_MAX_VIDEOS=1
+YOUTUBE_MAX_COMMENTS=1
+```
+
+Sau khi chỉnh `.env`, recreate Airflow:
+
+```powershell
+docker compose up -d --force-recreate airflow-scheduler airflow-webserver
+```
+
+Khi muốn chạy toàn bộ:
+
+```dotenv
+GOOGLE_MAPS_RATINGS_LIMIT=0
+GOOGLE_MAPS_REVIEWS_LIMIT=0
+YOUTUBE_MAX_PLACES=0
+YOUTUBE_MAX_VIDEOS=5
+YOUTUBE_MAX_COMMENTS=5
+```
+
+Không nên đặt:
+
+```dotenv
+TLCN_REFRESH_SUCCESS=true
+```
+
+trong vận hành bình thường.
+
+## 7. Các file chính liên quan đến ingestion
+
+### `tourism_reference.py`
+
+Điều phối Reference pipeline:
+
+- Crawl tỉnh/thành.
+- Crawl địa điểm OSM.
+- Validate địa điểm.
+- Phân loại địa điểm.
+- Tạo/cập nhật `places.csv`.
+- Gọi quality gate giữa các bước.
+
+DAG này có:
+
+```python
+schedule=None
+```
+
+Nghĩa là chỉ chạy khi trigger thủ công.
+
+### `tourism_social.py`
+
+Điều phối social ingestion:
+
+- Backfill dữ liệu lịch sử.
+- Ratings Google Maps.
+- Reviews Google Maps.
+- YouTube videos.
+- YouTube comments.
+
+Đây là DAG có lịch chạy tự động hàng tuần.
+
+### `config.py`
+
+Quản lý:
+
+- Đường dẫn `data`.
+- Đường dẫn Bronze.
+- Đường dẫn historical CSV.
+- Đường dẫn `places.csv`.
+- Các biến môi trường crawler.
+- Limit, timeout, retry, tier khu vực.
+
+### `ingestion.py`
+
+Đây là lớp trung tâm của Bronze:
+
+- `BronzeWriter`: validate record và ghi dữ liệu.
+- Ghi bản local vào:
+
+```text
+data/bronze/
+```
+
+- Ghi bản MinIO vào:
+
+```text
+s3://bronze/
+```
+
+- Partition theo ngày:
+
+```text
+bronze/google_maps/reviews/crawl_date=2026-09-12/part-<run_id>.jsonl
+```
+
+- Thêm metadata:
+
+```text
+run_id
+source
+source_id
+source_url
+ingested_at_utc
+crawler_version
+record_status
+```
+
+- Record lỗi chất lượng được đưa vào:
+
+```text
+data/bronze/quarantine/
+```
+
+`CheckpointStore` trong cùng file ghi trạng thái resume:
+
+```text
+data/bronze/_state/
+```
+
+### `backfill_historical.py`
+
+Đưa dữ liệu CSV lịch sử vào Bronze một lần:
+
+```text
+data/historical/*.csv
+  -> BronzeWriter
+  -> data/bronze
+  -> MinIO bronze
+```
+
+Dùng marker trong:
+
+```text
+data/bronze/_backfill/
+```
+
+để tránh backfill lặp lại.
+
+### Các crawler social
+
+`google_maps_ratings.py`
+
+- Đọc `places.csv`.
+- Crawl rating từng place.
+- Ghi CSV historical.
+- Ghi Bronze.
+- Ghi checkpoint theo `place_id`.
+
+`google_maps_reviews.py`
+
+- Crawl reviews từng place.
+- Ghi Bronze.
+- Checkpoint theo `place_id`.
+- Có progress/stopped snapshot.
+
+`youtube_videos.py`
+
+- Tìm video theo place.
+- Checkpoint theo `place_id`.
+- Ghi video và crawl log vào Bronze.
+
+`youtube_comments.py`
+
+- Đọc danh sách video.
+- Crawl comments theo `video_id`.
+- Checkpoint theo `video_id`.
+- Phụ thuộc dữ liệu YouTube videos.
+
+### `ingestion.py`
+
+Ghi metrics từng run vào:
+
+```text
+data/bronze/_metrics/
+```
+
+Ví dụ metrics:
+
+```json
+{
+  "source": "youtube_videos",
+  "total": 100,
+  "success": 98,
+  "failed": 2,
+  "success_rate": 0.98
+}
+```
+
+### `discord.py`
+
+Xử lý Discord alert:
+
+- `[PROGRESS]`: gửi theo batch, mặc định mỗi 10 item.
+- `[STOPPED]`: gửi snapshot khi task bị dừng.
+- `[SUCCESS]`: gửi khi DAG thành công.
+- `[FAILED]`: gửi khi task thất bại.
+
+Cấu hình tần suất progress:
+
+```dotenv
+DISCORD_PROGRESS_EVERY=10
+```
+
+Airflow log vẫn hiển thị progress từng item, nhưng Discord không bị spam.
+
+### `docker-compose.yml`
+
+Cấu hình:
+
+- PostgreSQL.
+- MinIO.
+- Lakekeeper.
+- Airflow Scheduler.
+- Airflow Webserver.
+- Bucket `warehouse`.
+- Bucket `bronze`.
+- Mount source code vào Airflow.
+
+## 8. Kiểm tra dữ liệu sau khi chạy
+
+Local Bronze:
+
+```powershell
+Get-ChildItem data\bronze -Recurse -Filter *.jsonl
+```
+
+Metrics:
+
+```powershell
+Get-ChildItem data\bronze\_metrics -Filter *.json
+```
+
+Checkpoint:
+
+```powershell
+Get-ChildItem data\bronze\_state -Filter *.jsonl
+```
+
+Log Airflow:
+
+```powershell
+docker compose logs airflow-scheduler --tail=100
+```
+
+Kiểm tra MinIO bucket `bronze`:
+
+- Mở `http://localhost:9001`.
+- Đăng nhập bằng thông tin MinIO trong `.env`.
+- Chọn bucket `bronze`.
+
+## 9. Resume khi chạy lại
+
+Với:
+
+```dotenv
+TLCN_REFRESH_SUCCESS=false
+```
+
+thì:
+
+- Item đã `SUCCESS`: được bỏ qua.
+- Item bị giới hạn bởi `LIMIT`: lần sau tiếp tục lấy item chưa thành công.
+- Item `FAILED`: có thể retry.
+- Item đang crawl dở: lần sau crawl lại item đó từ đầu.
+- Bronze cũ không bị ghi đè.
+- Dữ liệu mới được ghi thành partition mới theo `run_id`.
+
+Không xóa:
+
+```text
+data/bronze/_state
+data/bronze/_metrics
+```
+
+nếu muốn giữ khả năng resume và theo dõi lịch sử.
+
+Created 2 todos

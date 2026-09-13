@@ -1,51 +1,1020 @@
-# Lộ trình Xây dựng Tourism Data Lakehouse (Đồ án TLCN)
+Tourism Data Lakehouse — Roadmap & Technical Notes
+Đồ án TLCN
+1. Mục tiêu dự án
 
-## Checkpoint1
-Ingestion
-Crawl Ranh giới Hành chính: Thu thập GeoJSON và Bounding Box cho 34 tỉnh mục tiêu sau sáp nhập (`crawl_province.py`). Cụ thể
-- Crawl Địa điểm (OSM): Đã dùng Overpass API tải toàn bộ tập địa điểm thô (`crawl_candidate_places_raw.py`).
-- Xác thực Không gian: Đã fix lỗi chồng lấn biên giới Bounding Box bằng thuật toán `Point-in-Polygon` (Spatial Join) đảm bảo tính chính xác 100% về mặt địa lý (`validate_places.py`). Kết quả giữ lại 5,954 địa điểm sạch.
-- Phân loại (Classification): Đã phân loại thành công 6,301/7,155 địa điểm vào các danh mục cụ thể (Công viên, Núi, Di tích, Bảo tàng...) dựa trên Taxonomy tự định nghĩa (`classify_places.py`).
-=> Output hiện tại: File `places.csv` đóng vai trò là bảng Dimension (Dim_Place) cốt lõi và sạch sẽ nhất của Lakehouse.
+Xây dựng một Tourism Data Lakehouse thu thập, lưu trữ và xử lý dữ liệu đa nguồn về các địa điểm du lịch tại Việt Nam.
 
-Checkpoint2 2. Các nguồn Data tiếp theo cần thu thập (Next Data Pipelines)
-Để phục vụ Deep Learning, cần thu thập thêm các luồng dữ liệu (Fact tables) sau:
-Ưu tiên số 1 hiện tại là thu thập dữ liệu hành vi (Reviews/Ratings) từ Google Maps để có metrics đo lường độ phổ biến của địa điểm.
+Hệ thống hướng tới hai mục tiêu chính:
 
-1. **Google Maps Data (Đang chuẩn bị chạy):**
-   - *Metrics:* Rating (số sao), Review Count (số lượng đánh giá).
-   - *Behavioral:* Review Text (Bắt buộc phải lấy text để chạy mô hình NLP phân tích cảm xúc).
-   - *Context:* Popular times (Giờ cao điểm), Giá vé (nếu có).
-2. **Social Media Trend (YouTube/TikTok):**
-   - *Nguồn:* Sử dụng `discover_youtube_api.py`.
-   - *Metrics:* Lượt view, like, comment của các video có nhắc đến tên địa điểm. Dùng làm chỉ số đo lường "độ phủ sóng" (Trendiness).
-3. **Ancillary POIs (Dịch vụ phụ trợ - Dễ làm nhất):**
-   - *Nguồn:* Quay lại tái sử dụng API OSM.
-   - *Nhiệm vụ:* Đếm số lượng nhà hàng (`amenity=restaurant`), khách sạn (`tourism=hotel`), trạm xe buýt/ATM trong bán kính 2km quanh mỗi địa điểm trong `places.csv`. Tính thành điểm tiện ích (Accessibility Score).
+Xây dựng data ingestion pipeline có khả năng mở rộng, có thể thu thập dữ liệu cho hàng nghìn địa điểm.
+Tạo dataset phục vụ Analytics và Deep Learning, đặc biệt là:
+Sentiment Analysis từ review/comment.
+Đánh giá độ phổ biến của địa điểm.
+Phân tích xu hướng du lịch.
+Xây dựng các feature phục vụ ranking/recommendation/prediction.
+
+Trọng tâm của project không phải chỉ là "crawl thật nhiều dữ liệu", mà là xây dựng một data pipeline có khả năng mở rộng, incremental ingestion và phục vụ downstream analytics/ML.
+
+2. Checkpoint 1 — Core Place Ingestion
+2.1. Crawl ranh giới hành chính
+
+Mục tiêu: Xây dựng dữ liệu ranh giới cho 34 tỉnh/thành mục tiêu sau sáp nhập.
+
+Script:
+
+crawl_province.py
 
 
-                 INGESTION
-                     │
-          ┌──────────┴──────────┐
-          ▼                     ▼
-     OSM Raw                Other APIs
-          │                     │
-          ▼                     ▼
-       BRONZE ◄─────────────────┘
-          │
-          ▼
-       SILVER
-          │
-       Dim_Place
-          │
-     ┌────┼────┬──────┐
-     ▼    ▼    ▼      ▼
-    GMap YT  Weather  OSM POI
-     │    │    │      │
-     └────┴────┴──────┘
-              │
-              ▼
-            GOLD
-              │
-              ▼
-       Deep Learning
+Thu thập:
+
+Administrative boundary GeoJSON.
+Bounding Box.
+Province ID.
+Province name.
+Geometry.
+2.2. Crawl địa điểm từ OpenStreetMap
+
+Sử dụng Overpass API để thu thập candidate POIs.
+
+Script:
+
+crawl_candidate_places_raw.py
+
+
+Dữ liệu ban đầu bao gồm các địa điểm thuộc nhiều nhóm:
+
+Công viên.
+Núi.
+Di tích.
+Bảo tàng.
+Chùa.
+Đền.
+Điểm tham quan.
+Các POI du lịch khác.
+2.3. Spatial Validation
+
+Ban đầu có vấn đề do Bounding Box của các tỉnh có thể chồng lấn, dẫn tới một địa điểm có thể bị gán nhầm tỉnh.
+
+Đã giải quyết bằng:
+
+Point-in-Polygon
++
+Spatial Join
+
+
+Script:
+
+validate_places.py
+
+
+Mục tiêu:
+
+POI coordinates
+       ↓
+Point-in-Polygon
+       ↓
+Province geometry
+       ↓
+Correct province assignment
+
+
+Kết quả hiện tại:
+
+7,155 candidate places
+        ↓
+Spatial validation
+        ↓
+5,954 valid places
+
+2.4. Classification
+
+Phân loại POI theo taxonomy tự định nghĩa.
+
+Script:
+
+classify_places.py
+
+
+Kết quả:
+
+6,301 / 7,155 places
+
+
+đã được phân loại vào các category cụ thể.
+
+Ví dụ:
+
+Park
+Mountain
+Monument
+Museum
+Temple
+Historical Site
+...
+
+Current Core Dataset
+
+File:
+
+places.csv
+
+
+đóng vai trò là Dim_Place, dimension cốt lõi của hệ thống.
+
+Các thông tin chính:
+
+place_id
+place_name
+province_id
+province_name
+latitude
+longitude
+category
+...
+
+
+Đây là dataset đầu vào cho các pipeline tiếp theo.
+
+3. Checkpoint 2 — Multi-source Data Ingestion
+
+Sau khi có Dim_Place, hệ thống sẽ thu thập các Fact/Observation Data từ nhiều nguồn.
+
+Các pipeline chính:
+
+Dim_Place
+    │
+    ├── Google Maps
+    ├── YouTube
+    ├── OSM POIs
+    └── Weather
+
+
+Không nhất thiết phải crawl tất cả cùng lúc.
+
+Ưu tiên hiện tại:
+
+1. Google Maps
+2. YouTube
+3. Ancillary POIs
+4. Weather
+
+4. Pipeline 1 — Google Maps
+Mục tiêu
+
+Thu thập các tín hiệu phản ánh mức độ phổ biến và trải nghiệm của du khách.
+
+Metrics
+google_rating
+google_review_count
+
+
+Có thể thu thập thêm distribution:
+
+rating_5_count
+rating_4_count
+rating_3_count
+rating_2_count
+rating_1_count
+
+Behavioral Data
+
+Quan trọng nhất:
+
+review_text
+
+
+Review text sẽ được sử dụng cho:
+
+NLP
+   ↓
+Sentiment Analysis
+   ↓
+Positive / Neutral / Negative
+
+Context Data
+
+Nếu nguồn cho phép thu thập:
+
+popular_times
+ticket_price
+opening_hours
+
+Ví dụ output hiện tại
+place_id
+place_name
+province_id
+province_name
+google_maps_url
+google_rating
+google_review_count
+rating_5_count
+rating_4_count
+rating_3_count
+rating_2_count
+rating_1_count
+crawl_status
+error_message
+crawled_at
+
+5. Pipeline 2 — YouTube Social Trend
+Mục tiêu
+
+Sử dụng YouTube như một nguồn social/trend signal để đo độ phủ sóng của địa điểm.
+
+Ví dụ:
+
+place_name = "Tượng đài Lý Thái Tổ"
+
+        ↓
+
+Search YouTube
+"Tượng đài Lý Thái Tổ Hà Nội"
+
+        ↓
+
+Search Results
+
+        ↓
+
+Relevant Videos
+        +
+Irrelevant Videos
+
+        ↓
+
+Filtering / Relevance Scoring
+
+        ↓
+
+Selected Videos
+
+5.1. Library
+
+Đang sử dụng:
+
+pip install "ytscrape[async]"
+
+
+Library:
+
+ytscrape
+
+
+Sử dụng YouTube internal endpoints thông qua HTTP, không cần Selenium/Playwright.
+
+5.2. Video Metadata
+
+Hiện tại có thể thu thập:
+
+video_id
+title
+description
+channel
+channel_id
+views
+length_seconds
+published
+category
+thumbnail
+url
+
+5.3. Comments
+
+Có thể lấy comment và sắp xếp theo:
+
+TOP
+
+
+Ví dụ lấy khoảng:
+
+Top 5 comments / video
+
+
+Các field:
+
+author
+text
+likes
+is_reply
+
+
+Review/comment text có thể tiếp tục đưa vào NLP.
+
+5.4. Trend Features
+
+Từ video data có thể xây dựng:
+
+video_count
+total_views
+average_views
+max_views
+comment_count
+
+
+Sau đó tạo:
+
+YouTube Trend Score
+
+
+Ví dụ concept:
+
+Trend Score
+    =
+    weighted(
+        video_count,
+        total_views,
+        comment_count,
+        recency
+    )
+
+
+Công thức cuối cùng sẽ được xác định sau khi có dataset thực tế và cần được benchmark/validate.
+
+6. Pipeline 3 — Ancillary POIs
+Mục tiêu
+
+Đánh giá mức độ thuận tiện của một điểm du lịch dựa trên các dịch vụ xung quanh.
+
+Nguồn:
+
+OpenStreetMap
+
+
+Tái sử dụng dữ liệu OSM.
+
+Với mỗi place:
+
+             Place
+                │
+        radius = 2 km
+                │
+      ┌─────────┼─────────┐
+      ▼         ▼         ▼
+ Restaurants  Hotels    Bus Stops
+      │         │         │
+      └─────────┼─────────┘
+                ▼
+       Accessibility Score
+
+
+Có thể thu thập:
+
+restaurant_count
+hotel_count
+bus_stop_count
+atm_count
+cafe_count
+parking_count
+...
+
+
+Sau đó xây dựng:
+
+Accessibility Score
+
+
+Pipeline này tương đối dễ triển khai và có giá trị để tạo feature cho ML.
+
+7. Pipeline 4 — Weather
+
+Weather là ancillary/contextual data, chưa phải ưu tiên số 1.
+
+Có thể sử dụng để trả lời:
+
+Thời tiết có ảnh hưởng tới độ phổ biến của địa điểm không?
+
+
+Các feature:
+
+temperature
+precipitation
+humidity
+weather_condition
+wind_speed
+
+
+Sau đó join theo:
+
+place
++
+date
+
+
+Ví dụ:
+
+place_id
+date
+temperature
+rainfall
+weather_condition
+youtube_views
+google_reviews
+
+
+Từ đó có thể nghiên cứu correlation giữa:
+
+Weather
+      ↓
+Tourism Activity
+
+
+Weather có thể được bổ sung sau khi các pipeline chính ổn định.
+
+8. Lakehouse Data Layers
+
+Kiến trúc dữ liệu:
+
+                    DATA SOURCES
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+         OSM        Google Maps       YouTube
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                      BRONZE
+                   Raw / Immutable
+                         │
+                         ▼
+                      SILVER
+                  Clean / Standardized
+                         │
+                         ▼
+                       GOLD
+                Analytics / ML Features
+
+Bronze
+
+Lưu dữ liệu raw gần với source nhất.
+
+Ví dụ:
+
+bronze/
+├── osm/
+├── google_maps/
+├── youtube/
+└── weather/
+
+
+Không nên overwrite dữ liệu raw.
+
+Mục tiêu:
+
+Raw
++
+Traceability
++
+Reprocessing
+
+Silver
+
+Dữ liệu đã:
+
+Clean.
+Normalize.
+Deduplicate.
+Validate.
+Chuẩn hóa schema.
+Join với Dim_Place.
+
+Ví dụ:
+
+silver/
+├── dim_place
+├── google_reviews
+├── youtube_videos
+├── youtube_comments
+├── ancillary_pois
+└── weather
+
+Gold
+
+Dữ liệu phục vụ trực tiếp:
+
+Analytics
++
+Machine Learning
++
+Deep Learning
+
+
+Ví dụ:
+
+gold/
+├── place_popularity
+├── place_sentiment
+├── tourism_trend
+├── accessibility_score
+└── ml_features
+
+9. Distributed Ingestion Architecture
+
+Sau khi crawler đơn lẻ chạy ổn, chuyển từ:
+
+for place in places:
+    crawl(place)
+
+
+sang:
+
+                    Dim_Place
+                        │
+                        ▼
+                    Producer
+                        │
+                        ▼
+                    RabbitMQ
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+       Worker         Worker        Worker
+          │             │             │
+          └─────────────┼─────────────┘
+                        ▼
+                      MinIO
+                        │
+                        ▼
+                  Bronze Storage
+
+10. RabbitMQ
+
+RabbitMQ đóng vai trò message broker / task queue.
+
+Producer tạo task:
+
+{
+  "place_id": "OSM_node_443033827",
+  "place_name": "Tượng đài Lý Thái Tổ",
+  "province_id": 1,
+  "source": "youtube"
+}
+
+
+RabbitMQ:
+
+Producer
+    ↓
+Exchange
+    ↓
+Queue
+    ↓
+Worker
+
+
+Worker:
+
+receive task
+     ↓
+crawl
+     ↓
+save raw data
+     ↓
+ACK
+
+
+Các cơ chế cần nghiên cứu:
+
+ACK
+NACK
+Retry
+Dead Letter Queue
+Prefetch
+Routing Key
+Exchange
+
+
+Mục tiêu là biến ingestion thành asynchronous distributed processing.
+
+11. Kubernetes
+
+Kubernetes được sử dụng để orchestrate và scale các crawler/worker.
+
+Local prototype:
+
+Docker Desktop
+      │
+      ▼
+Kubernetes
+
+
+Các workload:
+
+Kubernetes Cluster
+│
+├── youtube-crawler
+├── google-crawler
+├── youtube-worker
+├── google-worker
+├── nlp-worker
+├── processing-worker
+└── API
+
+
+Ví dụ:
+
+youtube-worker × 1
+
+
+có thể scale thành:
+
+youtube-worker × 2
+youtube-worker × 4
+youtube-worker × 8
+
+
+RabbitMQ chịu trách nhiệm:
+
+Task distribution
+
+
+Kubernetes chịu trách nhiệm:
+
+Container orchestration
+Scaling
+Self-healing
+Deployment
+Resource management
+
+12. MinIO
+
+MinIO đóng vai trò Object Storage cho Data Lake.
+
+Ví dụ:
+
+MinIO
+│
+├── bronze/
+│   ├── osm/
+│   ├── google/
+│   ├── youtube/
+│   └── weather/
+│
+├── silver/
+│
+└── gold/
+
+
+MinIO phù hợp cho prototype vì có S3-compatible API.
+
+Về sau nếu triển khai cloud production có thể thay bằng:
+
+MinIO
+   ↓
+AWS S3 / GCS / Azure Blob
+
+
+mà không cần thay đổi concept của Data Lake.
+
+13. Tổng thể Architecture
+                         DATA SOURCES
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+             OSM         Google Maps       YouTube
+              │               │               │
+              └───────────────┼───────────────┘
+                              │
+                              ▼
+                     ┌────────────────┐
+                     │    Crawlers    │
+                     │     Python     │
+                     └───────┬────────┘
+                             │
+                             ▼
+                     ┌────────────────┐
+                     │    RabbitMQ    │
+                     │ Queue / Retry  │
+                     └───────┬────────┘
+                             │
+                 ┌───────────┼───────────┐
+                 ▼           ▼           ▼
+              Worker       Worker      Worker
+                ×N           ×N          ×N
+                 │           │           │
+                 └───────────┼───────────┘
+                             │
+                             ▼
+                          MinIO
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │     BRONZE      │
+                    │   Raw Data      │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │     SILVER      │
+                    │ Clean + Join    │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │      GOLD       │
+                    │ Analytics / ML  │
+                    └────────┬────────┘
+                             │
+                  ┌──────────┴──────────┐
+                  ▼                     ▼
+              Analytics           Deep Learning
+
+
+Kubernetes quản lý:
+
+┌──────────────────── Kubernetes ────────────────────┐
+│                                                    │
+│ Crawlers                                           │
+│ YouTube Workers                                    │
+│ Google Workers                                     │
+│ NLP Workers                                        │
+│ Processing Workers                                 │
+│ API                                                │
+│                                                    │
+└────────────────────────────────────────────────────┘
+
+14. Deep Learning / Analytics
+
+Gold layer cung cấp feature cho downstream applications.
+
+14.1. Sentiment Analysis
+
+Input:
+
+Google Review
+YouTube Comment
+
+
+Pipeline:
+
+Raw Text
+   ↓
+Cleaning
+   ↓
+Vietnamese NLP
+   ↓
+Sentiment Model
+   ↓
+Positive / Neutral / Negative
+
+
+Có thể aggregate:
+
+place_id
+positive_ratio
+negative_ratio
+average_sentiment
+
+14.2. Popularity / Trend Analysis
+
+Kết hợp:
+
+Google rating
+Google review count
+YouTube views
+YouTube video count
+YouTube comments
+Review sentiment
+
+
+để xây dựng:
+
+Place Popularity Score
+
+
+hoặc:
+
+Tourism Trend Score
+
+14.3. Accessibility Analysis
+
+Kết hợp:
+
+Restaurants
+Hotels
+Transport
+ATM
+Parking
+...
+
+
+để tạo:
+
+Accessibility Score
+
+15. Những câu hỏi hệ thống có thể trả lời
+
+Sau khi các pipeline hoàn thiện, project có thể trả lời các câu hỏi như:
+
+Popularity
+Địa điểm nào đang phổ biến nhất?
+Địa điểm nào có độ phủ YouTube cao?
+Địa điểm nào có nhiều review nhất?
+Địa điểm nào đang có xu hướng tăng?
+Sentiment
+Du khách đánh giá địa điểm như thế nào?
+Địa điểm nào có sentiment tích cực nhất?
+Những vấn đề nào thường xuất hiện trong review/comment?
+Accessibility
+Địa điểm nào có nhiều dịch vụ hỗ trợ du khách nhất?
+Khu vực nào thiếu nhà hàng/khách sạn/phương tiện công cộng?
+Context
+Thời tiết có ảnh hưởng đến popularity không?
+Những loại địa điểm nào có xu hướng được quan tâm nhiều hơn?
+ML / DL
+Có thể dự đoán popularity của một địa điểm không?
+Có thể phân loại sentiment của review/comment không?
+Có thể xây dựng recommendation/ranking cho địa điểm không?
+16. Benchmark & Scalability
+
+Không nên tuyên bố hệ thống "chịu được X records/second" nếu chưa benchmark.
+
+Cần thực nghiệm với nhiều mức worker:
+
+1 worker
+2 workers
+4 workers
+8 workers
+
+
+Đo:
+
+Messages / second
+Videos / minute
+Comments / second
+Processing latency
+Queue latency
+CPU utilization
+Memory utilization
+Failure rate
+
+
+Ví dụ benchmark:
+
+Workers       Throughput
+--------------------------------
+1             xxx tasks/min
+2             xxx tasks/min
+4             xxx tasks/min
+8             xxx tasks/min
+
+
+Mục tiêu là chứng minh:
+
+Worker ↑
+   ↓
+Throughput ↑
+
+
+cho tới khi gặp bottleneck:
+
+API rate limit
+Network
+CPU
+Memory
+Storage
+RabbitMQ
+External source
+
+17. Incremental Ingestion
+
+Hệ thống không nên chỉ chạy:
+
+crawl everything
+
+
+một lần.
+
+Mục tiêu cuối cùng:
+
+Initial Load
+     ↓
+Incremental Load
+     ↓
+Periodic Refresh
+
+
+Ví dụ:
+
+Day 1
+5,954 places
+    ↓
+Initial crawl
+
+Day 2
+    ↓
+Chỉ crawl data mới / changed data
+
+Day 3
+    ↓
+Update reviews / videos / metrics
+
+
+Có thể sử dụng:
+
+place_id
+source_id
+video_id
+review_id
+crawled_at
+published_at
+updated_at
+
+
+để tránh crawl và lưu trùng dữ liệu.
+
+18. Current Status
+Đã hoàn thành
+[x] Crawl province boundaries
+[x] Crawl OSM candidate places
+[x] Point-in-Polygon validation
+[x] Spatial Join
+[x] Place classification
+[x] Generate places.csv
+[x] Google Maps rating/review metrics
+[x] YouTube search prototype
+[x] YouTube video metadata prototype
+[x] YouTube TOP comments prototype
+
+Đang triển khai
+[ ] Google Maps review text pipeline
+[ ] YouTube relevance filtering
+[ ] YouTube dataset → CSV/JSON
+[ ] RabbitMQ task queue
+[ ] Worker architecture
+[ ] Dockerize crawler
+[ ] MinIO Bronze storage
+[ ] Kubernetes local deployment
+
+Giai đoạn tiếp theo
+[ ] Silver transformation
+[ ] Gold feature tables
+[ ] NLP sentiment analysis
+[ ] Popularity / Trend Score
+[ ] Accessibility Score
+[ ] Weather integration
+[ ] Incremental ingestion
+[ ] Benchmark
+[ ] Horizontal scaling test
+
+19. Recommended Implementation Order
+
+Không nên phát triển tất cả source cùng lúc.
+
+Thứ tự đề xuất:
+
+1. places.csv
+       ↓
+2. YouTube crawler
+       ↓
+3. Google Maps crawler
+       ↓
+4. Dockerize crawler
+       ↓
+5. RabbitMQ
+       ↓
+6. Worker
+       ↓
+7. MinIO
+       ↓
+8. Bronze layer
+       ↓
+9. Kubernetes
+       ↓
+10. Silver
+       ↓
+11. Gold
+       ↓
+12. NLP / Deep Learning
+       ↓
+13. Benchmark
+       ↓
+14. Incremental ingestion
+
+Nguyên tắc
+
+Crawler chạy được → đóng gói → đưa vào queue → scale worker → lưu raw data → transform → ML.
+
+Không cần cố thu thập thật nhiều nguồn trước khi pipeline hoạt động end-to-end.
+
+Một pipeline hoàn chỉnh với:
+
+OSM
++
+Google Maps
++
+YouTube
++
+RabbitMQ
++
+Kubernetes
++
+MinIO
++
+Bronze/Silver/Gold
++
+NLP
+
+
+có giá trị kiến trúc và nghiên cứu cao hơn việc có thêm thật nhiều nguồn dữ liệu nhưng mỗi nguồn chỉ có một script crawl độc lập.
+
+Nếu làm theo note này, bước tiếp theo hợp lý nhất không phải crawl TikTok hay Weather ngay, mà là lấy places.csv → biến YouTube crawler hiện tại thành Docker worker → cho RabbitMQ phân phối place_id → worker crawl → ghi raw JSON vào MinIO. Khi flow đó chạy end-to-end, toàn bộ kiến trúc còn lại sẽ nối vào khá tự nhiên.

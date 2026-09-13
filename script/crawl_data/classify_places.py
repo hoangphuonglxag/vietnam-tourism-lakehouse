@@ -2,7 +2,8 @@ import os
 import uuid
 import pandas as pd
 
-from source.pipeline_scope import log_event, utc_now_iso
+from .pipeline_scope import log_event, utc_now_iso
+from .ingestion import BronzeWriter
 
 # ============================================================
 # CONFIG
@@ -10,10 +11,11 @@ from source.pipeline_scope import log_event, utc_now_iso
 
 INPUT_FILE = "./data/candidate_places_validated.csv"
 
-PLACES_OUTPUT = "./data/places.csv"
-CATEGORIES_OUTPUT = "./data/place_categories.csv"
-TAXONOMY_OUTPUT = "./data/taxonomy.csv"
-LEGACY_MAPPING_FILE = "./data/legacy_province_mapping.csv"
+REFERENCE_DIR = os.path.join("data", "reference")
+PLACES_OUTPUT = os.path.join(REFERENCE_DIR, "places.csv")
+CATEGORIES_OUTPUT = os.path.join(REFERENCE_DIR, "place_categories.csv")
+TAXONOMY_OUTPUT = os.path.join(REFERENCE_DIR, "taxonomy.csv")
+LEGACY_MAPPING_FILE = os.path.join(REFERENCE_DIR, "legacy_province_mapping.csv")
 
 TEST_MODE = False
 TEST_PROVINCE = "Đà Nẵng"
@@ -532,6 +534,25 @@ def main():
         index=False,
         encoding="utf-8-sig"
     )
+
+    BronzeWriter(
+        "places",
+        "openstreetmap",
+        run_id=run_id,
+        crawler_version="place-classification-1",
+    ).write(places_df.to_dict("records"))
+    BronzeWriter(
+        "reference/place_categories",
+        "openstreetmap",
+        run_id=run_id,
+        crawler_version="place-classification-1",
+    ).write(categories_df.to_dict("records"))
+    BronzeWriter(
+        "reference/taxonomy",
+        "pipeline",
+        run_id=run_id,
+        crawler_version="place-classification-1",
+    ).write(taxonomy_df.to_dict("records"))
 
     # ========================================================
     # REPORT

@@ -1,31 +1,29 @@
 import requests
 import pandas as pd
 
-from source.pipeline_scope import (
+from .config import (
+    DATA_ROOT,
+    PROVINCE_REQUEST_TIMEOUT_SECONDS,
+    PROVINCES_RAW_BASE_URL,
+    PROVINCES_SOURCE_URL,
+    USER_AGENT,
+)
+from .pipeline_scope import (
     SCOPE_CURRENT_34,
     ensure_scope,
     log_event,
     utc_now_iso,
 )
+from .ingestion import BronzeWriter, new_run_id
 
 
 # ============================================================
 # CONFIG
 # ============================================================
 
-GITHUB_API_URL = (
-    "https://api.github.com/repos/"
-    "thanglequoc/vietnamese-provinces-database/"
-    "contents/json/geojson"
-)
-
-RAW_BASE_URL = (
-    "https://raw.githubusercontent.com/"
-    "thanglequoc/vietnamese-provinces-database/"
-    "master/json/geojson"
-)
-
-OUTPUT_FILE = "./data/provinces.csv"
+GITHUB_API_URL = PROVINCES_SOURCE_URL
+RAW_BASE_URL = PROVINCES_RAW_BASE_URL
+OUTPUT_FILE = DATA_ROOT / "provinces.csv"
 
 # Scope của bộ địa giới hành chính đang crawl.
 ADMIN_SCOPE = SCOPE_CURRENT_34
@@ -56,9 +54,9 @@ def main():
     response = requests.get(
         GITHUB_API_URL,
         headers={
-            "User-Agent": "TLCN-Tourism-Research/1.0"
+            "User-Agent": USER_AGENT
         },
-        timeout=30
+        timeout=PROVINCE_REQUEST_TIMEOUT_SECONDS
     )
 
     response.raise_for_status()
@@ -101,9 +99,9 @@ def main():
         response = requests.get(
             geojson_url,
             headers={
-                "User-Agent": "TLCN-Tourism-Research/1.0"
+                "User-Agent": USER_AGENT
             },
-            timeout=30
+            timeout=PROVINCE_REQUEST_TIMEOUT_SECONDS
         )
 
         if response.status_code != 200:
@@ -174,6 +172,13 @@ def main():
         index=False,
         encoding="utf-8-sig"
     )
+
+    BronzeWriter(
+        "reference/provinces",
+        "github_geojson",
+        run_id=new_run_id("provinces"),
+        crawler_version="province-boundary-1",
+    ).write(data)
 
     log_event(
         "PROVINCES",

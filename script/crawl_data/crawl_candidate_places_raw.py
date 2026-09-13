@@ -8,42 +8,38 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import requests
 
-from source.pipeline_scope import (
-    SCOPE_LEGACY_63,
+from .config import (
+    DATA_ROOT,
+    MAX_RETRIES,
+    MAX_WORKERS,
+    OVERPASS_TIMEOUT_SECONDS,
+    OVERPASS_URL,
+    REQUEST_JITTER_MAX_SECONDS,
+    REQUEST_JITTER_MIN_SECONDS,
+    REQUEST_TIMEOUT_SECONDS,
+    RETRY_BACKOFF_SECONDS,
+    TEST_MODE,
+    TEST_PROVINCE,
+    USER_AGENT,
+)
+from .pipeline_scope import (
+    SCOPE_CURRENT_34,
     ensure_scope,
     log_event,
     utc_now_iso,
 )
+from .ingestion import BronzeWriter
 
 
 # ============================================================
 # CONFIG
 # ============================================================
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-
-PROVINCES_FILE = "./data/provinces.csv"
-OUTPUT_FILE = "./data/candidate_places_raw.csv"
-
-# True  -> chỉ crawl 1 tỉnh để test
-# False -> crawl toàn bộ tỉnh trong PROVINCES_FILE
-TEST_MODE = False
-TEST_PROVINCE = "Đà Nẵng"
-
-REQUEST_TIMEOUT = 180
-OVERPASS_TIMEOUT = 120
-
-USER_AGENT = "TLCN-Tourism-Research/1.0"
-
-# Worker settings for province-level crawling.
-MAX_WORKERS = 8
-MAX_RETRIES = 3
-RETRY_BACKOFF_SECONDS = 2
-REQUEST_JITTER_MIN_SECONDS = 0.3
-REQUEST_JITTER_MAX_SECONDS = 1.2
+PROVINCES_FILE = DATA_ROOT / "provinces.csv"
+OUTPUT_FILE = DATA_ROOT / "candidate_places_raw.csv"
 
 # Scope của job discovery theo pipeline.
-DISCOVERY_SCOPE = SCOPE_LEGACY_63
+DISCOVERY_SCOPE = SCOPE_CURRENT_34
 
 # Nếu đặt current_34 hoặc legacy_63 thì script sẽ cảnh báo
 # khi scope trong provinces.csv không khớp.
@@ -115,7 +111,7 @@ def build_overpass_query(bbox):
         )
 
     query = f"""
-    [out:json][timeout:{OVERPASS_TIMEOUT}];
+    [out:json][timeout:{OVERPASS_TIMEOUT_SECONDS}];
 
     (
         {"".join(queries)}
@@ -186,7 +182,7 @@ def crawl_province(
                 headers={
                     "User-Agent": USER_AGENT
                 },
-                timeout=REQUEST_TIMEOUT
+                timeout=REQUEST_TIMEOUT_SECONDS
             )
 
             response.raise_for_status()
@@ -567,6 +563,13 @@ def main():
         index=False,
         encoding="utf-8-sig"
     )
+
+    BronzeWriter(
+        "osm/candidate_places_raw",
+        "openstreetmap",
+        run_id=run_id,
+        crawler_version="osm-discovery-1",
+    ).write(df_places.to_dict("records"))
 
     log_event(
         "DISCOVERY",

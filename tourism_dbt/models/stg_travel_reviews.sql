@@ -9,6 +9,6 @@ SELECT
     LOWER(review_text) AS review_text_cleaned,
     source
 FROM read_parquet(
-    's3://warehouse/raw/travel_reviews/*.parquet'
+    's3://lakehouse/raw/travel_reviews/*.parquet'
 )
 WHERE rating IS NOT NULL

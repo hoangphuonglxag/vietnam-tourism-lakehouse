@@ -1,45 +1,110 @@
-# TLCN Ingestion va Bronze
+# Vietnam Tourism Lakehouse
 
-## Pham vi
+Pipeline thu thap va luu tru du lieu du lich Viet Nam theo mo hinh lakehouse.
+Project su dung Airflow de dieu phoi ingestion, MinIO lam object storage tuong
+thich S3, Lakekeeper lam Iceberg REST Catalog va PostgreSQL lam metadata store.
 
-Pipeline hien tai tap trung vao ingestion va luu tru Bronze append-only:
+## Project lam gi?
+
+Pipeline gom hai luong chinh:
 
 ```text
-Reference: provinces -> OSM candidates -> validation -> places
-Social:    Google Maps ratings/reviews, YouTube videos/comments
+Reference pipeline
+provinces -> candidate places -> validation -> classification -> places
+
+Social pipeline
+places -> Google Maps ratings/reviews
+       -> YouTube videos/comments
 ```
 
-Bronze duoc luu tai `data/bronze/`, theo partition:
+Du lieu raw va ket qua ingestion duoc ghi vao Bronze theo dang JSONL,
+append-only. Moi partition co dang:
 
 ```text
 data/bronze/<dataset>/crawl_date=YYYY-MM-DD/part-<run_id>.jsonl
 ```
 
-Moi record co metadata nhu `run_id`, `source`, `ingested_at_utc`, `crawler_version` va `record_status`.
+Dong thoi, `BronzeWriter` ghi cung object vao bucket MinIO:
 
-## Cau hinh
+```text
+s3://lakehouse/bronze/<dataset>/crawl_date=YYYY-MM-DD/...
+```
 
-Cau hinh runtime nam trong `.env`. Docker Compose nap `.env` vao Airflow container.
+Moi record co metadata ingestion nhu `run_id`, `source`, `ingested_at_utc`,
+`crawler_version` va `record_status`.
 
-Sau khi sua `.env`, nap lai environment:
+## Cau truc chinh
+
+```text
+airflow/dags/                  Airflow DAGs
+script/crawl_data/             crawler, validation va BronzeWriter
+data/reference/                dimension va policy crawl
+data/historical/               du lieu CSV lich su de backfill
+data/bronze/                   Bronze local, checkpoint va metrics
+iceberg/                       cac module Iceberg/Lakehouse
+tourism_dbt/                   dbt models
+docker-compose.yml             PostgreSQL, MinIO, Lakekeeper, Airflow
+```
+
+## Yeu cau
+
+- Docker Desktop voi Docker Compose
+- Git
+- API key/cau hinh crawler neu chay Google Maps hoac YouTube
+
+## Cai dat va cau hinh
+
+Clone project va tao file `.env` tu file mau:
 
 ```powershell
-docker compose up -d --force-recreate airflow-scheduler airflow-webserver
+Copy-Item .env.example .env
 ```
 
-Cac bien gioi han social:
+Kiem tra va dieu chinh cac gia tri trong `.env`, dac biet la credential
+MinIO/PostgreSQL va cac gioi han crawler. Khong commit `.env` vi file co the
+chua password, API key va Discord webhook.
 
-```dotenv
-GOOGLE_MAPS_RATINGS_LIMIT=0
-GOOGLE_MAPS_REVIEWS_LIMIT=0
-YOUTUBE_MAX_PLACES=0
-YOUTUBE_MAX_VIDEOS=5
-YOUTUBE_MAX_COMMENTS=5
+## Chay nhanh
+
+Mo PowerShell tai thu muc project:
+
+```powershell
+docker compose config --quiet
+docker compose up -d
+docker compose ps
 ```
 
-`0` nghia la khong gioi han. `TLCN_TEST_MODE` chu yeu ap dung cho luong reference; social duoc gioi han boi cac bien `*_LIMIT` o tren.
+Mo Airflow tai [http://localhost:8080](http://localhost:8080). Tai khoan mac
+dinh trong `.env.example` la `airflow` / `airflow`.
 
-De smoke test:
+### 1. Chay reference pipeline
+
+Reference pipeline tao hoac cap nhat danh sach dia diem. Can chay thanh cong
+truoc khi crawl social:
+
+```powershell
+docker compose exec -T airflow-scheduler airflow dags unpause tourism_reference_pipeline
+docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
+docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_reference_pipeline -o table
+```
+
+### 2. Chay social ingestion
+
+Sau khi reference pipeline thanh cong:
+
+```powershell
+docker compose exec -T airflow-scheduler airflow dags unpause tourism_social_ingestion
+docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
+docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_social_ingestion -o table
+```
+
+Social DAG gom backfill du lieu lich su, Google Maps ratings/reviews va
+YouTube videos/comments. DAG nay duoc lap lich hang tuan luc `03:00 UTC` thu
+Hai, nhung co the trigger thu cong.
+
+## Che do test va gioi han
+
+De smoke test voi pham vi nho, dat trong `.env`:
 
 ```dotenv
 TLCN_TEST_MODE=true
@@ -50,126 +115,22 @@ YOUTUBE_MAX_VIDEOS=1
 YOUTUBE_MAX_COMMENTS=1
 ```
 
-## Chay pipeline
-
-Khoi dong service:
-
-```powershell
-docker compose config --quiet
-docker compose up -d
-docker compose ps
-```
-
-Mo Airflow tai `http://localhost:8080`. DAG mac dinh co the dang paused.
-
-Chay reference truoc:
-
-```powershell
-docker compose exec -T airflow-scheduler airflow dags unpause tourism_reference_pipeline
-docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
-docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_reference_pipeline -o table
-```
-
-Reference tao/cap nhat `places.csv` va ghi Bronze reference/OSM. Chi chay social sau khi reference thanh cong:
-
-```powershell
-docker compose exec -T airflow-scheduler airflow dags unpause tourism_social_ingestion
-docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
-docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_social_ingestion -o table
-```
-
-Social dang co lich hang tuan trong DAG. Co the trigger thu cong bat ky luc nao.
-
-## Tier khu vuc
-
-`data/reference/region_crawl_policy.csv` luu tier va score theo tinh. Bien chon tier:
+Khi chay du lieu lon, co the dat gioi han ve `0` theo quy uoc cua tung job.
+`TLCN_CRAWL_TIERS` dung de chon nhom khu vuc, vi du:
 
 ```dotenv
 TLCN_CRAWL_TIERS=tier_1,tier_2,tier_3
 ```
 
-Vi du:
-
-```dotenv
-TLCN_CRAWL_TIERS=tier_1
-```
-
-Policy co the tao lai tu `places.csv`:
+Sau khi sua `.env`, nap lai environment cho Airflow:
 
 ```powershell
-python -m script.crawl_data.update_region_priority
+docker compose up -d --force-recreate airflow-scheduler airflow-webserver
 ```
 
-## Dung giua chung va chay lai
+## Kiem tra ket qua
 
-Bronze ghi file moi theo `run_id`, khong ghi de partition cu. Checkpoint nam tai:
-
-```text
-data/bronze/_state/
-```
-
-Metrics nam tai:
-
-```text
-data/bronze/_metrics/
-```
-
-Neu DAG bi dung giua chung:
-
-- Bronze da ghi thanh cong van con nguyen.
-- Record/place da checkpoint `SUCCESS` se duoc bo qua o run sau khi `TLCN_REFRESH_SUCCESS=false`.
-- Record dang chay do dang co the chua co checkpoint va se duoc thu lai.
-- Run Airflow cu co the hien `failed`, nhung du lieu Bronze da ghi truoc do khong bi xoa.
-- Khong xoa `_state` hoac `data/bronze` de resume.
-
-Voi task Google Maps reviews, progress duoc ghi sau moi place. Neu task nhan
-SIGTERM khi dung co chu dinh, job gui Discord summary dang `STOPPED` gom so
-place da xu ly, success, failed va remaining. Neu bam `Mark Failed` sau khi
-process da bi kill, summary co the khong duoc gui; xem metrics JSON de lay so
-lieu cuoi cung.
-
-Dung co chu dinh:
-
-```powershell
-docker compose stop airflow-scheduler
-```
-
-Neu chi muon dung DAG, dung Stop tren Airflow UI. Khi chay lai, trigger mot run moi.
-
-## Limit, skip va run lap
-
-Limit khong danh dau record con lai la `SUCCESS` va khong lam mat record.
-
-Vi du:
-
-```dotenv
-GOOGLE_MAPS_RATINGS_LIMIT=10
-```
-
-Job loc cac place da thanh cong truoc, sau do lay 10 place chua thanh cong dau tien. Run se xu ly 10 place nay va ket thuc. Run tiep theo se lay 10 place chua thanh cong ke tiep.
-
-Cac truong hop khac:
-
-- Place da thanh cong: bi bo qua o run sau, khong crawl lai khi `TLCN_REFRESH_SUCCESS=false`.
-- Place bi gioi han boi `LIMIT`: chua bi skip vinh vien; se duoc xem xet o run tiep theo.
-- Place bi loi: ghi loi/checkpoint `FAILED`; run sau co the thu lai.
-- Place thieu `place_id`: job danh dau `skipped`, nhung khong co SUCCESS; neu input khong doi thi no co the bi gap lai o run sau.
-- YouTube videos gioi han so video moi place bang `YOUTUBE_MAX_VIDEOS`.
-- YouTube comments gioi han so comment moi video bang `YOUTUBE_MAX_COMMENTS`.
-
-## Chay nhieu lan
-
-Chay lai voi `TLCN_REFRESH_SUCCESS=false` la cach binh thuong de resume. Cac record da thanh cong duoc loc boi CSV/checkpoint.
-
-Khong dat `TLCN_REFRESH_SUCCESS=true` trong van hanh thuong. Bien nay bat crawl lai ca record da thanh cong va co the tao them quan sat moi trong Bronze.
-
-Bronze la append-only, nen nhieu run co the tao nhieu partition. Day la chu y de giu lich su crawl; downstream can deduplicate theo business key va thoi diem crawl.
-
-## Theo doi
-
-Airflow UI dung de xem state, retry va task log. Metrics JSON xem tai `data/bronze/_metrics/`. Discord nhan thong bao tong ket khi DAG success/failure; chi tiet van nam trong Airflow log va metrics.
-
-Kiem tra nhanh:
+Du lieu local, metrics va checkpoint nam tai:
 
 ```powershell
 Get-ChildItem data\bronze -Recurse -Filter *.jsonl
@@ -178,10 +139,34 @@ Get-ChildItem data\bronze\_state -Filter *.jsonl
 docker compose logs airflow-scheduler --tail=100
 ```
 
-## Airflow UTC
+Bronze la append-only: moi lan chay tao partition moi theo `run_id`, khong ghi
+de partition cu. Checkpoint nam trong `data/bronze/_state/` giup bo qua item da
+thanh cong khi chay lai. Khong xoa `data/bronze` hoac `_state` neu muon resume.
 
-Airflow container dung UTC. Vi du `14:50 UTC` tuong duong `21:50` gio Viet Nam.
+## Chay module truc tiep
 
-## Bao mat
+Co the chay mot so module tu PowerShell sau khi cai dependencies Python:
 
-Khong commit `.env`. File nay chua database password, API key va Discord webhook. Neu secret da bi chia se trong chat/log, can rotate sau khi kiem thu.
+```powershell
+python -m script.crawl_data.backfill_historical
+python -m script.crawl_data.update_region_priority
+python -m script.crawl_data.quality_gate places
+```
+
+Trong van hanh binh thuong, nen chay qua Airflow de co retry, checkpoint,
+metrics va task log tap trung.
+
+## Tai lieu lien quan
+
+- [RUNBOOK_INGESTION_BRONZE.txt](RUNBOOK_INGESTION_BRONZE.txt): huong dan van hanh, resume, retry va xu ly loi.
+- [data_contract.md](data_contract.md): contract cua cac dataset.
+- [tourism_dbt/README.md](tourism_dbt/README.md): dbt models.
+
+## Dung he thong
+
+```powershell
+docker compose stop
+```
+
+Dung `docker compose down` neu can xoa container nhung van giu volume. Khong
+dung `docker compose down -v` neu muon giu du lieu PostgreSQL va MinIO.

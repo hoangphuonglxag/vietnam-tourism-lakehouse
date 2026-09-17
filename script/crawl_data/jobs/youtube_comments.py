@@ -20,6 +20,7 @@ from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..region_priority import filter_places
 from ..alerts.discord import crawl_progress
+from ..status import SUCCESS, classify_error, is_success_status
 
 
 COMMENT_COLUMNS = [
@@ -46,7 +47,7 @@ def _successful_videos(log_file: Path) -> set[str]:
     log = pd.read_csv(log_file, dtype=str, encoding="utf-8-sig")
     if "video_id" not in log or "status" not in log:
         return set()
-    return set(log.loc[log["status"] == "success", "video_id"].dropna())
+    return set(log.loc[log["status"].map(is_success_status), "video_id"].dropna())
 
 
 def _existing_comment_keys(comment_file: Path) -> set[tuple[str, str, str]]:
@@ -69,12 +70,12 @@ def run() -> None:
     videos = filter_places(pd.read_csv(YOUTUBE_VIDEOS_FILE, dtype=str, encoding="utf-8-sig").fillna(""))
     successful = _successful_videos(YOUTUBE_COMMENTS_CRAWL_LOG_FILE)
     existing_keys = _existing_comment_keys(YOUTUBE_COMMENTS_FILE)
-    max_comments = env_int("YOUTUBE_MAX_COMMENTS", 5)
+    max_comments = env_int("YOUTUBE_COMMENTS_PER_VIDEO", env_int("YOUTUBE_MAX_COMMENTS", 5))
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
     if not refresh_success:
         videos = videos[~videos["video_id"].astype(str).isin(successful) & ~videos["video_id"].astype(str).map(checkpoint.is_success)]
-    limit = env_int("YOUTUBE_MAX_VIDEOS", 0)
+    limit = env_int("YOUTUBE_COMMENT_VIDEO_LIMIT", 0)
     if limit > 0:
         videos = videos.head(limit)
     remaining = len(videos)
@@ -108,14 +109,14 @@ def run() -> None:
                         new_records.append(record)
                 _append(new_records, YOUTUBE_COMMENTS_FILE, COMMENT_COLUMNS)
                 bronze_comments.write(new_records)
-                log_row = {**video, "status": "success", "comment_count": len(new_records),
+                log_row = {**video, "status": SUCCESS, "comment_count": len(new_records),
                            "error_message": "", "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_COMMENTS_CRAWL_LOG_FILE, LOG_COLUMNS)
                 bronze_log.write([log_row], source_id=video_id)
                 checkpoint.mark(video_id, "SUCCESS")
                 metrics.mark("success")
             except Exception as error:
-                log_row = {**video, "status": "failed", "comment_count": 0,
+                log_row = {**video, "status": classify_error(error), "comment_count": 0,
                            "error_message": str(error), "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_COMMENTS_CRAWL_LOG_FILE, LOG_COLUMNS)
                 bronze_log.write([log_row], source_id=video_id)

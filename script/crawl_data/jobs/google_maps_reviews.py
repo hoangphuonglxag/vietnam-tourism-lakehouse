@@ -14,6 +14,7 @@ from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..region_priority import filter_places
 from ..alerts.discord import crawl_progress
+from ..status import SUCCESS, classify_error
 
 
 REVIEW_COLUMNS = [
@@ -99,10 +100,10 @@ def run() -> None:
                     reviews = crawler.crawl_place(place)
                     _append(reviews, existing_ids)
                     bronze.write([review.__dict__ for review in reviews], source_id=place.place_id)
-                    checkpoint.mark(place.place_id, "SUCCESS")
+                    checkpoint.mark(place.place_id, SUCCESS)
                     metrics.mark("success")
                 except Exception as error:
-                    checkpoint.mark(place.place_id, "FAILED", error_message=str(error))
+                    checkpoint.mark(place.place_id, classify_error(error), error_message=str(error))
                     metrics.mark("failed")
                     print(f"[ERROR] place_id={place.place_id}: {error}", flush=True)
                 remaining -= 1

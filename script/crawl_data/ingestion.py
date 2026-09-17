@@ -51,6 +51,7 @@ DATASET_SPECS = {
     "google_maps/reviews": DatasetSpec(required=("review_id", "place_id", "crawled_at_utc"), numeric_ranges=(("rating", 1, 5),), non_negative=("likes_count",)),
     "google_maps/errors": DatasetSpec(required=("place_id", "error_type", "failed_at")),
     "youtube/videos": DatasetSpec(required=("place_id", "video_id", "crawled_at"), non_negative=("views", "duration_seconds")),
+    "youtube/search_candidates": DatasetSpec(required=("place_id", "query", "video_id", "resolution_status", "resolution_score", "crawled_at"), non_negative=("views", "resolution_score")),
     "youtube/comments": DatasetSpec(required=("place_id", "video_id", "crawled_at_utc"), non_negative=("likes",)),
     "youtube/crawl_log": DatasetSpec(required=("place_id", "query", "status", "crawled_at"), non_negative=("video_count",)),
     "youtube/comments_crawl_log": DatasetSpec(required=("place_id", "video_id", "status", "crawled_at"), non_negative=("comment_count",)),

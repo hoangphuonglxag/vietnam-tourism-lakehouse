@@ -1,6 +1,8 @@
 TLCN - RUNBOOK INGESTION VA BRONZE
 ===================================
-
+docker compose exec -T airflow-scheduler sh -c "ps -ef | grep '[y]outube_videos'"
+docker compose exec -T airflow-scheduler kill -TERM 1234
+docker compose exec -T airflow-scheduler airflow tasks test tourism_social_ingestion crawl_youtube_videos 2026-09-15
 Muc tieu
 --------
 Chay luong ingestion va luu du lieu append-only vao data/bronze/:

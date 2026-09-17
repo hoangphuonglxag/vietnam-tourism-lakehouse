@@ -14,6 +14,7 @@ from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..region_priority import filter_places
 from ..alerts.discord import crawl_progress
+from ..status import SUCCESS, classify_error, is_success_status
 
 
 RATING_COLUMNS = [
@@ -41,7 +42,7 @@ def _successful_places(target: Path) -> set[str]:
     data = pd.read_csv(target, dtype=str, encoding="utf-8-sig")
     if "place_id" not in data or "crawl_status" not in data:
         return set()
-    return set(data.loc[data["crawl_status"] == "success", "place_id"].dropna())
+    return set(data.loc[data["crawl_status"].map(is_success_status), "place_id"].dropna())
 
 
 def run() -> None:
@@ -90,7 +91,7 @@ def run() -> None:
                 }
                 try:
                     result = crawl_place(page, place)
-                    output = {**base, **result, "crawl_status": "success", "error_message": ""}
+                    output = {**base, **result, "crawl_status": SUCCESS, "error_message": ""}
                     _append(output, GOOGLE_MAPS_RATINGS_FILE, RATING_COLUMNS)
                     bronze_ratings.write([output], source_id=place_id, source_url=str(output.get("google_maps_url", "")))
                     checkpoint.mark(place_id, "SUCCESS")
@@ -101,7 +102,7 @@ def run() -> None:
                                "failed_at": pd.Timestamp.utcnow().isoformat()}
                     _append(failure, GOOGLE_MAPS_ERRORS_FILE, ERROR_COLUMNS)
                     bronze_errors.write([failure], source_id=place_id, source_url=str(base.get("google_maps_url", "")))
-                    checkpoint.mark(place_id, "FAILED", error_message=str(error))
+                    checkpoint.mark(place_id, classify_error(error), error_message=str(error))
                     metrics.mark("failed")
                 remaining -= 1
                 report = metrics.write()

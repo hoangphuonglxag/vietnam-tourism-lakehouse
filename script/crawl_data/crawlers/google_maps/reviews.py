@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 
+from ...config import MAX_REVIEWS_PER_PLACE
+
 
 @dataclass(frozen=True)
 class Place:
@@ -59,7 +61,10 @@ class GoogleMapsReviewsCrawler:
 		self.page.wait_for_timeout(3000)
 		self._open_reviews()
 		self._scroll_reviews()
-		return self._extract(place)
+		reviews = self._extract(place)
+		if MAX_REVIEWS_PER_PLACE > 0:
+			return reviews[:MAX_REVIEWS_PER_PLACE]
+		return reviews
 
 	def _open_reviews(self) -> None:
 		pattern = re.compile(r"(Bài đánh giá|Đánh giá|Reviews)", re.IGNORECASE)

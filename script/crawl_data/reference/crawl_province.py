@@ -1,20 +1,20 @@
 import requests
 import pandas as pd
 
-from .config import (
+from ..config import (
     DATA_ROOT,
     PROVINCE_REQUEST_TIMEOUT_SECONDS,
     PROVINCES_RAW_BASE_URL,
     PROVINCES_SOURCE_URL,
     USER_AGENT,
 )
-from .pipeline_scope import (
+from ..utils.pipeline_scope import (
     SCOPE_CURRENT_34,
     ensure_scope,
     log_event,
     utc_now_iso,
 )
-from .ingestion import BronzeWriter, new_run_id
+from ..utils.ingestion import BronzeWriter, new_run_id
 
 
 # ============================================================

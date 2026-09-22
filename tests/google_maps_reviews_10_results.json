@@ -1,0 +1,48 @@
+{
+  "started_at_utc": "2026-09-21T20:23:28+00:00",
+  "config": {
+    "max_reviews": 100,
+    "limit": 0,
+    "headless": false,
+    "test_mode": false,
+    "url_cache": false
+  },
+  "places": [
+    {
+      "place_id": "OSM_node_443033827",
+      "name": "Tượng đài Lý Thái Tổ",
+      "status": "no_reviews",
+      "found_name": "Tượng đài Lý Thái Tổ",
+      "name_matched": true,
+      "reviews_crawled": 0,
+      "new_rows": 0,
+      "url": "https://www.google.com/maps/place/T%C6%B0%E1%BB%A3ng+%C4%91%C3%A0i+L%C3%BD+Th%C3%A1i+T%E1%BB%95,+French+Quarter,+Ho%C3%A0n+Ki%E1%BA%BFm,+H%C3%A0+N%E1%BB%99i,+Vi%E1%BB%87t+Nam/@21.0274726,105.8544774,17z/data=!3m1!4b1!4m6!3m5!1s0x3135abeae25d4b3f:0x4095ebc6bff2c04d!8m2!3d21.0274732!4d105.854465!16s%2Fg%2F11bzv2_yp9?hl=vi&entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D",
+      "error": null,
+      "seconds": 62.7
+    },
+    {
+      "place_id": "OSM_node_445345255",
+      "name": "Nhà 48 phố Hàng Ngang",
+      "status": "no_reviews",
+      "found_name": "48 P. Hàng Ngang",
+      "name_matched": true,
+      "reviews_crawled": 0,
+      "new_rows": 0,
+      "url": "https://www.google.com/maps/place/48+P.+H%C3%A0ng+Ngang,+Ph%E1%BB%91+c%E1%BB%95+H%C3%A0+N%E1%BB%99i,+Ho%C3%A0n+Ki%E1%BA%BFm,+H%C3%A0+N%E1%BB%99i,+Vi%E1%BB%87t+Nam/@21.0344516,105.8503645,17z/data=!3m1!4b1!4m6!3m5!1s0x3135abbf104598fb:0xffd73a79ab9a7b27!8m2!3d21.0344516!4d105.8503645!16s%2Fg%2F11c5dsmk4_?hl=vi&entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D",
+      "error": null,
+      "seconds": 60.3
+    },
+    {
+      "place_id": "OSM_node_446043019",
+      "name": "thác Thăng thiên",
+      "status": "ok",
+      "found_name": "Thác Thăng Thiên",
+      "name_matched": true,
+      "reviews_crawled": 100,
+      "new_rows": 100,
+      "url": "https://www.google.com/maps/place/Th%C3%A1c+Th%C4%83ng+Thi%C3%AAn/@20.9361944,105.4452894,17z/data=!3m1!4b1!4m6!3m5!1s0x313442dd13345a0f:0xa9bedb75b1e49882!8m2!3d20.9361944!4d105.4452894!16s%2Fg%2F11clhqy799?hl=vi&entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D",
+      "error": null,
+      "seconds": 27.9
+    }
+  ]
+}

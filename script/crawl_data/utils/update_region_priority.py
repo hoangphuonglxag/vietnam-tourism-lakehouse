@@ -1,4 +1,4 @@
-from .region_priority import write_policy
+from ..utils.region_priority import write_policy
 
 
 if __name__ == "__main__":

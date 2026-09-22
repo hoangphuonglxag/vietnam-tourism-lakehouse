@@ -68,11 +68,25 @@ def resolve_video(video: dict[str, object], place: dict[str, str]) -> dict[str, 
     context_score = min(1.0, sum(term in searchable for term in context_terms if term) / max(1, len(context_terms)))
     category_terms = [normalize_text(value) for value in _values(place, "category_terms")]
     category_score = min(1.0, sum(term in searchable for term in category_terms if term) / max(1, len(category_terms)))
+    
     negative_terms = [normalize_text(value) for value in _values(place, "negative_keywords")]
-    negative_match = any(term and term in searchable for term in negative_terms)
+    global_negative = {"karaoke", "remix", "nhạc", "lyric", "audio", "mp3", "beat", "cover", "nhac"}
+    words = set(searchable.split())
+    negative_match = any(term and term in searchable for term in negative_terms) or bool(global_negative & words)
+    
+    video_category = normalize_text(video.get("category", ""))
+    if video_category in ("music", "âm nhạc", "nhạc", "nhac"):
+        negative_match = True
+
     score = 0.50 * name_score + 0.20 * location_score + 0.15 * category_score + 0.15 * context_score
+    
+    # Penalize partial matches (e.g. "Mộc San" vs "Mộc Sơn") if no category/context confirmation
+    if name_score < 1.0 and category_score == 0 and context_score == 0:
+        score -= 0.20
+        
     if negative_match:
         score -= 0.45
+        
     score = max(0.0, min(1.0, score))
     status = "accepted" if score >= 0.62 and not negative_match else "uncertain" if score >= 0.40 else "rejected"
     reason = "negative_keyword" if negative_match else (

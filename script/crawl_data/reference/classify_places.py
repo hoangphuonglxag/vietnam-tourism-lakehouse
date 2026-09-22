@@ -2,8 +2,8 @@ import os
 import uuid
 import pandas as pd
 
-from .pipeline_scope import log_event, utc_now_iso
-from .ingestion import BronzeWriter
+from ..utils.pipeline_scope import log_event, utc_now_iso
+from ..utils.ingestion import BronzeWriter
 
 # ============================================================
 # CONFIG

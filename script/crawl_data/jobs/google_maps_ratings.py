@@ -10,11 +10,11 @@ from playwright.sync_api import sync_playwright
 
 from ..config import GOOGLE_MAPS_ERRORS_FILE, GOOGLE_MAPS_RATINGS_FILE, PLACES_FILE, ensure_data_directories, env_bool, env_float, env_int
 from ..crawlers.google_maps.rating import crawl_place
-from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
+from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
-from ..region_priority import filter_places
+from ..utils.region_priority import filter_places
 from ..alerts.discord import crawl_progress
-from ..status import SUCCESS, classify_error, is_success_status
+from ..utils.status import SUCCESS, classify_error, is_success_status
 
 
 RATING_COLUMNS = [

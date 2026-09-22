@@ -4,8 +4,8 @@ import json
 
 import pandas as pd
 
-from .config import BRONZE_ROOT, HISTORICAL_ROOT, ensure_data_directories
-from .ingestion import BronzeWriter
+from ..config import BRONZE_ROOT, HISTORICAL_ROOT, ensure_data_directories
+from ..utils.ingestion import BronzeWriter
 
 
 DATASETS = {

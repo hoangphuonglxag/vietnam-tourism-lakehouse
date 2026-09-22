@@ -56,8 +56,6 @@ def env_float(name: str, default: float) -> float:
     return float(value) if value else default
 
 
-# Shared crawler/runtime settings. Environment variables override defaults so
-# local runs and Airflow tasks use the same configuration contract.
 OVERPASS_URL = os.getenv(
     "OVERPASS_URL",
     "https://overpass-api.de/api/interpreter",
@@ -82,7 +80,9 @@ MAX_RETRIES = env_int("CRAWL_MAX_RETRIES", 3)
 RETRY_BACKOFF_SECONDS = env_float("CRAWL_RETRY_BACKOFF_SECONDS", 2.0)
 REQUEST_JITTER_MIN_SECONDS = env_float("REQUEST_JITTER_MIN_SECONDS", 0.3)
 REQUEST_JITTER_MAX_SECONDS = env_float("REQUEST_JITTER_MAX_SECONDS", 1.2)
-MAX_REVIEWS_PER_PLACE = env_int("MAX_REVIEWS_PER_PLACE", 50)
+MAX_REVIEWS_PER_PLACE = env_int("MAX_REVIEWS_PER_PLACE", 100)
+MAX_VIDEOS_PER_PLACE = env_int("MAX_VIDEOS_PER_PLACE", 10)
+MAX_COMMENTS_PER_VIDEO = env_int("MAX_COMMENTS_PER_VIDEO", 50)
 TEST_MODE = env_bool("TLCN_TEST_MODE", False)
 TEST_PROVINCE = os.getenv("TEST_PROVINCE", "Đà Nẵng").strip()
 BOUNDARY_REVIEW_DISTANCE_M = env_float("BOUNDARY_REVIEW_DISTANCE_M", 1000.0)

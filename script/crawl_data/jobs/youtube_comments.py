@@ -11,21 +11,23 @@ from ..config import (
     YOUTUBE_COMMENTS_CRAWL_LOG_FILE,
     YOUTUBE_COMMENTS_FILE,
     YOUTUBE_VIDEOS_FILE,
+    MAX_COMMENTS_PER_VIDEO,
     ensure_data_directories,
     env_bool,
     env_int,
 )
 from ..crawlers.youtube.comments import crawl_video
-from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
+from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
-from ..region_priority import filter_places
+from ..utils.region_priority import filter_places
 from ..alerts.discord import crawl_progress
-from ..status import SUCCESS, classify_error, is_success_status
+from ..utils.status import SUCCESS, classify_error, is_success_status
 
 
 COMMENT_COLUMNS = [
     "place_id", "place_name", "province_id", "province_name", "video_id",
-    "video_title", "author", "text", "likes", "is_reply", "crawled_at_utc",
+    "video_title", "comment_id", "author", "text", "likes", "is_reply",
+    "comment_created_at", "crawled_at_utc",
 ]
 LOG_COLUMNS = [
     "place_id", "place_name", "province_id", "province_name", "video_id",
@@ -60,6 +62,14 @@ def _existing_comment_keys(comment_file: Path) -> set[tuple[str, str, str]]:
     return set(zip(comments["video_id"], comments["author"], comments["text"]))
 
 
+def _comment_key(record: dict[str, object]) -> tuple[str, str, str]:
+    """Return dedup key: prefer comment_id, fall back to (video_id, author, text)."""
+    comment_id = str(record.get("comment_id") or "")
+    if comment_id:
+        return (str(record["video_id"]), "__id__", comment_id)
+    return (str(record["video_id"]), str(record["author"]), str(record["text"]))
+
+
 def run() -> None:
     ensure_data_directories()
     run_id = new_run_id("youtube")
@@ -70,7 +80,7 @@ def run() -> None:
     videos = filter_places(pd.read_csv(YOUTUBE_VIDEOS_FILE, dtype=str, encoding="utf-8-sig").fillna(""))
     successful = _successful_videos(YOUTUBE_COMMENTS_CRAWL_LOG_FILE)
     existing_keys = _existing_comment_keys(YOUTUBE_COMMENTS_FILE)
-    max_comments = env_int("YOUTUBE_COMMENTS_PER_VIDEO", env_int("YOUTUBE_MAX_COMMENTS", 5))
+    max_comments = env_int("YOUTUBE_COMMENTS_PER_VIDEO", MAX_COMMENTS_PER_VIDEO)
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
     if not refresh_success:
@@ -103,7 +113,7 @@ def run() -> None:
                     record["crawled_at_utc"] = record.pop("crawled_at", "")
                 new_records = []
                 for record in records:
-                    key = (str(record["video_id"]), str(record["author"]), str(record["text"]))
+                    key = _comment_key(record)
                     if key not in existing_keys:
                         existing_keys.add(key)
                         new_records.append(record)

@@ -14,17 +14,18 @@ from ..config import (
     YOUTUBE_CRAWL_LOG_FILE,
     YOUTUBE_SEARCH_CANDIDATES_FILE,
     YOUTUBE_VIDEOS_FILE,
+    MAX_VIDEOS_PER_PLACE,
     ensure_data_directories,
     env_bool,
     env_int,
 )
 from ..crawlers.youtube.videos import crawl_place
 from ..crawlers.youtube.resolution import generate_queries, resolve_candidates
-from ..ingestion import BronzeWriter, CheckpointStore, new_run_id
+from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
-from ..region_priority import filter_places
+from ..utils.region_priority import filter_places
 from ..alerts.discord import crawl_progress
-from ..status import SUCCESS, classify_error, is_success_status
+from ..utils.status import SUCCESS, classify_error, is_success_status
 
 
 VIDEO_COLUMNS = [
@@ -107,7 +108,7 @@ def run() -> None:
     places = filter_places(places)
     successful = _successful_places(YOUTUBE_CRAWL_LOG_FILE)
     existing_keys = _existing_video_keys(YOUTUBE_VIDEOS_FILE)
-    max_videos = env_int("YOUTUBE_VIDEOS_PER_PLACE", env_int("YOUTUBE_MAX_VIDEOS", 5))
+    max_videos = env_int("YOUTUBE_VIDEOS_PER_PLACE", MAX_VIDEOS_PER_PLACE)
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
     metrics = RunMetrics("youtube_videos", run_id)

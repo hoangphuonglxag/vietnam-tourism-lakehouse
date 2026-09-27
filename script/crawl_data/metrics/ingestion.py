@@ -30,8 +30,12 @@ class RunMetrics:
     def mark(self, status: str) -> None:
         self._counts[status] += 1
 
+    def add(self, name: str, value: int) -> None:
+        self._counts[name] += value
+
     def write(self) -> dict[str, int | float | str]:
-        total = sum(self._counts.values())
+        status_names = ("success", "failed", "skipped", "quarantine", "retry", "empty")
+        total = sum(self._counts[name] for name in status_names)
         report: dict[str, int | float | str] = {
             "source": self.source,
             "run_id": self.run_id,
@@ -44,6 +48,10 @@ class RunMetrics:
             "skipped": self._counts["skipped"],
             "quarantine": self._counts["quarantine"],
             "retry": self._counts["retry"],
+            "empty": self._counts["empty"],
+            "reviews_found": self._counts["reviews_found"],
+            "new_reviews": self._counts["new_reviews"],
+            "empty_reviews": self._counts["empty_reviews"],
             "success_rate": self._counts["success"] / total if total else 1.0,
         }
         METRICS_ROOT.mkdir(parents=True, exist_ok=True)

@@ -21,6 +21,8 @@ REFERENCE_ROOT = _path_from_env("TLCN_REFERENCE_ROOT", DATA_ROOT / "reference")
 # Canonical inputs and legacy CSV outputs. Jobs own these paths so crawlers
 # can be replaced without changing Airflow DAG configuration.
 PLACES_FILE = REFERENCE_ROOT / "places.csv"
+PLACES_CATEGORIES_FILE = REFERENCE_ROOT / "place_categories.csv"
+PLACE_TAXONOMY_FILE = REFERENCE_ROOT / "taxonomy.csv"
 GOOGLE_MAPS_RATINGS_FILE = HISTORICAL_ROOT / "google_maps_ratings.csv"
 GOOGLE_MAPS_REVIEWS_FILE = HISTORICAL_ROOT / "google_maps_reviews.csv"
 GOOGLE_MAPS_ERRORS_FILE = HISTORICAL_ROOT / "google_maps_errors.csv"
@@ -28,6 +30,7 @@ METRICS_ROOT = BRONZE_ROOT / "_metrics"
 YOUTUBE_VIDEOS_FILE = HISTORICAL_ROOT / "youtube_videos.csv"
 YOUTUBE_COMMENTS_FILE = HISTORICAL_ROOT / "youtube_comments.csv"
 YOUTUBE_CRAWL_LOG_FILE = HISTORICAL_ROOT / "youtube_crawl_log.csv"
+YOUTUBE_SEARCH_CANDIDATES_FILE = HISTORICAL_ROOT / "youtube_search_candidates.csv"
 YOUTUBE_COMMENTS_CRAWL_LOG_FILE = HISTORICAL_ROOT / "youtube_comments_crawl_log.csv"
 
 def ensure_data_directories() -> None:
@@ -53,8 +56,6 @@ def env_float(name: str, default: float) -> float:
     return float(value) if value else default
 
 
-# Shared crawler/runtime settings. Environment variables override defaults so
-# local runs and Airflow tasks use the same configuration contract.
 OVERPASS_URL = os.getenv(
     "OVERPASS_URL",
     "https://overpass-api.de/api/interpreter",
@@ -79,6 +80,9 @@ MAX_RETRIES = env_int("CRAWL_MAX_RETRIES", 3)
 RETRY_BACKOFF_SECONDS = env_float("CRAWL_RETRY_BACKOFF_SECONDS", 2.0)
 REQUEST_JITTER_MIN_SECONDS = env_float("REQUEST_JITTER_MIN_SECONDS", 0.3)
 REQUEST_JITTER_MAX_SECONDS = env_float("REQUEST_JITTER_MAX_SECONDS", 1.2)
+MAX_REVIEWS_PER_PLACE = env_int("MAX_REVIEWS_PER_PLACE", 100)
+MAX_VIDEOS_PER_PLACE = env_int("MAX_VIDEOS_PER_PLACE", 10)
+MAX_COMMENTS_PER_VIDEO = env_int("MAX_COMMENTS_PER_VIDEO", 50)
 TEST_MODE = env_bool("TLCN_TEST_MODE", False)
 TEST_PROVINCE = os.getenv("TEST_PROVINCE", "Đà Nẵng").strip()
 BOUNDARY_REVIEW_DISTANCE_M = env_float("BOUNDARY_REVIEW_DISTANCE_M", 1000.0)

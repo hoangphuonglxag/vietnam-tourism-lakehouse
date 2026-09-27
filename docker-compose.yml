@@ -15,9 +15,11 @@ x-airflow-common: &airflow-common
     - AWS_REGION=${AWS_REGION}
     - MINIO_ROOT_USER=${MINIO_ROOT_USER}
     - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    - PYTHONPATH=/opt/airflow/project
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./:/opt/airflow/project
+  working_dir: /opt/airflow/project
   networks:
     - lakehouse_net
   depends_on:

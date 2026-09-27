@@ -10,8 +10,8 @@ from typing import Iterable, Mapping
 import pandas as pd
 import s3fs
 
-from .bronze.writer import write_jsonl
-from .config import BRONZE_ROOT
+from ..bronze.writer import write_jsonl
+from ..config import BRONZE_ROOT
 
 
 @dataclass(frozen=True)
@@ -51,6 +51,7 @@ DATASET_SPECS = {
     "google_maps/reviews": DatasetSpec(required=("review_id", "place_id", "crawled_at_utc"), numeric_ranges=(("rating", 1, 5),), non_negative=("likes_count",)),
     "google_maps/errors": DatasetSpec(required=("place_id", "error_type", "failed_at")),
     "youtube/videos": DatasetSpec(required=("place_id", "video_id", "crawled_at"), non_negative=("views", "duration_seconds")),
+    "youtube/search_candidates": DatasetSpec(required=("place_id", "query", "video_id", "resolution_status", "resolution_score", "crawled_at"), non_negative=("views", "resolution_score")),
     "youtube/comments": DatasetSpec(required=("place_id", "video_id", "crawled_at_utc"), non_negative=("likes",)),
     "youtube/crawl_log": DatasetSpec(required=("place_id", "query", "status", "crawled_at"), non_negative=("video_count",)),
     "youtube/comments_crawl_log": DatasetSpec(required=("place_id", "video_id", "status", "crawled_at"), non_negative=("comment_count",)),
@@ -173,14 +174,26 @@ class CheckpointStore:
         self.path = BRONZE_ROOT / "_state" / f"{dataset.replace('/', '_')}.jsonl"
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._latest: dict[str, str] = {}
+        self._updated_at: dict[str, datetime] = {}
         if self.path.exists():
             for line in self.path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     event = json.loads(line)
-                    self._latest[str(event["item_key"])] = str(event["status"])
+                    item_key = str(event["item_key"])
+                    self._latest[item_key] = str(event["status"])
+                    updated_at = pd.to_datetime(event.get("updated_at_utc"), utc=True, errors="coerce")
+                    if not pd.isna(updated_at):
+                        self._updated_at[item_key] = updated_at.to_pydatetime()
 
     def is_success(self, item_key: str) -> bool:
         return self._latest.get(str(item_key)) == "SUCCESS"
+
+    def is_fresh(self, item_key: str, interval_days: int) -> bool:
+        updated_at = self._updated_at.get(str(item_key))
+        if not self.is_success(item_key) or updated_at is None:
+            return False
+        age_seconds = (datetime.now(timezone.utc) - updated_at).total_seconds()
+        return age_seconds < max(interval_days, 0) * 86400
 
     def mark(self, item_key: str, status: str, attempt: int = 1, error_message: str = "") -> None:
         event = {
@@ -193,3 +206,4 @@ class CheckpointStore:
         with self.path.open("a", encoding="utf-8", newline="\n") as file:
             file.write(json.dumps(event, ensure_ascii=False) + "\n")
         self._latest[str(item_key)] = status
+        self._updated_at[str(item_key)] = datetime.fromisoformat(event["updated_at_utc"])

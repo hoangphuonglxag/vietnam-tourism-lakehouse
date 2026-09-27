@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import HISTORICAL_ROOT, PLACES_FILE, REFERENCE_ROOT
+from ..config import HISTORICAL_ROOT, PLACES_FILE, REFERENCE_ROOT
 
 POLICY_FILE = REFERENCE_ROOT / "region_crawl_policy.csv"
 SCORE_VERSION = "v1-place-supply"
@@ -36,7 +36,7 @@ def build_policy(places_file: Path = PLACES_FILE) -> pd.DataFrame:
     grouped["sample_size"] = grouped["place_count"]
     grouped["confidence"] = grouped["sample_size"].map(lambda value: "low" if value < 20 else "medium" if value < 100 else "high")
     grouped["tier"] = grouped["potential_score"].map(lambda value: "tier_1" if value >= 70 else "tier_2" if value >= 40 else "tier_3")
-    grouped["crawl_interval_days"] = grouped["tier"].map({"tier_1": 7, "tier_2": 30, "tier_3": 90})
+    grouped["crawl_interval_days"] = 30
     grouped["strategic_override"] = False
     grouped["enabled"] = True
     grouped["score_version"] = SCORE_VERSION
@@ -67,4 +67,8 @@ def filter_places(places: pd.DataFrame) -> pd.DataFrame:
     policy = pd.read_csv(POLICY_FILE, dtype=str, encoding="utf-8-sig").fillna("")
     policy = policy[policy["enabled"].str.lower().isin({"true", "1", "yes"})]
     policy = policy[policy["tier"].isin(allowed_tiers())]
-    return places.merge(policy[["province_id"]], on="province_id", how="inner")
+    return places.merge(
+        policy[["province_id", "crawl_interval_days"]],
+        on="province_id",
+        how="inner",
+    )

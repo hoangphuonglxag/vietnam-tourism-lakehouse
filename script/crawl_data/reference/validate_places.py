@@ -8,14 +8,14 @@ import pandas as pd
 from shapely.geometry import Point
 from shapely.ops import unary_union
 
-from .config import (
+from ..config import (
     DATA_ROOT,
     BOUNDARY_REVIEW_DISTANCE_M,
     TEST_MODE,
     TEST_PROVINCE,
 )
-from .pipeline_scope import log_event, utc_now_iso
-from .ingestion import BronzeWriter
+from ..utils.pipeline_scope import log_event, utc_now_iso
+from ..utils.ingestion import BronzeWriter
 
 
 # ============================================================

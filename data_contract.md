@@ -75,7 +75,7 @@ Business key: (`place_id`, `crawled_at`)
 | rating_3_count | int64, >=0 | no |
 | rating_2_count | int64, >=0 | no |
 | rating_1_count | int64, >=0 | no |
-| crawl_status | enum: success, failed, skipped, quarantine | no |
+| crawl_status | enum: SUCCESS, FAILED_SEARCH, FAILED_RATE_LIMIT, FAILED_DATA, FAILED_UNKNOWN | no |
 | error_message | string | yes |
 | crawled_at | timestamp UTC | no |
 
@@ -179,7 +179,7 @@ Role: one execution result per place and query.
 
 Business key: (`place_id`, `query`, `crawled_at`)
 
-Fields: `place_id` string not null; `place_name`, `province_id`, `province_name`, `query` strings nullable; `status` enum: success, failed, skipped, quarantine; `video_count` int64 nullable and >=0; `error_message` string nullable; `crawled_at` timestamp UTC not null.
+Fields: `place_id` string not null; `place_name`, `province_id`, `province_name`, `query` strings nullable; `status` enum: `SUCCESS`, `FAILED_SEARCH`, `FAILED_RATE_LIMIT`, `FAILED_DATA`, `FAILED_UNKNOWN`; `video_count` int64 nullable and >=0; `error_message` string nullable; `crawled_at` timestamp UTC not null. `SUCCESS` means the search execution completed, including zero candidates or candidates later rejected by entity resolution. Entity outcomes belong to `youtube_search_candidates.resolution_status`, not this operational status. Historical lowercase `success` and `failed` values remain readable for backward compatibility.
 
 ## 4. Reference datasets
 

@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import requests
 
-from .config import (
+from ..config import (
     DATA_ROOT,
     MAX_RETRIES,
     MAX_WORKERS,
@@ -22,13 +22,13 @@ from .config import (
     TEST_PROVINCE,
     USER_AGENT,
 )
-from .pipeline_scope import (
+from ..utils.pipeline_scope import (
     SCOPE_CURRENT_34,
     ensure_scope,
     log_event,
     utc_now_iso,
 )
-from .ingestion import BronzeWriter
+from ..utils.ingestion import BronzeWriter
 
 
 # ============================================================

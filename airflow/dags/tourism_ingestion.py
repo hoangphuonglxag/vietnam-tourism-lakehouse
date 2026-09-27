@@ -17,7 +17,7 @@ def python_module(module: str) -> str:
 
 
 def quality_gate(stage: str) -> str:
-    return python_module(f"script.crawl_data.quality_gate {stage}")
+    return python_module(f"script.crawl_data.utils.quality_gate {stage}")
 
 
 with DAG(
@@ -34,7 +34,7 @@ with DAG(
 ) as dag:
     crawl_provinces = BashOperator(
         task_id="crawl_provinces",
-        bash_command=python_module("script.crawl_data.crawl_province"),
+        bash_command=python_module("script.crawl_data.reference.crawl_province"),
     )
     validate_provinces = BashOperator(
         task_id="quality_gate_provinces",
@@ -42,7 +42,7 @@ with DAG(
     )
     crawl_candidates = BashOperator(
         task_id="crawl_candidate_places",
-        bash_command=python_module("script.crawl_data.crawl_candidate_places_raw"),
+        bash_command=python_module("script.crawl_data.reference.crawl_candidate_places_raw"),
     )
     validate_candidates = BashOperator(
         task_id="quality_gate_candidates",
@@ -50,7 +50,7 @@ with DAG(
     )
     spatial_validate = BashOperator(
         task_id="validate_places_spatially",
-        bash_command=python_module("script.crawl_data.validate_places"),
+        bash_command=python_module("script.crawl_data.reference.validate_places"),
     )
     validate_validated = BashOperator(
         task_id="quality_gate_validated_places",
@@ -58,7 +58,7 @@ with DAG(
     )
     classify_places = BashOperator(
         task_id="classify_places",
-        bash_command=python_module("script.crawl_data.classify_places"),
+        bash_command=python_module("script.crawl_data.reference.classify_places"),
     )
     validate_dimension = BashOperator(
         task_id="quality_gate_places_dimension",
@@ -66,7 +66,7 @@ with DAG(
     )
     backfill_bronze = BashOperator(
         task_id="backfill_historical_to_bronze",
-        bash_command=python_module("script.crawl_data.backfill_historical"),
+        bash_command=python_module("script.crawl_data.reference.backfill_historical"),
     )
     google_ratings = BashOperator(
         task_id="crawl_google_maps_ratings",

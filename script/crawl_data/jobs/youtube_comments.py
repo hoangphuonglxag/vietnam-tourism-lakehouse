@@ -75,6 +75,8 @@ def run() -> None:
     run_id = new_run_id("youtube")
     bronze_comments = BronzeWriter("youtube/comments", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
     bronze_log = BronzeWriter("youtube/comments_crawl_log", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
+    bronze_comment_records: list[dict[str, object]] = []
+    bronze_log_records: list[dict[str, object]] = []
     metrics = RunMetrics("youtube_comments", run_id)
     checkpoint = CheckpointStore("youtube/comments_crawl_log")
     videos = filter_places(pd.read_csv(YOUTUBE_VIDEOS_FILE, dtype=str, encoding="utf-8-sig").fillna(""))
@@ -91,6 +93,8 @@ def run() -> None:
     remaining = len(videos)
 
     def stop_handler(signum: int, frame: object) -> None:
+        bronze_comments.write(bronze_comment_records)
+        bronze_log.write(bronze_log_records)
         report = metrics.write()
         crawl_progress("youtube_comments", report, remaining, stopped=True)
         raise SystemExit(143)
@@ -118,24 +122,26 @@ def run() -> None:
                         existing_keys.add(key)
                         new_records.append(record)
                 _append(new_records, YOUTUBE_COMMENTS_FILE, COMMENT_COLUMNS)
-                bronze_comments.write(new_records)
+                bronze_comment_records.extend(new_records)
                 log_row = {**video, "status": SUCCESS, "comment_count": len(new_records),
                            "error_message": "", "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_COMMENTS_CRAWL_LOG_FILE, LOG_COLUMNS)
-                bronze_log.write([log_row], source_id=video_id)
+                bronze_log_records.append(log_row)
                 checkpoint.mark(video_id, "SUCCESS")
                 metrics.mark("success")
             except Exception as error:
                 log_row = {**video, "status": classify_error(error), "comment_count": 0,
                            "error_message": str(error), "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_COMMENTS_CRAWL_LOG_FILE, LOG_COLUMNS)
-                bronze_log.write([log_row], source_id=video_id)
+                bronze_log_records.append(log_row)
                 checkpoint.mark(video_id, "FAILED", error_message=str(error))
                 metrics.mark("failed")
             remaining -= 1
             report = metrics.write()
             crawl_progress("youtube_comments", report, remaining)
             time.sleep(delay_seconds)
+            bronze_comments.write(bronze_comment_records)
+            bronze_log.write(bronze_log_records)
     report = metrics.write()
     if report["failed"]:
         raise RuntimeError(f"YouTube comments had {report['failed']} failed videos")

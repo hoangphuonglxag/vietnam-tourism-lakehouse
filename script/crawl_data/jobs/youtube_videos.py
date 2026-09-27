@@ -103,6 +103,8 @@ def run() -> None:
     bronze_videos = BronzeWriter("youtube/videos", "youtube", run_id=run_id, crawler_version="youtube-video-1")
     bronze_candidates = BronzeWriter("youtube/search_candidates", "youtube", run_id=run_id, crawler_version="youtube-video-2")
     bronze_log = BronzeWriter("youtube/crawl_log", "youtube", run_id=run_id, crawler_version="youtube-video-1")
+    bronze_candidate_records: list[dict[str, object]] = []
+    bronze_log_records: list[dict[str, object]] = []
     checkpoint = CheckpointStore("youtube/crawl_log")
     places = _load_places()
     places = filter_places(places)
@@ -112,6 +114,7 @@ def run() -> None:
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
     metrics = RunMetrics("youtube_videos", run_id)
+    bronze_video_records: list[dict[str, object]] = []
     if not refresh_success:
         places = places[~places["place_id"].astype(str).isin(successful) & ~places["place_id"].astype(str).map(checkpoint.is_success)]
     limit = env_int("YOUTUBE_MAX_PLACES", 0)
@@ -120,6 +123,9 @@ def run() -> None:
     remaining = len(places)
 
     def stop_handler(signum: int, frame: object) -> None:
+        bronze_videos.write(bronze_video_records)
+        bronze_candidates.write(bronze_candidate_records)
+        bronze_log.write(bronze_log_records)
         report = metrics.write()
         crawl_progress("youtube_videos", report, remaining, stopped=True)
         raise SystemExit(143)
@@ -140,7 +146,7 @@ def run() -> None:
             try:
                 records = resolve_candidates(crawl_place(client, place, max_videos), place)
                 _append(records, YOUTUBE_SEARCH_CANDIDATES_FILE, CANDIDATE_COLUMNS)
-                bronze_candidates.write(records)
+                bronze_candidate_records.extend(records)
                 records = [record for record in records if record["resolution_status"] == "accepted"]
                 new_records = []
                 for record in records:
@@ -149,11 +155,11 @@ def run() -> None:
                         existing_keys.add(key)
                         new_records.append(record)
                 _append(new_records, YOUTUBE_VIDEOS_FILE, VIDEO_COLUMNS)
-                bronze_videos.write(new_records)
+                bronze_video_records.extend(new_records)
                 log_row = {**place, "query": query, "status": SUCCESS, "video_count": len(new_records),
                            "error_message": "", "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_CRAWL_LOG_FILE, LOG_COLUMNS)
-                bronze_log.write([log_row], source_id=place_id)
+                bronze_log_records.append(log_row)
                 checkpoint.mark(place_id, "SUCCESS")
                 metrics.mark("success")
             except Exception as error:
@@ -161,13 +167,16 @@ def run() -> None:
                 log_row = {**place, "query": query, "status": status, "video_count": 0,
                            "error_message": str(error), "crawled_at": pd.Timestamp.utcnow().isoformat()}
                 _append([log_row], YOUTUBE_CRAWL_LOG_FILE, LOG_COLUMNS)
-                bronze_log.write([log_row], source_id=place_id)
+                bronze_log_records.append(log_row)
                 checkpoint.mark(place_id, "FAILED", error_message=str(error))
                 metrics.mark("failed")
             remaining -= 1
             report = metrics.write()
             crawl_progress("youtube_videos", report, remaining)
             time.sleep(delay_seconds)
+            bronze_videos.write(bronze_video_records)
+            bronze_candidates.write(bronze_candidate_records)
+            bronze_log.write(bronze_log_records)
     report = metrics.write()
     if report["failed"]:
         raise RuntimeError(f"YouTube videos had {report['failed']} failed places")

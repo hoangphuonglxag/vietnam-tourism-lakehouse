@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import time
 import signal
+import csv
+import os
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -43,6 +46,44 @@ def _append(rows: list[dict[str, object]], target: Path, columns: list[str]) -> 
         )
 
 
+def _ensure_comment_schema(comment_file: Path) -> None:
+    if not comment_file.exists():
+        return
+
+    with comment_file.open("r", encoding="utf-8-sig", newline="") as source:
+        reader = csv.reader(source)
+        header = next(reader, [])
+        if header == COMMENT_COLUMNS:
+            return
+        if header != [
+            "place_id", "place_name", "province_id", "province_name", "video_id",
+            "video_title", "author", "text", "likes", "is_reply", "crawled_at",
+        ]:
+            raise ValueError(f"Unexpected YouTube comments CSV header: {header}")
+
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=comment_file.parent, prefix=f"{comment_file.name}.", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8-sig", newline="") as destination:
+                writer = csv.writer(destination)
+                writer.writerow(COMMENT_COLUMNS)
+                for row in reader:
+                    if len(row) == 11:
+                        row = row[:6] + [""] + row[6:10] + [""] + [row[10]]
+                    elif len(row) != len(COMMENT_COLUMNS):
+                        raise ValueError(
+                            f"Unexpected YouTube comments CSV row width {len(row)} "
+                            f"near line {reader.line_num}"
+                        )
+                    writer.writerow(row)
+            os.replace(temporary_name, comment_file)
+        except Exception:
+            if os.path.exists(temporary_name):
+                os.unlink(temporary_name)
+            raise
+
+
 def _successful_videos(log_file: Path) -> set[str]:
     if not log_file.exists():
         return set()
@@ -81,6 +122,7 @@ def run() -> None:
     checkpoint = CheckpointStore("youtube/comments_crawl_log")
     videos = filter_places(pd.read_csv(YOUTUBE_VIDEOS_FILE, dtype=str, encoding="utf-8-sig").fillna(""))
     successful = _successful_videos(YOUTUBE_COMMENTS_CRAWL_LOG_FILE)
+    _ensure_comment_schema(YOUTUBE_COMMENTS_FILE)
     existing_keys = _existing_comment_keys(YOUTUBE_COMMENTS_FILE)
     max_comments = env_int("YOUTUBE_COMMENTS_PER_VIDEO", MAX_COMMENTS_PER_VIDEO)
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
@@ -140,8 +182,9 @@ def run() -> None:
             report = metrics.write()
             crawl_progress("youtube_comments", report, remaining)
             time.sleep(delay_seconds)
-            bronze_comments.write(bronze_comment_records)
-            bronze_log.write(bronze_log_records)
+            if remaining == 0:
+                bronze_comments.write(bronze_comment_records)
+                bronze_log.write(bronze_log_records)
     report = metrics.write()
     if report["failed"]:
         raise RuntimeError(f"YouTube comments had {report['failed']} failed videos")

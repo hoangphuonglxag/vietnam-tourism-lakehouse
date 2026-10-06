@@ -174,9 +174,10 @@ def run() -> None:
             report = metrics.write()
             crawl_progress("youtube_videos", report, remaining)
             time.sleep(delay_seconds)
-            bronze_videos.write(bronze_video_records)
-            bronze_candidates.write(bronze_candidate_records)
-            bronze_log.write(bronze_log_records)
+            if remaining == 0:
+                bronze_videos.write(bronze_video_records)
+                bronze_candidates.write(bronze_candidate_records)
+                bronze_log.write(bronze_log_records)
     report = metrics.write()
     if report["failed"]:
         raise RuntimeError(f"YouTube videos had {report['failed']} failed places")

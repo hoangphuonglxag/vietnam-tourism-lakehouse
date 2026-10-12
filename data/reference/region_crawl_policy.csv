@@ -1,0 +1,35 @@
+﻿province_id,province_name,potential_score,place_supply_score,rating_score,sample_size,confidence,tier,crawl_interval_days,strategic_override,enabled,score_version,updated_at_utc
+1,Hà Nội,78.01,73.63,88.23,658,high,tier_1,7,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+11,Điện Biên,30.82,5.46,90.0,84,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+12,Lai Châu,31.37,5.94,90.71,88,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+14,Sơn La,27.34,1.07,88.65,47,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+15,Lào Cai,33.6,9.86,89.0,121,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+19,Thái Nguyên,26.82,0.0,89.41,38,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+20,Lạng Sơn,30.34,4.39,90.89,75,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+22,Quảng Ninh,34.33,10.81,89.21,129,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+24,Bắc Ninh,38.11,17.1,87.12,182,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+25,Phú Thọ,37.59,16.03,87.89,173,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+31,Hải Phòng,43.17,23.99,87.92,240,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+33,Hưng Yên,32.16,6.65,91.69,94,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+37,Ninh Bình,48.24,29.93,90.97,290,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+38,Thanh Hoá,30.36,4.87,89.83,79,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+4,Cao Bằng,31.99,6.89,90.57,96,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+40,Nghệ An,29.84,3.92,90.31,71,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+42,Hà Tĩnh,25.72,2.14,80.73,56,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+44,Quảng Trị,44.64,24.7,91.17,246,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+46,Huế,44.61,24.94,90.52,248,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+48,Đà Nẵng,67.97,58.67,89.67,532,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+51,Quảng Ngãi,36.48,14.01,88.92,156,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+52,Gia Lai,39.84,19.24,87.9,200,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+56,Khánh Hoà,47.11,29.33,88.61,285,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+66,Đắk Lắk,44.28,25.42,88.28,252,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+68,Lâm Đồng,66.18,56.77,88.12,516,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+75,Đồng Nai,34.0,11.05,87.54,131,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+79,Hồ Chí Minh,96.77,100.0,89.23,880,high,tier_1,7,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+8,Tuyên Quang,41.19,19.95,90.75,206,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+80,Tây Ninh,34.67,12.0,87.58,139,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+82,Đồng Tháp,32.38,8.55,88.0,110,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+86,Vĩnh Long,34.06,10.81,88.32,129,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+91,An Giang,59.96,48.1,87.62,443,high,tier_2,30,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+92,Cần Thơ,32.19,9.03,86.23,114,high,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00
+96,Cà Mau,27.03,1.07,87.59,47,medium,tier_3,90,False,True,v1-place-supply,2026-09-11T14:25:55.941616+00:00

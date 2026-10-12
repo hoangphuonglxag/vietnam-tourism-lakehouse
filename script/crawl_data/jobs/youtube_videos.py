@@ -24,6 +24,7 @@ from ..crawlers.youtube.resolution import generate_queries, resolve_candidates
 from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..utils.region_priority import filter_places
+from ..utils.crawl_plan import load_crawl_plan, run_context
 from ..alerts.discord import crawl_progress
 from ..utils.status import SUCCESS, classify_error, is_success_status
 
@@ -100,12 +101,16 @@ def _load_places() -> pd.DataFrame:
 def run() -> None:
     ensure_data_directories()
     run_id = new_run_id("youtube")
-    bronze_videos = BronzeWriter("youtube/videos", "youtube", run_id=run_id, crawler_version="youtube-video-1")
-    bronze_candidates = BronzeWriter("youtube/search_candidates", "youtube", run_id=run_id, crawler_version="youtube-video-2")
-    bronze_log = BronzeWriter("youtube/crawl_log", "youtube", run_id=run_id, crawler_version="youtube-video-1")
+    plan = load_crawl_plan()
+    context = run_context(plan, "youtube_videos")
+    metrics = RunMetrics("youtube_videos", run_id, context)
+    decision = plan["decisions"].get("videos", {}) if plan else {}
+    if plan and not decision.get("should_run"):
+        metrics.finish("skipped")
+        return
     bronze_candidate_records: list[dict[str, object]] = []
     bronze_log_records: list[dict[str, object]] = []
-    checkpoint = CheckpointStore("youtube/crawl_log")
+    checkpoint = CheckpointStore("youtube/crawl_log", run_id=run_id, metadata=context)
     places = _load_places()
     places = filter_places(places)
     successful = _successful_places(YOUTUBE_CRAWL_LOG_FILE)
@@ -113,20 +118,28 @@ def run() -> None:
     max_videos = env_int("YOUTUBE_VIDEOS_PER_PLACE", MAX_VIDEOS_PER_PLACE)
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
-    metrics = RunMetrics("youtube_videos", run_id)
     bronze_video_records: list[dict[str, object]] = []
-    if not refresh_success:
+    if plan:
+        target_ids = set(map(str, decision.get("place_ids", [])))
+        places = places[places["place_id"].astype(str).isin(target_ids)]
+    elif not refresh_success:
         places = places[~places["place_id"].astype(str).isin(successful) & ~places["place_id"].astype(str).map(checkpoint.is_success)]
     limit = env_int("YOUTUBE_MAX_PLACES", 0)
     if limit > 0:
         places = places.head(limit)
     remaining = len(places)
+    if places.empty:
+        metrics.finish("skipped")
+        return
+    bronze_videos = BronzeWriter("youtube/videos", "youtube", run_id=run_id, crawler_version="youtube-video-1")
+    bronze_candidates = BronzeWriter("youtube/search_candidates", "youtube", run_id=run_id, crawler_version="youtube-video-2")
+    bronze_log = BronzeWriter("youtube/crawl_log", "youtube", run_id=run_id, crawler_version="youtube-video-1")
 
     def stop_handler(signum: int, frame: object) -> None:
         bronze_videos.write(bronze_video_records)
         bronze_candidates.write(bronze_candidate_records)
         bronze_log.write(bronze_log_records)
-        report = metrics.write()
+        report = metrics.finish("stopped")
         crawl_progress("youtube_videos", report, remaining, stopped=True)
         raise SystemExit(143)
 
@@ -139,7 +152,7 @@ def run() -> None:
             if not place_id:
                 metrics.mark("skipped")
                 continue
-            if not refresh_success and (place_id in successful or checkpoint.is_success(place_id)):
+            if not plan and not refresh_success and (place_id in successful or checkpoint.is_success(place_id)):
                 metrics.mark("skipped")
                 continue
             query = " | ".join(generate_queries(place))
@@ -174,10 +187,11 @@ def run() -> None:
             report = metrics.write()
             crawl_progress("youtube_videos", report, remaining)
             time.sleep(delay_seconds)
-            bronze_videos.write(bronze_video_records)
-            bronze_candidates.write(bronze_candidate_records)
-            bronze_log.write(bronze_log_records)
-    report = metrics.write()
+            if remaining == 0:
+                bronze_videos.write(bronze_video_records)
+                bronze_candidates.write(bronze_candidate_records)
+                bronze_log.write(bronze_log_records)
+    report = metrics.finish()
     if report["failed"]:
         raise RuntimeError(f"YouTube videos had {report['failed']} failed places")
 

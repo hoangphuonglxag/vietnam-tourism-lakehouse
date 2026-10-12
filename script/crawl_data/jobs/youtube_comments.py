@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import time
 import signal
+import csv
+import os
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -20,6 +23,7 @@ from ..crawlers.youtube.comments import crawl_video
 from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..utils.region_priority import filter_places
+from ..utils.crawl_plan import load_crawl_plan, run_context, successful_item_ids
 from ..alerts.discord import crawl_progress
 from ..utils.status import SUCCESS, classify_error, is_success_status
 
@@ -43,13 +47,66 @@ def _append(rows: list[dict[str, object]], target: Path, columns: list[str]) -> 
         )
 
 
-def _successful_videos(log_file: Path) -> set[str]:
-    if not log_file.exists():
-        return set()
-    log = pd.read_csv(log_file, dtype=str, encoding="utf-8-sig")
-    if "video_id" not in log or "status" not in log:
-        return set()
-    return set(log.loc[log["status"].map(is_success_status), "video_id"].dropna())
+def _ensure_comment_schema(comment_file: Path) -> None:
+    if not comment_file.exists():
+        return
+
+    with comment_file.open("r", encoding="utf-8-sig", newline="") as source:
+        reader = csv.reader(source)
+        header = next(reader, [])
+        if header == COMMENT_COLUMNS:
+            return
+        if header != [
+            "place_id", "place_name", "province_id", "province_name", "video_id",
+            "video_title", "author", "text", "likes", "is_reply", "crawled_at",
+        ]:
+            raise ValueError(f"Unexpected YouTube comments CSV header: {header}")
+
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=comment_file.parent, prefix=f"{comment_file.name}.", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8-sig", newline="") as destination:
+                writer = csv.writer(destination)
+                writer.writerow(COMMENT_COLUMNS)
+                for row in reader:
+                    if len(row) == 11:
+                        row = row[:6] + [""] + row[6:10] + [""] + [row[10]]
+                    elif len(row) != len(COMMENT_COLUMNS):
+                        raise ValueError(
+                            f"Unexpected YouTube comments CSV row width {len(row)} "
+                            f"near line {reader.line_num}"
+                        )
+                    writer.writerow(row)
+            os.replace(temporary_name, comment_file)
+        except Exception:
+            if os.path.exists(temporary_name):
+                os.unlink(temporary_name)
+            raise
+
+
+def _select_videos(
+    videos: pd.DataFrame,
+    decision: dict[str, object] | None,
+    successful: set[str],
+    force_refresh: bool,
+) -> pd.DataFrame:
+    if decision is not None:
+        target_video_ids = set(map(str, decision.get("item_ids", [])))
+        existing_video_ids = set(map(str, decision.get("existing_video_ids", [])))
+        target_place_ids = set(map(str, decision.get("place_ids", [])))
+        if decision.get("include_new_videos"):
+            videos = videos[videos["place_id"].astype(str).isin(target_place_ids)]
+            videos = videos[
+                videos["video_id"].astype(str).isin(target_video_ids)
+                | ~videos["video_id"].astype(str).isin(existing_video_ids)
+            ]
+        else:
+            videos = videos[videos["video_id"].astype(str).isin(target_video_ids)]
+
+    if not force_refresh:
+        videos = videos[~videos["video_id"].astype(str).isin(successful)]
+    return videos
 
 
 def _existing_comment_keys(comment_file: Path) -> set[tuple[str, str, str]]:
@@ -73,29 +130,44 @@ def _comment_key(record: dict[str, object]) -> tuple[str, str, str]:
 def run() -> None:
     ensure_data_directories()
     run_id = new_run_id("youtube")
-    bronze_comments = BronzeWriter("youtube/comments", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
-    bronze_log = BronzeWriter("youtube/comments_crawl_log", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
+    plan = load_crawl_plan()
+    context = run_context(plan, "youtube_comments")
     bronze_comment_records: list[dict[str, object]] = []
     bronze_log_records: list[dict[str, object]] = []
-    metrics = RunMetrics("youtube_comments", run_id)
-    checkpoint = CheckpointStore("youtube/comments_crawl_log")
+    metrics = RunMetrics("youtube_comments", run_id, context)
+    checkpoint = CheckpointStore(
+        "youtube/comments_crawl_log",
+        run_id=run_id,
+        metadata=context,
+    )
+    decision = plan["decisions"].get("comments", {}) if plan else {}
+    if plan and not decision.get("should_run"):
+        metrics.finish("skipped")
+        return
     videos = filter_places(pd.read_csv(YOUTUBE_VIDEOS_FILE, dtype=str, encoding="utf-8-sig").fillna(""))
-    successful = _successful_videos(YOUTUBE_COMMENTS_CRAWL_LOG_FILE)
+    _ensure_comment_schema(YOUTUBE_COMMENTS_FILE)
     existing_keys = _existing_comment_keys(YOUTUBE_COMMENTS_FILE)
     max_comments = env_int("YOUTUBE_COMMENTS_PER_VIDEO", MAX_COMMENTS_PER_VIDEO)
     delay_seconds = env_int("YOUTUBE_DELAY_SECONDS", 1)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
-    if not refresh_success:
-        videos = videos[~videos["video_id"].astype(str).isin(successful) & ~videos["video_id"].astype(str).map(checkpoint.is_success)]
+    force_refresh = refresh_success or bool(plan and plan.get("force_refresh"))
+    candidate_video_ids = videos["video_id"].astype(str).drop_duplicates().tolist()
+    successful = successful_item_ids("comments", candidate_video_ids)
+    videos = _select_videos(videos, decision if plan else None, successful, force_refresh)
     limit = env_int("YOUTUBE_COMMENT_VIDEO_LIMIT", 0)
     if limit > 0:
         videos = videos.head(limit)
     remaining = len(videos)
+    if videos.empty:
+        metrics.finish("skipped")
+        return
+    bronze_comments = BronzeWriter("youtube/comments", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
+    bronze_log = BronzeWriter("youtube/comments_crawl_log", "youtube", run_id=run_id, crawler_version="youtube-comment-1")
 
     def stop_handler(signum: int, frame: object) -> None:
         bronze_comments.write(bronze_comment_records)
         bronze_log.write(bronze_log_records)
-        report = metrics.write()
+        report = metrics.finish("stopped")
         crawl_progress("youtube_comments", report, remaining, stopped=True)
         raise SystemExit(143)
 
@@ -106,9 +178,6 @@ def run() -> None:
             video = row.to_dict()
             video_id = str(video.get("video_id", ""))
             if not video_id:
-                metrics.mark("skipped")
-                continue
-            if not refresh_success and (video_id in successful or checkpoint.is_success(video_id)):
                 metrics.mark("skipped")
                 continue
             try:
@@ -140,9 +209,10 @@ def run() -> None:
             report = metrics.write()
             crawl_progress("youtube_comments", report, remaining)
             time.sleep(delay_seconds)
-            bronze_comments.write(bronze_comment_records)
-            bronze_log.write(bronze_log_records)
-    report = metrics.write()
+            if remaining == 0:
+                bronze_comments.write(bronze_comment_records)
+                bronze_log.write(bronze_log_records)
+    report = metrics.finish()
     if report["failed"]:
         raise RuntimeError(f"YouTube comments had {report['failed']} failed videos")
 

@@ -1,28 +1,50 @@
-
-.env
-__pycache__/
-*.pyc
-
-# Local / temporary
-*.log
-*.tmp
-
 # Secrets
+.env
+.env.*
+!.env.example
 pk.txt
 checkpoint2.txt
-RUNBOOK_INGESTION_BRONZE.txt
-README.md
-# Large/raw generated datasets
-data/*
 
-# Keep important schema/reference files
-!data/.gitkeep
-!data/provinces.csv
-!data/taxonomy.csv
-!data/places.csv
-!data/place_categories.csv
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
 
-# Python virtual environment
-tourism_lakehouse/
+# IDE
 .idea/
+.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
 logs/
+temp/
+tmp/
+
+# Local runbook
+RUNBOOK_INGESTION_BRONZE.txt
+
+# Generated data
+data.zip
+data/bronze/
+data/silver/
+data/gold/
+data/historical/
+
+# Keep reference data
+!data/reference/
+!data/reference/*.csv
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

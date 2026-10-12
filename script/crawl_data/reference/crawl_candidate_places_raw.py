@@ -58,6 +58,7 @@ OSM_TAGS = {
         "theme_park",
         "zoo",
         "aquarium",
+        "hotel",
         "gallery",
         "arts_centre",
         "artwork"

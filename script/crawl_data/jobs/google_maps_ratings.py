@@ -13,6 +13,7 @@ from ..crawlers.google_maps.rating import crawl_place
 from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..utils.region_priority import filter_places
+from ..utils.crawl_plan import load_crawl_plan, run_context
 from ..alerts.discord import crawl_progress
 from ..utils.status import SUCCESS, classify_error, is_success_status
 
@@ -48,24 +49,36 @@ def _successful_places(target: Path) -> set[str]:
 def run() -> None:
     ensure_data_directories()
     run_id = new_run_id("google_maps")
-    bronze_ratings = BronzeWriter("google_maps/ratings", "google_maps", run_id=run_id, crawler_version="google-maps-rating-1")
-    bronze_errors = BronzeWriter("google_maps/errors", "google_maps", run_id=run_id, crawler_version="google-maps-rating-1")
-    checkpoint = CheckpointStore("google_maps/ratings")
+    plan = load_crawl_plan()
+    context = run_context(plan, "google_ratings")
+    checkpoint = CheckpointStore("google_maps/ratings", run_id=run_id, metadata=context)
+    metrics = RunMetrics("google_maps_ratings", run_id, context)
+    decision = plan["decisions"].get("ratings", {}) if plan else {}
+    if plan and not decision.get("should_run"):
+        metrics.finish("skipped")
+        return
     places = pd.read_csv(PLACES_FILE, dtype=str, encoding="utf-8-sig").fillna("").to_dict("records")
     places = filter_places(pd.DataFrame(places)).to_dict("records")
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
     delay_seconds = env_float("GOOGLE_MAPS_DELAY_SECONDS", 1.0)
-    metrics = RunMetrics("google_maps_ratings", run_id)
     completed = _successful_places(GOOGLE_MAPS_RATINGS_FILE)
     limit = env_int("GOOGLE_MAPS_RATINGS_LIMIT", 0)
-    if not refresh_success:
+    if plan:
+        target_ids = set(map(str, decision.get("place_ids", [])))
+        places = [place for place in places if str(place.get("place_id", "")) in target_ids]
+    elif not refresh_success:
         places = [place for place in places if str(place.get("place_id", "")) not in completed and not checkpoint.is_success(str(place.get("place_id", "")))]
     if limit > 0:
         places = places[:limit]
     remaining = len(places)
+    if not places:
+        metrics.finish("skipped")
+        return
+    bronze_ratings = BronzeWriter("google_maps/ratings", "google_maps", run_id=run_id, crawler_version="google-maps-rating-1")
+    bronze_errors = BronzeWriter("google_maps/errors", "google_maps", run_id=run_id, crawler_version="google-maps-rating-1")
 
     def stop_handler(signum: int, frame: object) -> None:
-        report = metrics.write()
+        report = metrics.finish("stopped")
         crawl_progress("google_maps_ratings", report, remaining, stopped=True)
         raise SystemExit(143)
 
@@ -79,7 +92,7 @@ def run() -> None:
                 if not place_id:
                     metrics.mark("skipped")
                     continue
-                if not refresh_success and (place_id in completed or checkpoint.is_success(place_id)):
+                if not plan and not refresh_success and (place_id in completed or checkpoint.is_success(place_id)):
                     metrics.mark("skipped")
                     continue
                 base = {
@@ -110,7 +123,7 @@ def run() -> None:
                 time.sleep(delay_seconds)
         finally:
             browser.close()
-    report = metrics.write()
+    report = metrics.finish()
     if report["failed"]:
         raise RuntimeError(f"Google Maps ratings had {report['failed']} failed places")
 

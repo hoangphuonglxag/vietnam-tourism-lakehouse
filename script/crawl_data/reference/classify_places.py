@@ -2,6 +2,8 @@ import os
 import uuid
 import pandas as pd
 
+from ..config import DATA_ROOT, REFERENCE_ROOT, TEST_PROVINCE, env_bool
+from ..validation.tourism import evaluate_tourism_eligibility
 from ..utils.pipeline_scope import log_event, utc_now_iso
 from ..utils.ingestion import BronzeWriter
 
@@ -9,16 +11,16 @@ from ..utils.ingestion import BronzeWriter
 # CONFIG
 # ============================================================
 
-INPUT_FILE = "./data/candidate_places_validated.csv"
+INPUT_FILE = DATA_ROOT / "candidate_places_validated.csv"
 
-REFERENCE_DIR = os.path.join("data", "reference")
-PLACES_OUTPUT = os.path.join(REFERENCE_DIR, "places.csv")
-CATEGORIES_OUTPUT = os.path.join(REFERENCE_DIR, "place_categories.csv")
-TAXONOMY_OUTPUT = os.path.join(REFERENCE_DIR, "taxonomy.csv")
-LEGACY_MAPPING_FILE = os.path.join(REFERENCE_DIR, "legacy_province_mapping.csv")
-
-TEST_MODE = False
-TEST_PROVINCE = "Đà Nẵng"
+REFERENCE_DIR = REFERENCE_ROOT
+PLACES_OUTPUT = REFERENCE_DIR / "places.csv"
+CATEGORIES_OUTPUT = REFERENCE_DIR / "place_categories.csv"
+TAXONOMY_OUTPUT = REFERENCE_DIR / "taxonomy.csv"
+REVIEW_OUTPUT = REFERENCE_DIR / "places_review.csv"
+ELIGIBILITY_REPORT_OUTPUT = REFERENCE_DIR / "place_eligibility_report.csv"
+LEGACY_MAPPING_FILE = REFERENCE_DIR / "legacy_province_mapping.csv"
+TEST_MODE = env_bool("TLCN_CLASSIFY_TEST_MODE", False)
 
 # ============================================================
 # TAXONOMY V1
@@ -58,6 +60,9 @@ TAXONOMY = [
     # fallback
     ("other", "attraction", "general_attraction",
      "Điểm tham quan", "General Attraction"),
+
+    # accommodation
+    ("accommodation", "hotel", "hotel", "Khách sạn", "Hotel"),
 ]
 
 # ============================================================
@@ -115,6 +120,10 @@ OSM_RULES = {
 
     ("tourism", "museum"): [
         ("culture", "museum", "museum")
+    ],
+
+    ("tourism", "hotel"): [
+        ("accommodation", "hotel", "hotel")
     ],
 
     ("tourism", "gallery"): [
@@ -328,7 +337,7 @@ def main():
     # Load
     # --------------------------------------------------------
 
-    df = pd.read_csv(INPUT_FILE)
+    df = pd.read_csv(INPUT_FILE, dtype={"province_id": str}, encoding="utf-8-sig")
 
     log_event(
         "CLASSIFY",
@@ -402,6 +411,11 @@ def main():
 
         osm_id = row["osm_id"]
         osm_type = row["osm_type"]
+        eligibility = evaluate_tourism_eligibility(row)
+        crawl_eligible = (
+            str(row.get("validation_status", "")).strip() == "valid"
+            and eligibility["tourism_status"] == "eligible"
+        )
 
         place_id = make_place_id(
             osm_type,
@@ -443,12 +457,16 @@ def main():
             "website": row.get("website"),
             "wikidata": row.get("wikidata"),
             "wikipedia": row.get("wikipedia"),
+            "tags_json": row.get("tags_json"),
 
             "source": row.get("source"),
 
             "validation_status": row.get(
                 "validation_status"
             ),
+
+            **eligibility,
+            "crawl_eligible": crawl_eligible,
 
             "classified_at_utc": classified_at,
             "pipeline_run_id": run_id,
@@ -507,15 +525,38 @@ def main():
     categories_df = pd.DataFrame(
         place_categories
     )
+    review_df = places_df[
+        places_df["tourism_status"].isin(["review", "rejected"])
+        | (places_df["validation_status"] != "valid")
+    ].copy()
+
+    if places_df.empty:
+        eligibility_report_df = pd.DataFrame(
+            columns=[
+                "province_id", "province_name", "tourism_status",
+                "tourism_reason", "place_count",
+            ]
+        )
+    else:
+        eligibility_report_df = (
+            places_df.groupby(
+                [
+                    "province_id",
+                    "province_name",
+                    "tourism_status",
+                    "tourism_reason",
+                ],
+                dropna=False,
+            )
+            .size()
+            .reset_index(name="place_count")
+        )
 
     # --------------------------------------------------------
     # Save
     # --------------------------------------------------------
 
-    os.makedirs(
-        os.path.dirname(PLACES_OUTPUT),
-        exist_ok=True
-    )
+    os.makedirs(REFERENCE_DIR, exist_ok=True)
 
     places_df.to_csv(
         PLACES_OUTPUT,
@@ -531,6 +572,16 @@ def main():
 
     taxonomy_df.to_csv(
         TAXONOMY_OUTPUT,
+        index=False,
+        encoding="utf-8-sig"
+    )
+    review_df.to_csv(
+        REVIEW_OUTPUT,
+        index=False,
+        encoding="utf-8-sig"
+    )
+    eligibility_report_df.to_csv(
+        ELIGIBILITY_REPORT_OUTPUT,
         index=False,
         encoding="utf-8-sig"
     )
@@ -563,12 +614,16 @@ def main():
         "CLASSIFICATION COMPLETED",
         run_id=run_id,
         places=len(places_df),
+        crawl_eligible=int(places_df["crawl_eligible"].sum()),
+        review_or_rejected=len(review_df),
         place_category_relations=len(categories_df),
     )
 
     print()
 
     print("Classification coverage:")
+    print(f"  Crawl eligible: {int(places_df['crawl_eligible'].sum())}")
+    print(f"  Review/rejected: {len(review_df)}")
 
     classified_ids = set(
         categories_df["place_id"]
@@ -629,6 +684,12 @@ def main():
 
     print(
         f"  {TAXONOMY_OUTPUT}"
+    )
+    print(
+        f"  {REVIEW_OUTPUT}"
+    )
+    print(
+        f"  {ELIGIBILITY_REPORT_OUTPUT}"
     )
 
     print()

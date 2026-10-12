@@ -13,6 +13,7 @@ from ..crawlers.google_maps.reviews import GoogleMapsReviewsCrawler, Place
 from ..utils.ingestion import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..utils.region_priority import filter_places
+from ..utils.crawl_plan import load_crawl_plan, run_context
 from ..alerts.discord import crawl_progress
 from ..utils.status import SUCCESS, classify_error
 
@@ -99,9 +100,15 @@ def _append(reviews: list[object], existing_ids: set[str]) -> int:
 
 def run() -> None:
     ensure_data_directories()
-    bronze = BronzeWriter("google_maps/reviews", "google_maps", run_id=new_run_id("google_maps"), crawler_version="google-maps-review-1")
-    run_id = bronze.run_id
-    checkpoint = CheckpointStore("google_maps/reviews")
+    run_id = new_run_id("google_maps")
+    plan = load_crawl_plan()
+    context = run_context(plan, "google_reviews")
+    checkpoint = CheckpointStore("google_maps/reviews", run_id=run_id, metadata=context)
+    metrics = RunMetrics("google_maps_reviews", run_id, context)
+    decision = plan["decisions"].get("reviews", {}) if plan else {}
+    if plan and not decision.get("should_run"):
+        metrics.finish("skipped")
+        return
     data = pd.read_csv(PLACES_FILE, dtype=str, encoding="utf-8-sig").fillna("")
     data = filter_places(data)
     requested_place_ids = {
@@ -115,8 +122,10 @@ def run() -> None:
     headless = env_bool("HEADLESS", False)
     delay_seconds = env_float("GOOGLE_MAPS_REVIEWS_DELAY_SECONDS", 1.0)
     refresh_success = env_bool("TLCN_REFRESH_SUCCESS", False)
-    metrics = RunMetrics("google_maps_reviews", run_id)
-    if not refresh_success:
+    if plan:
+        target_ids = set(map(str, decision.get("place_ids", [])))
+        data = data[data["place_id"].astype(str).isin(target_ids)]
+    elif not refresh_success:
         data = data[
             ~data.apply(
                 lambda row: checkpoint.is_fresh(
@@ -130,9 +139,13 @@ def run() -> None:
     if limit > 0:
         data = data.head(limit)
     remaining = len(data)
+    if data.empty:
+        metrics.finish("skipped")
+        return
+    bronze = BronzeWriter("google_maps/reviews", "google_maps", run_id=run_id, crawler_version="google-maps-review-1")
 
     def stop_handler(signum: int, frame: object) -> None:
-        report = metrics.write()
+        report = metrics.finish("stopped")
         crawl_progress("google_maps_reviews", report, remaining, stopped=True)
         raise SystemExit(143)
 
@@ -147,7 +160,7 @@ def run() -> None:
                 if not row.get("place_id"):
                     metrics.mark("skipped")
                     continue
-                if not refresh_success and checkpoint.is_fresh(
+                if not plan and not refresh_success and checkpoint.is_fresh(
                     str(row["place_id"]),
                     int(row.get("crawl_interval_days") or 30),
                 ):
@@ -184,7 +197,7 @@ def run() -> None:
         finally:
             crawler.close()
             browser.close()
-    report = metrics.write()
+    report = metrics.finish()
     if env_bool("GOOGLE_MAPS_REVIEWS_REQUIRE_DATA", False):
         if report["reviews_found"] == 0:
             raise RuntimeError("Review smoke test found no reviews")

@@ -84,7 +84,7 @@ Sau khi reference success:
   docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
 
 DAG social gom:
-  backfill_historical_to_bronze
+  build_crawl_plan
   crawl_google_maps_ratings
   crawl_google_maps_reviews
   crawl_youtube_videos
@@ -93,6 +93,26 @@ DAG social gom:
 YouTube comments chi chay sau youtube videos.
 Social dang duoc dat lich hang tuan: 03:00 UTC thu Hai
 (tuc 10:00 gio Viet Nam thu Hai).
+
+Trigger theo scope/dataset va xem truoc (khong crawl):
+
+  docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion --conf "{\"province\":\"Đà Nẵng\",\"category\":\"hotel\",\"datasets\":[\"ratings\",\"reviews\",\"comments\"],\"dry_run\":true}"
+
+Bo `dry_run` hoac dat `false` de chay. Social DAG khong chay reference
+validate/classify va khong backfill historical mac dinh. Neu taxonomy chua co
+category hotel, refresh reference co chu dich mot lan truoc khi plan.
+
+Chi chuyen CSV historical vao Bronze (khong chay ca ingestion DAG):
+
+  1. Copy file da crawl vao data\historical\ tren may chay Docker.
+  2. Chay:
+
+     docker compose exec -T airflow-scheduler python -m script.crawl_data.reference.backfill_historical
+
+`tourism_ingestion_pipeline` van co task `backfill_historical_to_bronze`, nhung
+trigger ca DAG se chay reference pipeline va crawler sau backfill. Backfill chi
+doc cac ten CSV duoc khai bao trong `script/crawl_data/reference/backfill_historical.py`;
+marker local o `data\bronze\_backfill\` de bo qua file da chuyen.
 
 6. Kiem tra ket qua Bronze va metrics
 -------------------------------------
@@ -104,6 +124,10 @@ Tren may host:
 
 Metrics nam tai:
   data/bronze/_metrics/
+
+Run manifests va crawl plans nam tai:
+  data/bronze/_runs/
+  data/bronze/_plans/
 
 Checkpoint nam tai:
   data/bronze/_state/

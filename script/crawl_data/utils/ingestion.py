@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from typing import Iterable, Mapping
 
 import pandas as pd
-import s3fs
 
 from ..bronze.writer import write_jsonl
 from ..config import BRONZE_ROOT
@@ -109,6 +108,8 @@ class BronzeWriter:
     """Validate and append immutable JSONL Bronze objects for one dataset."""
 
     def __init__(self, dataset: str, source: str, run_id: str | None = None, pipeline_version: str = "1.0", crawler_version: str = "adapter-1"):
+        import s3fs
+
         self.dataset = dataset
         self.source = source
         self.run_id = run_id or new_run_id(source)
@@ -170,17 +171,28 @@ class BronzeWriter:
 class CheckpointStore:
     """Append-only item state used to resume a crawler after interruption."""
 
-    def __init__(self, dataset: str):
+    def __init__(
+        self,
+        dataset: str,
+        *,
+        run_id: str = "",
+        metadata: Mapping[str, object] | None = None,
+    ):
         self.path = BRONZE_ROOT / "_state" / f"{dataset.replace('/', '_')}.jsonl"
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.dataset = dataset
+        self.run_id = run_id
+        self.metadata = dict(metadata or {})
         self._latest: dict[str, str] = {}
         self._updated_at: dict[str, datetime] = {}
+        self._latest_events: dict[str, dict[str, object]] = {}
         if self.path.exists():
             for line in self.path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     event = json.loads(line)
                     item_key = str(event["item_key"])
                     self._latest[item_key] = str(event["status"])
+                    self._latest_events[item_key] = event
                     updated_at = pd.to_datetime(event.get("updated_at_utc"), utc=True, errors="coerce")
                     if not pd.isna(updated_at):
                         self._updated_at[item_key] = updated_at.to_pydatetime()
@@ -190,7 +202,8 @@ class CheckpointStore:
 
     def is_fresh(self, item_key: str, interval_days: int) -> bool:
         updated_at = self._updated_at.get(str(item_key))
-        if not self.is_success(item_key) or updated_at is None:
+        status = self._latest.get(str(item_key), "").upper()
+        if status not in {"SUCCESS", "EMPTY"} or updated_at is None:
             return False
         age_seconds = (datetime.now(timezone.utc) - updated_at).total_seconds()
         return age_seconds < max(interval_days, 0) * 86400
@@ -198,12 +211,20 @@ class CheckpointStore:
     def mark(self, item_key: str, status: str, attempt: int = 1, error_message: str = "") -> None:
         event = {
             "item_key": str(item_key),
+            "dataset": self.dataset,
+            "run_id": self.run_id,
             "status": status,
             "attempt": attempt,
             "error_message": error_message,
             "updated_at_utc": utc_now(),
+            **self.metadata,
         }
         with self.path.open("a", encoding="utf-8", newline="\n") as file:
             file.write(json.dumps(event, ensure_ascii=False) + "\n")
         self._latest[str(item_key)] = status
         self._updated_at[str(item_key)] = datetime.fromisoformat(event["updated_at_utc"])
+        self._latest_events[str(item_key)] = event
+
+    def latest_event(self, item_key: str) -> dict[str, object] | None:
+        event = self._latest_events.get(str(item_key))
+        return dict(event) if event else None

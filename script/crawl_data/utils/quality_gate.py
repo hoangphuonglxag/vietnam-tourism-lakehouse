@@ -53,9 +53,52 @@ def check(stage: str) -> None:
             raise RuntimeError(f"candidate_places_validated has unknown statuses: {sorted(found - allowed)}")
     elif stage == "places":
         data = _read("reference/places.csv")
-        _require(data, {"place_id", "place_name", "province_id", "latitude", "longitude", "validation_status"}, stage)
+        _require(
+            data,
+            {
+                "place_id", "place_name", "province_id", "latitude", "longitude",
+                "validation_status", "tourism_status", "tourism_reason",
+                "crawl_eligible", "tourism_rule_version",
+            },
+            stage,
+        )
         if data["place_id"].duplicated().any():
             raise RuntimeError("places contains duplicate place_id")
+        required_values = {
+            "place_id", "place_name", "province_id", "validation_status",
+            "tourism_status", "tourism_reason", "crawl_eligible",
+            "tourism_rule_version",
+        }
+        for field in required_values:
+            values = data[field].fillna("").astype(str).str.strip()
+            if values.eq("").any():
+                raise RuntimeError(f"places has empty values in required field: {field}")
+        allowed_validation_statuses = {"valid", "invalid", "review", "quarantine"}
+        found_validation_statuses = set(data["validation_status"].str.lower())
+        if not found_validation_statuses.issubset(allowed_validation_statuses):
+            raise RuntimeError(
+                f"places has unknown validation statuses: "
+                f"{sorted(found_validation_statuses - allowed_validation_statuses)}"
+            )
+        allowed_tourism_statuses = {"eligible", "review", "rejected"}
+        found_tourism_statuses = set(data["tourism_status"].str.lower())
+        if not found_tourism_statuses.issubset(allowed_tourism_statuses):
+            raise RuntimeError(
+                f"places has unknown tourism statuses: "
+                f"{sorted(found_tourism_statuses - allowed_tourism_statuses)}"
+            )
+        eligible_values = data["crawl_eligible"].str.lower()
+        if not eligible_values.isin({"true", "false", "1", "0", "yes", "no"}).all():
+            raise RuntimeError("places has invalid crawl_eligible values")
+        eligible = eligible_values.isin({"true", "1", "yes"})
+        expected_eligible = (
+            data["tourism_status"].str.lower().eq("eligible")
+            & data["validation_status"].str.lower().eq("valid")
+        )
+        if eligible.ne(expected_eligible).any():
+            raise RuntimeError(
+                "places crawl_eligible does not match technical and tourism statuses"
+            )
         latitude = pd.to_numeric(data["latitude"], errors="coerce")
         longitude = pd.to_numeric(data["longitude"], errors="coerce")
         if latitude.isna().any() or (~latitude.between(-90, 90)).any():

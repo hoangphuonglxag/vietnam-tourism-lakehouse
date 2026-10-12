@@ -64,6 +64,5 @@ with DAG(
         task_id="quality_gate_places",
         bash_command=gate_command("places"),
     )
-
     crawl_provinces >> gate_provinces >> crawl_candidates >> gate_candidates
     gate_candidates >> spatial_validate >> gate_validated >> classify >> gate_places

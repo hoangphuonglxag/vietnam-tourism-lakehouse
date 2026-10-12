@@ -88,7 +88,38 @@ docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ing
 docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_social_ingestion -o table
 ```
 
-Social DAG nap CSV lich su vao Bronze, sau do crawl Google Maps ratings/reviews va YouTube videos/comments. DAG duoc len lich luc `03:00 UTC` moi thu Hai; co the trigger thu cong tren CLI hoac Airflow UI.
+Social DAG lap crawl plan tu danh muc place va freshness, sau do chi crawl cac dataset/item thieu hoac cu. DAG duoc len lich luc `03:00 UTC` moi thu Hai; co the trigger thu cong voi province/category/dataset cu the. DAG social khong chay lai reference validation/classification va khong backfill CSV lich su mac dinh.
+
+Xem truoc ke hoach cho khach san Da Nang, khong crawl:
+
+```powershell
+docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion --conf '{"province":"Đà Nẵng","category":"hotel","datasets":["ratings","reviews","comments"],"dry_run":true}'
+```
+
+Neu plan dung, bo `dry_run` hoac dat `false` de crawl. `datasets` chap nhan `ratings`, `reviews`, `videos`, `comments`; `freshness_days` co the la so ngay chung hoac map theo dataset. `force_refresh=true` cho phep crawl lai item da `SUCCESS`, bo qua freshness. YouTube comments chi crawl video chua `SUCCESS` theo crawl log/checkpoint, bat ke freshness; neu videos cung duoc cap nhat trong run, comments se lay them video moi sau buoc videos.
+
+Scope co the ket hop:
+
+```json
+{"province":"Đà Nẵng","category":"artwork","datasets":["videos"],"dry_run":true}
+{"provinces":["Đà Nẵng","Huế"],"datasets":["comments"],"dry_run":true}
+{"place_ids":["OSM_node_123","OSM_way_456"],"datasets":["ratings","reviews"],"dry_run":true}
+{"provinces":["Đà Nẵng","Huế"],"category":"artwork","place_ids":["OSM_node_123"],"datasets":["videos","comments"],"dry_run":true}
+```
+
+Dung `place_ids` dung chinh xac ID trong `data/reference/places.csv`; cac bo loc tinh/category/place la giao cua nhau. Planner mac dinh chi chon item chua co crawl thanh cong hoac qua han freshness (30 ngay); `dry_run` bat buoc khong co crawler nao duoc goi. Sau khi kiem tra plan, trigger lai cung JSON nhung bo `dry_run`.
+
+Reference taxonomy can duoc refresh mot lan de them mapping `tourism=hotel`. Neu planner bao taxonomy chua co category `hotel`, chay `tourism_reference_pipeline` co chu dich mot lan truoc. Cac lan trigger social sau khong chay validate/classify.
+
+### Chuyen CSV crawl local vao Bronze/MinIO
+
+`tourism_ingestion_pipeline` van giu task `backfill_historical_to_bronze`, nhung trigger ca DAG se chay ca reference va cac crawler. De chi chuyen file da crawl, copy CSV cua team vao `data/historical/` tren may coordinator (dung ten file trong `script/crawl_data/reference/backfill_historical.py`), sau do chay rieng:
+
+```powershell
+docker compose exec -T airflow-scheduler python -m script.crawl_data.reference.backfill_historical
+```
+
+Lenh nay doc cac CSV historical co mat, ghi Bronze len MinIO, va bo qua file da co marker trong `data/bronze/_backfill/`. Moi may local khong tu dong chia se file hoac MinIO voi may khac; can gom file ve coordinator truoc.
 
 ## Chay thu gioi han
 
@@ -114,11 +145,13 @@ docker compose up -d --force-recreate airflow-scheduler airflow-webserver
 ```powershell
 Get-ChildItem data\bronze -Recurse -Filter *.jsonl
 Get-ChildItem data\bronze\_metrics -Filter *.json
+Get-ChildItem data\bronze\_runs -Filter *.json
+Get-ChildItem data\bronze\_plans -Filter *.json
 Get-ChildItem data\bronze\_state -Filter *.jsonl
 docker compose logs airflow-scheduler --tail=100
 ```
 
-Bronze la append-only; moi run tao object moi va khong ghi de partition cu. Checkpoint trong `data/bronze/_state/` cho phep bo qua item da thanh cong khi chay lai. Khong xoa `data/bronze` hoac `_state` neu can giu du lieu va resume state.
+Bronze la append-only; moi run tao object moi va khong ghi de partition cu. Checkpoint trong `data/bronze/_state/` cho phep bo qua item da thanh cong khi chay lai. Run manifests nam trong `data/bronze/_runs/`; crawl plan va ly do bo qua nam trong `data/bronze/_plans/`. Khong xoa `data/bronze` hoac `_state` neu can giu du lieu va resume state.
 
 ## Lakehouse va phan tich
 

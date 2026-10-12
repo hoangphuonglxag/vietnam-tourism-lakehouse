@@ -50,10 +50,21 @@ Business key: `place_id`
 | wikidata | string | yes |
 | wikipedia | string | yes |
 | source | string | no |
-| validation_status | enum: valid, invalid, quarantine | no |
+| validation_status | enum: valid, review, invalid | no |
+| tourism_status | enum: eligible, review, rejected | no |
+| tourism_reason | string | no |
+| tourism_evidence | string | yes |
+| tourism_confidence | enum: high, medium, low | no |
+| tourism_rule_version | string | no |
+| crawl_eligible | boolean | no |
 | classified_at_utc | timestamp UTC | yes |
 | pipeline_run_id | string | yes |
 | admin_scope | enum: current_34, legacy_63 | no |
+
+Technical `validation_status` is independent from `tourism_status`. Automated
+crawling requires both `validation_status=valid` and `crawl_eligible=true`.
+Non-eligible candidates remain in the reference inventory; `tourism_reason`,
+`tourism_evidence`, and `tourism_rule_version` make the decision auditable.
 
 ### 2.2 `google_maps_ratings`
 

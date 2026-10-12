@@ -27,6 +27,8 @@ GOOGLE_MAPS_RATINGS_FILE = HISTORICAL_ROOT / "google_maps_ratings.csv"
 GOOGLE_MAPS_REVIEWS_FILE = HISTORICAL_ROOT / "google_maps_reviews.csv"
 GOOGLE_MAPS_ERRORS_FILE = HISTORICAL_ROOT / "google_maps_errors.csv"
 METRICS_ROOT = BRONZE_ROOT / "_metrics"
+RUNS_ROOT = BRONZE_ROOT / "_runs"
+PLANS_ROOT = BRONZE_ROOT / "_plans"
 YOUTUBE_VIDEOS_FILE = HISTORICAL_ROOT / "youtube_videos.csv"
 YOUTUBE_COMMENTS_FILE = HISTORICAL_ROOT / "youtube_comments.csv"
 YOUTUBE_CRAWL_LOG_FILE = HISTORICAL_ROOT / "youtube_crawl_log.csv"
@@ -35,7 +37,15 @@ YOUTUBE_COMMENTS_CRAWL_LOG_FILE = HISTORICAL_ROOT / "youtube_comments_crawl_log.
 
 def ensure_data_directories() -> None:
     """Create configured data roots at the job boundary."""
-    for path in (DATA_ROOT, BRONZE_ROOT, HISTORICAL_ROOT, REFERENCE_ROOT, METRICS_ROOT):
+    for path in (
+        DATA_ROOT,
+        BRONZE_ROOT,
+        HISTORICAL_ROOT,
+        REFERENCE_ROOT,
+        METRICS_ROOT,
+        RUNS_ROOT,
+        PLANS_ROOT,
+    ):
         path.mkdir(parents=True, exist_ok=True)
 
 
@@ -83,6 +93,12 @@ REQUEST_JITTER_MAX_SECONDS = env_float("REQUEST_JITTER_MAX_SECONDS", 1.2)
 MAX_REVIEWS_PER_PLACE = env_int("MAX_REVIEWS_PER_PLACE", 100)
 MAX_VIDEOS_PER_PLACE = env_int("MAX_VIDEOS_PER_PLACE", 10)
 MAX_COMMENTS_PER_VIDEO = env_int("MAX_COMMENTS_PER_VIDEO", 50)
+DEFAULT_FRESHNESS_DAYS = {
+    "ratings": env_int("TLCN_FRESHNESS_RATINGS_DAYS", 30),
+    "reviews": env_int("TLCN_FRESHNESS_REVIEWS_DAYS", 30),
+    "videos": env_int("TLCN_FRESHNESS_VIDEOS_DAYS", 30),
+    "comments": env_int("TLCN_FRESHNESS_COMMENTS_DAYS", 30),
+}
 TEST_MODE = env_bool("TLCN_TEST_MODE", False)
 TEST_PROVINCE = os.getenv("TEST_PROVINCE", "Đà Nẵng").strip()
 BOUNDARY_REVIEW_DISTANCE_M = env_float("BOUNDARY_REVIEW_DISTANCE_M", 1000.0)

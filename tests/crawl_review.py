@@ -59,6 +59,7 @@ PLACES_FILE = ROOT / "data" / "reference" / "places.csv"
 REVIEWS_FILE = ROOT / "tests" / "gg_maps_reviews.csv"
 BRONZE_REVIEWS_DIR = ROOT / "data" / "bronze" / "google_maps" / "reviews"
 REVIEW_STATUS_FILE = ROOT / "tests" / "google_maps_review_crawl_status.csv"
+ERROR_LOCATION_FILE = ROOT / "tests" / "gg_maps_error_location.csv"
 
 # ============================================================================
 # CONFIG (đọc từ env, có mặc định)
@@ -357,10 +358,10 @@ def open_place(page, place: dict) -> str:
             pass
 
         if page.get_by_text(NO_RESULT_RE).count() > 0:
-            raise PlaceNotFound(f'Search không ra kết quả: "{query}"')
+            raise PlaceNotFound(f'Search không ra kết quả (trống): "{query}"')
 
         if "/maps/place/" not in page.url:
-            raise RuntimeError(f"Không mở được trang place. url={page.url}")
+            raise PlaceNotFound(f"Không vào được trang chi tiết (có thể ra danh sách nhiều kết quả). url={page.url}")
 
         log(f"  ✓ đã vào place: {page.url}")
         check_blocked(page)
@@ -1047,10 +1048,13 @@ def crawl_review(page, place: dict, max_n: int, debug: bool = False) -> dict:
     if not open_reviews_tab(page):
 
         raise NoReviewsTab(f"Không mở được tab Bài đánh giá: {url}")
+    # if not sort_by_newest(page):
+    #     raise RuntimeError(
+    #         "Không   thể xác nhận Google Maps đang ở chế độ 'Mới nhất'."
+    #     )
+        # Bỏ raise lỗi, chỉ in cảnh báo rồi cho đi tiếp
     if not sort_by_newest(page):
-        raise RuntimeError(
-            "Không   thể xác nhận Google Maps đang ở chế độ 'Mới nhất'."
-        )
+        log("  ! Cảnh báo: UI không xác nhận được đã chuyển sang 'Mới nhất', nhưng vẫn tiếp tục cào dữ liệu.")
 
     total = get_total_review_count(page)
 
@@ -1229,6 +1233,8 @@ def main() -> None:
         # place "partial"/"error" luôn được crawl lại để lấy cho đủ.
 
         status_map = {} if args.force else load_place_status(REVIEW_STATUS_FILE)
+        error_places = set() if args.force else load_error_locations(ERROR_LOCATION_FILE)
+        done_statuses = {"success", "partial", "not_found", "no_reviews"}
 
         if args.new_only:
             todo = [
@@ -1238,7 +1244,7 @@ def main() -> None:
         else:
             todo = [
                 p for p in places
-                if args.force or status_map.get(p["place_id"]) != "success"
+                if args.force or status_map.get(p["place_id"]) not in done_statuses
             ]
 
     log(f"{len(places)} place, bỏ qua {len(places) - len(todo)} place đã crawl đủ (success), "
@@ -1295,6 +1301,27 @@ def main() -> None:
                     log(f"  !!! {e} -> dừng")
                     blocked = True
                 except PlaceNotFound as e:
+                    status = "not_found"  # Đổi status cho chuẩn xác
+                    crawled_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                    log(f"  !!! {e}")
+                    append_error_location(ERROR_LOCATION_FILE, place, "PlaceNotFound", crawled_at)
+                    upsert_review_status(
+                        REVIEW_STATUS_FILE, place_id=place["place_id"], place_name=place["name"],
+                        province_name=place["province"], status=status, requested_reviews=args.max_reviews,
+                        loaded_reviews=0, google_review_count=0, error_message=str(e), crawled_at=crawled_at
+                    )
+
+                except NoReviewsTab as e:
+                    status = "no_reviews"  # Đổi status cho chuẩn xác
+                    crawled_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                    log(f"  !!! {e}")
+                    append_error_location(ERROR_LOCATION_FILE, place, "NoReviewsTab", crawled_at)
+                    upsert_review_status(
+                        REVIEW_STATUS_FILE, place_id=place["place_id"], place_name=place["name"],
+                        province_name=place["province"], status=status, requested_reviews=args.max_reviews,
+                        loaded_reviews=0, google_review_count=0, error_message=str(e), crawled_at=crawled_at
+                    )
+                except PlaceNotFound as e:
                     status = "error"
                     log(f"  !!! {e}")
                 except NoReviewsTab as e:
@@ -1317,6 +1344,40 @@ def main() -> None:
     log(f"Xong. success={summary['success']} partial={summary['partial']} "
         f"error={summary['error']} blocked={summary['blocked']} -> {REVIEWS_FILE}")
     log(f"Bronze: {bronze_file}")
+
+
+def load_error_locations(path: Path) -> set[str]:
+    """Đọc danh sách các place_id đã bị lỗi (không tìm thấy, không có tab đánh giá) để bỏ qua."""
+    if not path.exists():
+        return set()
+    try:
+        with path.open(encoding="utf-8-sig", newline="") as f:
+            reader = csv.DictReader(f)
+            if "place_id" not in (reader.fieldnames or []):
+                return set()
+            return {row["place_id"] for row in reader if row.get("place_id")}
+    except Exception:
+        return set()
+
+
+def append_error_location(path: Path, place: dict, reason: str, crawled_at: str) -> None:
+    """Ghi địa điểm bị lỗi vĩnh viễn vào file csv để lần sau không chạy lại."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    file_empty = not path.exists() or path.stat().st_size == 0
+
+    with path.open("a", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["place_id", "place_name", "province_name", "reason", "crawled_at"])
+        if file_empty:
+            writer.writeheader()
+        writer.writerow({
+            "place_id": place.get("place_id", ""),
+            "place_name": place.get("name", ""),
+            "province_name": place.get("province", ""),
+            "reason": reason,
+            "crawled_at": crawled_at
+        })
+
+
 
 
 if __name__ == "__main__":

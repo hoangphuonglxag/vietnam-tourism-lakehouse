@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  -
+  # SILVER GOOGLE MAPS REVIEWS
+  - name: silver_travel_reviews
+    description: "Cleaned and standardized tourism reviews collected from Google Maps."
+    columns:
+      - name: review_id
+        description: "Unique identifier of a Google Maps review."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: place_id
+        description: "Identifier of the tourism destination."
+        data_tests:
+          - not_null
+
+      - name: rating
+        description: "Review rating from 1 to 5."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+
+      - name: review_text
+        description: "Cleaned review text. May be NULL when the original review contains no meaningful text."
+
+      - name: review_date_raw
+        description: "Original review date string collected from Google Maps."
+
+      - name: review_date
+        description: "Estimated review date derived from the original relative date and crawled_at_utc."
+
+      - name: review_date_precision
+        description: "Precision level of the normalized review date."
+        data_tests:
+          - accepted_values:
+              values: ['day', 'week', 'month', 'year', 'unknown']
+
+      - name: likes_count
+        description: "Number of likes associated with the review."
+        data_tests:
+          - not_negative
+
+      - name: source
+        description: "Original platform from which the review was collected."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['google_maps']
+
+      - name: crawled_at_utc
+        description: "UTC timestamp when the review was collected."
+        data_tests:
+          - not_null
+
+  # SILVER YOUTUBE COMMENTS
+  - name: silver_youtube_comments
+    description: "Cleaned and standardized YouTube comments associated with tourism destination videos."
+    columns:
+      - name: place_id
+        description: "Identifier of the tourism destination."
+        data_tests:
+          - not_null
+
+      - name: place_name
+        description: "Name of the tourism destination."
+
+      - name: province_id
+        description: "Identifier of the province."
+
+      - name: province_name
+        description: "Name of the province."
+
+      - name: video_id
+        description: "Unique identifier of the YouTube video."
+        data_tests:
+          - not_null
+
+      - name: video_title
+        description: "Title of the YouTube video."
+
+      - name: comment_id
+        description: "Unique identifier of the YouTube comment."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: author
+        description: "Author of the YouTube comment."
+
+      - name: comment_text
+        description: "Cleaned text content of the YouTube comment."
+
+      - name: likes
+        description: "Number of likes received by the YouTube comment."
+        data_tests:
+          - not_negative
+
+      - name: is_reply
+        description: "Indicates whether the comment is a reply."
+        data_tests:
+          - not_null
+
+      - name: comment_created_at
+        description: "Timestamp when the YouTube comment was created."
+
+      - name: crawled_at_utc
+        description: "UTC timestamp when the comment was collected."
+        data_tests:
+          - not_null
+
+      - name: source
+        description: "Original platform from which the comment was collected."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['youtube']

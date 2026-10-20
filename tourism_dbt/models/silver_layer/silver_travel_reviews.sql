@@ -1,5 +1,6 @@
 {{ config(materialized='table') }}
 
+
 WITH deduplicated AS (
     {{ deduplicate_reviews(
         ref('stg_google_maps_reviews'),

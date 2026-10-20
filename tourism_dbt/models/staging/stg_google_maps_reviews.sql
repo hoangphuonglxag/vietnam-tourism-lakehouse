@@ -19,6 +19,7 @@ SELECT
         TRIM(source)
     ) AS source,
 
+
     CAST(crawled_at_utc AS TIMESTAMPTZ) AS crawled_at_utc
 
 FROM read_parquet(

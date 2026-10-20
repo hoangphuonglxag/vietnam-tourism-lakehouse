@@ -9,6 +9,7 @@ WITH expected_months AS (
 
 ),
 
+
 actual_months AS (
     SELECT DISTINCT DATE_TRUNC('month', review_date) AS month
     FROM {{ ref('silver_travel_reviews') }}

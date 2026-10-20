@@ -22,6 +22,7 @@ SELECT
 
     {{ clean_text('text') }} AS comment_text,
 
+
     CAST(likes AS INTEGER) AS likes,
 
     CAST(is_reply AS BOOLEAN) AS is_reply,

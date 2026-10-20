@@ -22,6 +22,7 @@ coverage AS (
         END AS coverage_ratio
 
     FROM raw_data
+
     CROSS JOIN silver_data
 )
 

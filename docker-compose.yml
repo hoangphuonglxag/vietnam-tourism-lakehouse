@@ -3,6 +3,7 @@ x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: docker_image/airflow/Dockerfile
+  user: "${AIRFLOW_UID:-50000}:0"
   env_file: .env
   environment:
     - AIRFLOW__CORE__EXECUTOR=LocalExecutor

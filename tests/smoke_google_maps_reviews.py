@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLACES_FILE = ROOT / "data" / "reference" / "places.csv"
 sys.path.insert(0, str(ROOT))
 
-from script.crawl_data.crawlers.google_maps.reviews import (  # noqa: E402
+from script.crawl_data.crawl_social.crawl_google_reviews import (  # noqa: E402
     GoogleMapsReviewsCrawler,
     Place,
 )

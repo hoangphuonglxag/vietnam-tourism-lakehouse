@@ -1,3 +1,46 @@
+""" 
+{
+  "provinces": ["An Giang"],
+  "place_ids": ["OSM_node_4346215389"],
+  "categories": [],
+  "datasets": [
+    "google_ratings",
+    "google_reviews",
+    "youtube_videos",
+    "youtube_comments"
+  ],
+  "dry_run": true,
+  "force_refresh": false,
+  "freshness_days": {
+    "google_ratings": 7,
+    "google_reviews": 14,
+    "youtube_videos": 7,
+    "youtube_comments": 7
+  }
+}
+"""
+
+
+# {
+#   "place_ids": ["OSM_node_4346215389"],
+#   "datasets": [
+#     "google_ratings",
+#     "google_reviews",
+#     "youtube_videos",
+#     "youtube_comments"
+#   ],
+#   "dry_run": true,
+#   "force_refresh": false,
+#   "freshness_days": {
+#     "google_ratings": 7,
+#     "google_reviews": 14,
+#     "youtube_videos": 7,
+#     "youtube_comments": 7
+#   }
+# }
+# docker compose exec airflow-scheduler \
+#   airflow dags trigger dag_crawl_social_historical_data \
+#   --conf '{"place_ids":["OSM_node_4346215389"],"datasets":["google_ratings","google_reviews","youtube_videos","youtube_comments"],"dry_run":true,"force_refresh":false,"freshness_days":{"google_ratings":7,"google_reviews":14,"youtube_videos":7,"youtube_comments":7}}'
 from __future__ import annotations
 
 import hashlib
@@ -13,7 +56,7 @@ import pandas as pd
 
 from ..config import (
     DEFAULT_FRESHNESS_DAYS,
-    GOOGLE_MAPS_RATINGS_FILE,
+    GOOGLE_MAPS_RATINGS_FILE,   
     GOOGLE_MAPS_REVIEWS_FILE,
     PLACES_CATEGORIES_FILE,
     PLACES_FILE,
@@ -24,10 +67,7 @@ from ..config import (
     YOUTUBE_CRAWL_LOG_FILE,
     YOUTUBE_VIDEOS_FILE,
 )
-from ..validation.tourism import evaluate_tourism_eligibility
-from .ingestion import CheckpointStore
-from .region_priority import filter_places
-from .status import is_success_status
+from .ingestion_storage import CheckpointStore
 
 
 _OPERATIONS = {
@@ -198,10 +238,9 @@ def _load_places(request: dict[str, Any]) -> pd.DataFrame:
     if "crawl_eligible" in places:
         places = places[places["crawl_eligible"].str.lower().isin({"true", "1", "yes"})]
     else:
-        evaluated = places.apply(evaluate_tourism_eligibility, axis=1)
-        places = places[
-            evaluated.map(lambda item: item["tourism_status"] == "eligible").to_numpy()
-        ]
+        raise ValueError(
+            "Missing crawl_eligible column in curated places reference"
+        )
     category_source = places.copy()
 
     provinces = _request_values(request, "province", "provinces")
@@ -251,7 +290,6 @@ def _load_places(request: dict[str, Any]) -> pd.DataFrame:
                 tag_match |= places[field].map(_normalize).eq(wanted_category)
         places = places[taxonomy_match | tag_match]
 
-    places = filter_places(places)
     return places.drop_duplicates(subset=["place_id"], keep="first").reset_index(drop=True)
 
 
@@ -272,7 +310,7 @@ def _read_history(
         if data.empty:
             return {}
     if status_field and status_field in data:
-        data = data[data[status_field].map(is_success_status)]
+        data = data[data[status_field].astype(str).str.upper().eq("SUCCESS")]
     timestamps = pd.to_datetime(data[timestamp_field], utc=True, errors="coerce")
     data = data.assign(_timestamp=timestamps).dropna(subset=["_timestamp"])
     if data.empty:
@@ -303,7 +341,8 @@ def successful_item_ids(dataset: str, item_ids: list[str]) -> set[str]:
                 latest_status[item_id] = str(event.get("status", ""))
     return {
         item_id for item_id, status in latest_status.items()
-        if is_success_status(status)
+        if str(status).strip().upper() == "SUCCESS"
+
     }
 
 

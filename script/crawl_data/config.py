@@ -102,3 +102,98 @@ DEFAULT_FRESHNESS_DAYS = {
 TEST_MODE = env_bool("TLCN_TEST_MODE", False)
 TEST_PROVINCE = os.getenv("TEST_PROVINCE", "Đà Nẵng").strip()
 BOUNDARY_REVIEW_DISTANCE_M = env_float("BOUNDARY_REVIEW_DISTANCE_M", 1000.0)
+
+
+
+
+
+
+#status
+SUCCESS = "SUCCESS"
+FAILED_SEARCH = "FAILED_SEARCH"
+FAILED_RATE_LIMIT = "FAILED_RATE_LIMIT"
+FAILED_DATA = "FAILED_DATA"
+FAILED_UNKNOWN = "FAILED_UNKNOWN"
+
+
+
+
+TOURISM_RULE_VERSION = "tourism-eligibility-v1"
+
+DIRECT_TOURISM = {
+    "aquarium",
+    "hotel",
+    "museum",
+    "resort",
+    "theme_park",
+    "viewpoint",
+    "zoo",
+}
+
+DIRECT_NATURAL = {
+    "beach",
+    "cave_entrance",
+    "waterfall",
+}
+
+DIRECT_HISTORIC = {
+    "archaeological_site",
+    "castle",
+    "fort",
+    "monument",
+    "ruins",
+}
+
+CONDITIONAL_TAGS = {
+    ("tourism", "attraction"),
+    ("tourism", "artwork"),
+    ("tourism", "gallery"),
+    ("tourism", "arts_centre"),
+    ("natural", "cape"),
+    ("natural", "peak"),
+    ("historic", "building"),
+    ("historic", "memorial"),
+    ("leisure", "garden"),
+    ("leisure", "park"),
+}
+
+SUPPORTING_EVIDENCE_FIELDS = (
+    "wikidata",
+    "wikipedia",
+    "website",
+    "image",
+)
+
+BUSINESS_EXCLUSION_FIELDS = (
+    "shop",
+    "craft",
+    "office",
+)
+
+EXCLUDED_AMENITIES = {
+    "convenience",
+    "copyshop",
+}
+
+DIRECT_LEISURE = {
+    "water_park",
+}
+
+TOURISM_REQUIRED_VALIDATION_STATUS = "valid"
+
+def is_success_status(value: object) -> bool:
+    return str(value or "").upper().startswith("SUCCESS")
+
+
+def classify_error(error: Exception) -> str:
+    message = str(error).lower()
+    error_name = type(error).__name__.lower()
+    if any(token in message or token in error_name for token in ("429", "rate", "too many requests")):
+        return FAILED_RATE_LIMIT
+    if any(token in message or token in error_name for token in ("csv", "column", "keyerror", "valueerror")):
+        return FAILED_DATA
+    if any(token in message or token in error_name for token in ("connection", "timeout", "network", "http")):
+        return FAILED_SEARCH
+    return FAILED_UNKNOWN
+
+

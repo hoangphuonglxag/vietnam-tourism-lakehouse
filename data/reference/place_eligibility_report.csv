@@ -1,0 +1,16 @@
+﻿province_id,province_name,tourism_status,tourism_reason,place_count
+44,Quảng Trị,eligible,strong_tourism_tag,2
+44,Quảng Trị,review,conditional_tag_needs_evidence,2
+46,Huế,eligible,conditional_tag_with_independent_evidence,4
+46,Huế,eligible,strong_tourism_tag,218
+46,Huế,rejected,no_supported_tourism_signal,4
+46,Huế,review,conditional_tag_needs_evidence,160
+48,Đà Nẵng,eligible,conditional_tag_with_independent_evidence,17
+48,Đà Nẵng,eligible,strong_tourism_tag,1012
+48,Đà Nẵng,rejected,no_supported_tourism_signal,8
+48,Đà Nẵng,rejected,non_destination_business,1
+48,Đà Nẵng,review,conditional_tag_needs_evidence,247
+51,Quảng Ngãi,eligible,conditional_tag_with_independent_evidence,1
+51,Quảng Ngãi,eligible,strong_tourism_tag,39
+51,Quảng Ngãi,rejected,no_supported_tourism_signal,2
+51,Quảng Ngãi,review,conditional_tag_needs_evidence,28

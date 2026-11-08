@@ -1,0 +1,151 @@
+version: 2
+
+macros:
+  - name: clean_null
+    description: >
+      Chuẩn hóa giá trị rỗng về NULL: ép về VARCHAR, TRIM, và chuyển '' cùng các token
+      rỗng do pandas/Python sinh ra ('nan', 'none', 'null', 'nat') thành NULL.
+      Data contract quy định chuỗi rỗng không được dùng thay cho NULL ở Silver.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột / biểu thức SQL cần làm sạch.
+
+  - name: clean_text
+    description: >
+      Làm sạch văn bản tự do (review, comment, tiêu đề video): thay thẻ `<br>` bằng
+      khoảng trắng, gộp khoảng trắng liên tiếp, TRIM, chuỗi rỗng hoặc 'nan' => NULL.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột văn bản.
+
+  - name: deduplicate_by_key
+    description: >
+      Khử trùng lặp: giữ đúng 1 bản ghi cho mỗi khóa nghiệp vụ bằng
+      `ROW_NUMBER() ... QUALIFY = 1`. Mặc định giữ bản ghi có `crawled_at_utc` mới nhất.
+    arguments:
+      - name: relation
+        type: relation
+        description: ref(), source() hoặc tên CTE đầu vào.
+      - name: partition_by
+        type: any
+        description: Cột (string) hoặc danh sách cột (list) tạo thành khóa nghiệp vụ.
+      - name: order_by
+        type: string
+        description: Thứ tự ưu tiên; bản ghi đầu tiên được giữ lại. Mặc định `crawled_at_utc DESC`.
+
+  - name: to_int
+    description: Ép kiểu an toàn sang BIGINT (chấp nhận cả "5" và "5.0"); sai định dạng => NULL.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột nguồn.
+
+  - name: to_double
+    description: Ép kiểu an toàn sang DOUBLE; sai định dạng => NULL.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột nguồn.
+
+  - name: to_bool
+    description: >
+      Ép kiểu an toàn sang BOOLEAN. Nhận 'true/t/1/yes/y' và 'false/f/0/no/n'
+      (không phân biệt hoa thường, ví dụ "False" của pandas). Giá trị khác => NULL.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột nguồn.
+
+  - name: to_utc_timestamp
+    description: >
+      Chuẩn hóa timestamp về UTC (kiểu TIMESTAMP không timezone). Chuỗi có offset
+      (Z, +00:00, -07:00) được quy đổi về UTC; chuỗi không có offset (một số bản ghi
+      historical) được coi là UTC; không parse được => NULL.
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột timestamp dạng chuỗi.
+
+  - name: normalize_province_id
+    description: >
+      Chuẩn hóa `province_id` thành chuỗi 2 ký tự có số 0 đứng đầu ('1', '1.0' => '01').
+      Giải quyết vấn đề migration ghi trong data contract (mục 6).
+    arguments:
+      - name: column_name
+        type: string
+        description: Tên cột province_id.
+
+  - name: relative_date_text
+    description: >
+      Chuẩn hóa chuỗi ngày tương đối: NFC normalize (tránh lệch dấu tiếng Việt), lowercase,
+      gộp khoảng trắng, bỏ tiền tố "Thời gian chỉnh sửa:" / "Edited" và hậu tố "(đã chỉnh sửa)".
+    arguments:
+      - name: date_column
+        type: string
+        description: Cột chứa ngày tương đối.
+
+  - name: relative_date_unit
+    description: >
+      Nhận diện đơn vị thời gian của chuỗi tương đối (tiếng Việt và tiếng Anh):
+      today, second, minute, hour, day, week, month, year. Không nhận diện được => NULL.
+    arguments:
+      - name: date_column
+        type: string
+        description: Cột chứa ngày tương đối.
+
+  - name: relative_date_quantity
+    description: >
+      Trích số lượng trong chuỗi tương đối ("3 tuần trước" => 3). Các dạng không có số
+      ("một tháng trước", "a year ago", "tuần trước") mặc định = 1.
+    arguments:
+      - name: date_column
+        type: string
+        description: Cột chứa ngày tương đối.
+
+  - name: normalize_relative_date
+    description: >
+      Ước lượng ngày thực tế (DATE) = reference_date - số lượng x đơn vị.
+      Ví dụ "2 tháng trước" crawl ngày 2026-10-08 => 2026-08-08. Không nhận diện được => NULL.
+    arguments:
+      - name: date_column
+        type: string
+        description: Cột chứa ngày tương đối.
+      - name: reference_date
+        type: string
+        description: Biểu thức ngày tham chiếu, thường là `CAST(crawled_at_utc AS DATE)`.
+
+  - name: relative_date_precision
+    description: >
+      Độ chính xác của ngày ước lượng: 'day' (giờ/phút/giây/ngày/hôm nay), 'week', 'month',
+      'year', hoặc 'unknown'. Dùng để quyết định dữ liệu nào đủ tin cậy cho phân tích theo tháng.
+    arguments:
+      - name: date_column
+        type: string
+        description: Cột chứa ngày tương đối.
+
+  # Generic data tests (tests/generic)
+  - name: test_not_negative
+    description: Test thất bại nếu cột có giá trị âm (NULL được bỏ qua).
+
+  - name: test_accepted_range
+    description: >
+      Test thất bại nếu giá trị nằm ngoài khoảng [min_value, max_value]
+      (hoặc khoảng mở nếu inclusive=false). NULL được bỏ qua.
+
+  - name: test_unique_combination_of_columns
+    description: Test thất bại nếu tổ hợp các cột (khóa ghép / grain của bảng) bị trùng.
+
+  - name: test_expression_is_true
+    description: Test thất bại với mọi dòng mà biểu thức SQL truyền vào không đúng.
+
+  - name: test_equal_row_count
+    description: >
+      Kiểm tra số dòng trước và sau xử lý / join: số dòng của model phải bằng số dòng
+      (hoặc số khóa distinct) của model so sánh. Phát hiện fan-out do join hoặc mất dòng.
+
+  - name: test_row_count_ratio
+    description: >
+      Kiểm tra coverage: tỷ lệ (số dòng model / số dòng hoặc khóa distinct của model so sánh)
+      phải nằm trong [min_ratio, max_ratio].

@@ -7,6 +7,7 @@ from ..config import (
     PROVINCES_RAW_BASE_URL,
     PROVINCES_SOURCE_URL,
     USER_AGENT,
+    REFERENCE_ROOT,
 )
 from ..utils.pipeline_scope import (
     SCOPE_CURRENT_34,
@@ -23,7 +24,7 @@ from ..utils.ingestion_storage import BronzeWriter, new_run_id
 
 GITHUB_API_URL = PROVINCES_SOURCE_URL
 RAW_BASE_URL = PROVINCES_RAW_BASE_URL
-OUTPUT_FILE = DATA_ROOT / "provinces.csv"
+OUTPUT_FILE = REFERENCE_ROOT / "provinces.csv"
 
 # Scope của bộ địa giới hành chính đang crawl.
 ADMIN_SCOPE = SCOPE_CURRENT_34

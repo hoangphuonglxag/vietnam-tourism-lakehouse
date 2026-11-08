@@ -1,27 +1,39 @@
 {{ config(materialized='view') }}
 
-SELECT
-    {{ clean_null('review_id') }} AS review_id,
+WITH bronze AS (
 
-    {{ clean_null('place_id') }} AS place_id,
+    SELECT *
+    FROM {{ source('bronze', 'google_maps_reviews') }}
 
-    CAST(rating AS INTEGER) AS rating,
+),
 
-    {{ clean_text('review_text') }} AS review_text,
+renamed AS (
 
-    LOWER(
-        TRIM(review_date)
-    ) AS review_date_raw,
+    SELECT
+        -- Khóa định danh
+        {{ clean_null('review_id') }}                       AS review_id,
+        {{ clean_null('place_id') }}                        AS place_id,
 
-    CAST(likes_count AS INTEGER) AS likes_count,
+        -- Nội dung review
+        {{ to_int('rating') }}                              AS rating,
+        {{ clean_text('review_text') }}                     AS review_text,
+        LOWER({{ clean_null('review_date') }})              AS review_date_raw,
+        {{ to_int('likes_count') }}                         AS likes_count,
+        LOWER({{ clean_null('source') }})                   AS source,
 
-    LOWER(
-        TRIM(source)
-    ) AS source,
+        -- Thời gian
+        {{ to_utc_timestamp('crawled_at_utc') }}            AS crawled_at_utc,
 
+        -- Metadata Bronze (lineage)
+        {{ clean_null('run_id') }}                          AS bronze_run_id,
+        {{ to_utc_timestamp('ingested_at_utc') }}           AS bronze_ingested_at_utc,
+        LOWER({{ clean_null('record_status') }})            AS bronze_record_status,
+        TRY_CAST(crawl_date AS DATE)                        AS bronze_crawl_date,
+        filename                                            AS bronze_file_path
 
-    CAST(crawled_at_utc AS TIMESTAMPTZ) AS crawled_at_utc
+    FROM bronze
 
-FROM read_parquet(
-    's3://warehouse/raw/travel_reviews/*.parquet'
 )
+
+SELECT *
+FROM renamed

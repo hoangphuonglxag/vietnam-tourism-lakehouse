@@ -17,6 +17,8 @@ x-airflow-common: &airflow-common
     - MINIO_ROOT_USER=${MINIO_ROOT_USER}
     - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     - PYTHONPATH=/opt/airflow/project
+    - DBT_LOG_PATH=/tmp/dbt_logs
+    - DBT_TARGET_PATH=/tmp/dbt_target
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./:/opt/airflow/project
@@ -48,7 +50,7 @@ services:
   # 2. MinIO: Object Storage (S3-compatible)
   minio:
     hostname: minio
-    image: "minio/minio"
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: minio
     ports:
       - "9001:9001"
@@ -67,7 +69,7 @@ services:
 
   # MinIO Setup (Một bucket lakehouse, phân vùng bằng prefix)
   minio-setup:
-    image: minio/mc
+    image: pgsty/mc:RELEASE.2026-10-26T00-00-00Z
     depends_on:
       minio:
         condition: service_healthy

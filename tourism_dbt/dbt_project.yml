@@ -1,17 +1,10 @@
 
-# Name your project! Project names should contain only lowercase characters
-# and underscores. A good package name should reflect your organization's
-# name or the intended use of these models
 name: 'tourism_dbt'
 version: '1.0.0'
 config-version: 2
 
-# This setting configures which "profile" dbt uses for this project.
 profile: 'tourism_dbt'
 
-# These configurations specify where dbt should look for different types of files.
-# The `model-paths` config, for example, states that models in this project can be
-# found in the "models/" directory. You probably won't need to change these!
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
@@ -19,18 +12,43 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-clean-targets:         # directories to be removed by `dbt clean`
+clean-targets:
   - "target"
   - "dbt_packages"
 
+vars:
+  bronze_root: 's3://lakehouse/bronze'
 
-# Configuring models
-# Full documentation: https://docs.getdbt.com/docs/configuring-models
+  # Kiểm tra coverage Bronze -> Silver
+  # Tỷ lệ tối thiểu số khóa nghiệp vụ hợp lệ ở Bronze phải xuất hiện ở Silver.
+  min_bronze_to_silver_ratio: 0.95
 
-# In this example config, we tell dbt to build all models in the example/
-# directory as views. These settings can be overridden in the individual model
-# files using the `{{ config(...) }}` macro.
+  review_coverage_start_month: '2026-01-01'
+  review_coverage_end_month: '2026-09-01'
+
+  # Temporal Coverage Metadata
+  # Ngày mốc để đánh giá "recent". null => lấy ngày crawl lớn nhất trong dữ liệu.
+  coverage_as_of_date: null
+  # Số ngày tính từ as_of_date để coi là có dữ liệu gần đây.
+  coverage_recent_window_days: 90
+  # Độ dài lịch sử tối thiểu (tháng, từ hoạt động đầu tiên đến cuối cùng).
+  coverage_min_history_months: 12
+  # Số tháng có hoạt động (distinct month) tối thiểu để đủ temporal history.
+  coverage_min_active_months: 6
+  # Place có số tháng hoạt động <= ngưỡng này bị coi là sparse.
+  coverage_sparse_max_active_months: 2
+  # Số snapshot rating tối thiểu để coi là có lịch sử rating.
+  coverage_min_rating_snapshots: 2
+
+
 models:
   tourism_dbt:
-    # Config indicated by + and applies to all files under models/example/
     +materialized: table
+
+    staging:
+      +materialized: view
+      +tags: ['staging', 'bronze_to_silver']
+
+    silver_layer:
+      +materialized: table
+      +tags: ['silver']

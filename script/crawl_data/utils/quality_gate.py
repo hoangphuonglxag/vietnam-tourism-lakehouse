@@ -182,7 +182,7 @@ def is_crawl_eligible(row: Mapping[str, object]) -> bool:
     )
 
 def _read(name: str) -> pd.DataFrame:
-    path = DATA_ROOT / name
+    path = DATA_ROOT / "reference" / name
     if not path.exists():
         raise RuntimeError(f"Missing quality-gate input: {path}")
     data = pd.read_csv(path, dtype=str, encoding="utf-8-sig")
@@ -223,7 +223,7 @@ def check(stage: str) -> None:
         if not found.issubset(allowed):
             raise RuntimeError(f"candidate_places_validated has unknown statuses: {sorted(found - allowed)}")
     elif stage == "places":
-        data = _read("reference/places.csv")
+        data = _read("places.csv")
         _require(
             data,
             {

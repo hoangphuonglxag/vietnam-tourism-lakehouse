@@ -1,0 +1,193 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: '{{ doc("source_bronze") }}'
+    tables:
+
+      # -----------------------------------------------------------------------
+      - name: google_maps_reviews
+        description: >
+          Review cấp bài viết thu thập từ Google Maps (dataset Bronze `google_maps/reviews`).
+          Một review có thể xuất hiện nhiều lần nếu được crawl lại ở nhiều lần chạy.
+          `review_date` là chuỗi hiển thị tương đối ("một tháng trước"), giữ nguyên ở Bronze.
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/google_maps/reviews/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: review_id
+            description: ID review do Google Maps cung cấp (khóa nghiệp vụ).
+          - name: place_id
+            description: ID địa điểm nội bộ (OSM_<type>_<id>).
+          - name: rating
+            description: Số sao 1-5 (chuỗi ở Bronze).
+          - name: review_text
+            description: Nội dung review, có thể rỗng.
+          - name: review_date
+            description: Ngày tương đối dạng hiển thị của Google Maps.
+          - name: likes_count
+            description: Số lượt thích review.
+          - name: source
+            description: Nền tảng nguồn ('google_maps').
+          - name: crawled_at_utc
+            description: Thời điểm crawl (UTC, ISO 8601).
+          - name: run_id
+            description: ID lần chạy ingestion ghi bản ghi vào Bronze.
+          - name: ingested_at_utc
+            description: Thời điểm bản ghi được ghi vào Bronze.
+          - name: record_status
+            description: Trạng thái quality gate ở Bronze ('success' / 'quarantine').
+          - name: crawl_date
+            description: Phân vùng hive suy ra từ đường dẫn file.
+
+      # -----------------------------------------------------------------------
+      - name: google_maps_ratings
+        description: >
+          Snapshot rating cấp địa điểm từ Google Maps (dataset Bronze `google_maps/ratings`).
+          Mỗi lần crawl tạo một quan sát (place_id, crawled_at). Trường thời gian tên là
+          `crawled_at` (không có hậu tố _utc) - được đổi tên ở staging.
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/google_maps/ratings/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: place_id
+            description: ID địa điểm.
+          - name: google_rating
+            description: Điểm rating trung bình 0-5, có thể rỗng.
+          - name: google_review_count
+            description: Tổng số review hiển thị trên Google Maps.
+          - name: crawl_status
+            description: Trạng thái crawl (SUCCESS / FAILED_* ; dữ liệu cũ dùng chữ thường).
+          - name: crawled_at
+            description: Thời điểm crawl (UTC).
+
+      # -----------------------------------------------------------------------
+      - name: youtube_videos
+        description: >
+          Video YouTube liên quan tới địa điểm (dataset Bronze `youtube/videos`).
+          Khóa nghiệp vụ (place_id, video_id). `published_at` mang offset múi giờ nguồn.
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/youtube/videos/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: place_id
+            description: ID địa điểm được gắn với video.
+          - name: video_id
+            description: ID video YouTube.
+          - name: published_at
+            description: Thời điểm đăng video (có offset, ví dụ -07:00).
+          - name: crawled_at
+            description: Thời điểm crawl (UTC).
+
+      # -----------------------------------------------------------------------
+      - name: youtube_comments
+        description: >
+          Comment của các video YouTube liên quan tới địa điểm (dataset Bronze `youtube/comments`).
+          Dữ liệu historical không có `comment_id` và `comment_created_at` (chuỗi rỗng).
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/youtube/comments/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: place_id
+            description: ID địa điểm.
+          - name: video_id
+            description: ID video chứa comment.
+          - name: comment_id
+            description: ID comment do nguồn cung cấp (rỗng với dữ liệu historical).
+          - name: text
+            description: Nội dung comment.
+          - name: comment_created_at
+            description: Thời điểm tạo comment (ISO hoặc tương đối), có thể rỗng.
+          - name: crawled_at_utc
+            description: Thời điểm crawl (có thể thiếu offset ở dữ liệu historical).
+
+      # -----------------------------------------------------------------------
+      - name: places
+        description: >
+          Dimension địa điểm (dataset Bronze `places`). Mỗi lần phân loại tạo một snapshot.
+          File JSONL này có thể chứa token `NaN` (không hợp lệ theo chuẩn JSON) do pandas ghi ra,
+          vì vậy được đọc dưới dạng text thô bằng `read_text` và parse JSON ở staging
+          sau khi thay `NaN` bằng `null`.
+        meta:
+          external_location: >-
+            read_text('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/places/crawl_date=*/*.jsonl')
+        columns:
+          - name: filename
+            description: Đường dẫn file JSONL (chứa phân vùng crawl_date).
+          - name: content
+            description: Toàn bộ nội dung file (nhiều dòng JSON).
+
+      # -----------------------------------------------------------------------
+      - name: provinces
+        description: >
+          Danh mục tỉnh/thành phố và khung bao địa lý (dataset Bronze `reference/provinces`).
+          Khóa nghiệp vụ `province_id` (chuỗi 2 ký tự).
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/reference/provinces/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: province_id
+            description: Mã tỉnh/thành phố (chuỗi, ví dụ '01').
+          - name: province_name
+            description: Tên tỉnh/thành phố.
+          - name: min_lon
+            description: Kinh độ cực tây của bounding box.
+          - name: min_lat
+            description: Vĩ độ cực nam của bounding box.
+          - name: max_lon
+            description: Kinh độ cực đông của bounding box.
+          - name: max_lat
+            description: Vĩ độ cực bắc của bounding box.
+          - name: geojson_url
+            description: URL file ranh giới GeoJSON gốc.
+          - name: admin_scope
+            description: Phạm vi hành chính ('current_34' hoặc 'legacy_63').
+
+      # -----------------------------------------------------------------------
+      - name: taxonomy
+        description: >
+          Từ điển phân loại loại hình du lịch (dataset Bronze `reference/taxonomy`).
+          Khóa nghiệp vụ `category_id` (CAT001..CAT020).
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/reference/taxonomy/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: category_id
+            description: Mã loại hình du lịch (ví dụ CAT001).
+          - name: group
+            description: Nhóm cấp 1 (natural, cultural, accommodation...).
+          - name: category
+            description: Nhóm cấp 2 (landscape, coastal, heritage...).
+          - name: subcategory
+            description: Nhóm cấp 3 (mountain, beach, museum...).
+          - name: name_vi
+            description: Tên hiển thị tiếng Việt.
+          - name: name_en
+            description: Tên hiển thị tiếng Anh.
+
+      # -----------------------------------------------------------------------
+      - name: place_categories
+        description: >
+          Bảng ánh xạ địa điểm với loại hình du lịch (dataset Bronze `reference/place_categories`).
+          Khóa nghiệp vụ (`place_id`, `category_id`).
+        meta:
+          external_location: >-
+            read_json('{{ var("bronze_root", env_var("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze")) }}/reference/place_categories/crawl_date=*/*.jsonl',
+            format='newline_delimited', union_by_name=true, hive_partitioning=true, filename=true)
+        columns:
+          - name: place_id
+            description: ID địa điểm.
+          - name: category_id
+            description: Mã loại hình du lịch.
+          - name: is_primary
+            description: TRUE nếu đây là loại hình chính của địa điểm.
+          - name: classification_method
+            description: Phương pháp phân loại (osm_rule, keyword...).
+          - name: classification_confidence
+            description: Độ tin cậy phân loại (high, medium, low).

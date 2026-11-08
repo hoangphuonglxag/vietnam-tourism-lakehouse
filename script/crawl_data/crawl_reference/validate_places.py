@@ -10,6 +10,7 @@ from shapely.ops import unary_union
 
 from ..config import (
     DATA_ROOT,
+    REFERENCE_ROOT,
     BOUNDARY_REVIEW_DISTANCE_M,
     TEST_MODE,
     TEST_PROVINCE,
@@ -24,9 +25,9 @@ from ..utils.ingestion_storage import BronzeWriter
 
 DATA_DIR = DATA_ROOT
 
-PROVINCES_FILE = DATA_DIR / "provinces.csv"
-INPUT_FILE = DATA_DIR / "candidate_places_raw.csv"
-OUTPUT_FILE = DATA_DIR / "candidate_places_validated.csv"
+PROVINCES_FILE = REFERENCE_ROOT / "provinces.csv"
+INPUT_FILE = REFERENCE_ROOT / "candidate_places_raw.csv"
+OUTPUT_FILE = REFERENCE_ROOT / "candidate_places_validated.csv"
 
 # ============================================================
 # BASIC VALIDATION

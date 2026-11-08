@@ -1,163 +1,98 @@
-{% macro normalize_relative_date(date_column, reference_date) %}
+{#-
+    CHUẨN HÓA NGÀY TƯƠNG ĐỐI (relative date)
+    Google Maps (và đôi khi YouTube) chỉ trả về thời gian dạng tương đối như
+    "8 giờ trước", "một tháng trước", "Thời gian chỉnh sửa: 2 năm trước",
+    "3 weeks ago". Ngày thực tế được ước lượng bằng:
 
+        ngày ước lượng = ngày tham chiếu (thường là ngày crawl) - (số lượng x đơn vị)
+
+    Bộ macro gồm:
+      - relative_date_text(col)      : chuẩn hóa chuỗi (NFC, lowercase, gộp khoảng trắng,
+                                       bỏ tiền tố/hậu tố "chỉnh sửa"/"edited").
+      - relative_date_unit(col)      : đơn vị thời gian nhận diện được
+                                       (today/second/minute/hour/day/week/month/year) hoặc NULL.
+      - relative_date_quantity(col)  : số lượng (mặc định 1 cho "một", "a", "tuần trước"...).
+      - normalize_relative_date(col, reference_date) : ngày ước lượng (DATE) hoặc NULL.
+      - relative_date_precision(col) : độ chính xác: day / week / month / year / unknown.
+-#}
+
+
+{% macro relative_date_text(date_column) -%}
+REGEXP_REPLACE(
+    REGEXP_REPLACE(
+        REGEXP_REPLACE(
+            NFC_NORMALIZE(LOWER(TRIM(CAST({{ date_column }} AS VARCHAR)))),
+            '\s+', ' ', 'g'
+        ),
+        '^(thời gian chỉnh sửa|đã chỉnh sửa|edited) ?:? ?', ''
+    ),
+    ' ?\((đã chỉnh sửa|edited)\)$', ''
+)
+{%- endmacro %}
+
+
+{% macro relative_date_unit(date_column) -%}
+{%- set t = relative_date_text(date_column) -%}
+{%- set qty = "(([0-9]+|một|a|an|one) )?" -%}
 CASE
-    -- =========================================================
-    -- 1. HOURS
-    -- Ví dụ:
-    -- 8 giờ trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }})) ~ '^[0-9]+ giờ trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 HOUR
-        )
-
-    -- =========================================================
-    -- 2. DAYS
-    -- Ví dụ:
-    -- 1 ngày trước
-    -- 3 ngày trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }})) ~ '^[0-9]+ ngày trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 DAY
-        )
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'một ngày trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 DAY
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'ngày hôm qua'
-    THEN
-        {{ reference_date }} - INTERVAL 1 DAY
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'hôm nay'
-    THEN
-        {{ reference_date }}
-
-    -- =========================================================
-    -- 3. WEEKS
-    -- Ví dụ:
-    -- 2 tuần trước
-    -- 3 tuần trước
-    -- một tuần trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }})) ~ '^[0-9]+ tuần trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 WEEK
-        )
-    WHEN LOWER(TRIM({{ date_column }})) = 'một tuần trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 WEEK
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'tuần trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 WEEK
-
-    -- =========================================================
-    -- 4. MONTHS
-    -- Ví dụ:
-    -- một tháng trước
-    -- 2 tháng trước
-    -- 3 tháng trước
-    -- ...
-    -- 11 tháng trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }})) ~ '^[0-9]+ tháng trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 MONTH
-        )
-    WHEN LOWER(TRIM({{ date_column }})) = 'một tháng trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 MONTH
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'tháng trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 MONTH
-
-    -- =========================================================
-    -- 5. YEARS
-    -- Ví dụ:
-    -- một năm trước
-    -- 2 năm trước
-    -- 3 năm trước
-    -- 4 năm trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }})) ~ '^[0-9]+ năm trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 YEAR
-        )
-    WHEN LOWER(TRIM({{ date_column }})) = 'một năm trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 YEAR
-
-    WHEN LOWER(TRIM({{ date_column }})) = 'năm trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 YEAR
-
-    -- =========================================================
-    -- 6. GOOGLE MAPS EDITED TIME
-    -- Ví dụ:
-    -- Thời gian chỉnh sửa: 2 năm trước
-    -- Thời gian chỉnh sửa: 3 năm trước
-    -- Thời gian chỉnh sửa: 4 năm trước
-    -- =========================================================
-    WHEN LOWER(TRIM({{ date_column }}))
-        ~ '^thời gian chỉnh sửa: [0-9]+ năm trước$'
-    THEN
-        {{ reference_date }}
-        - (
-            CAST(
-                REGEXP_EXTRACT(
-                    LOWER(TRIM({{ date_column }})),
-                    '[0-9]+'
-                ) AS INTEGER
-            ) * INTERVAL 1 YEAR
-        )
-    WHEN LOWER(TRIM({{ date_column }}))
-        = 'thời gian chỉnh sửa: một năm trước'
-    THEN
-        {{ reference_date }} - INTERVAL 1 YEAR
-
-    -- =========================================================
-    -- 7. KHÔNG NHẬN DIỆN ĐƯỢC
-    -- =========================================================
+    WHEN {{ t }} IN ('hôm nay', 'today', 'vừa xong', 'just now') THEN 'today'
+    WHEN {{ t }} IN ('hôm qua', 'ngày hôm qua', 'yesterday') THEN 'day'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(giây|seconds?) (trước|ago)') THEN 'second'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(phút|minutes?) (trước|ago)') THEN 'minute'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(giờ|tiếng|hours?) (trước|ago)') THEN 'hour'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(ngày|days?) (trước|ago)') THEN 'day'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(tuần|weeks?) (trước|ago)') THEN 'week'
+    WHEN {{ t }} = 'last week' THEN 'week'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(tháng|months?) (trước|ago)') THEN 'month'
+    WHEN {{ t }} = 'last month' THEN 'month'
+    WHEN REGEXP_FULL_MATCH({{ t }}, '{{ qty }}(năm|years?) (trước|ago)') THEN 'year'
+    WHEN {{ t }} = 'last year' THEN 'year'
     ELSE NULL
-
 END
+{%- endmacro %}
 
+
+{% macro relative_date_quantity(date_column) -%}
+{%- set t = relative_date_text(date_column) -%}
+CASE
+    WHEN REGEXP_MATCHES({{ t }}, '^[0-9]+ ')
+        THEN CAST(REGEXP_EXTRACT({{ t }}, '^([0-9]+)', 1) AS INTEGER)
+    -- "một", "a", "an", "one", "tuần trước", "last month"... => 1
+    ELSE 1
+END
+{%- endmacro %}
+
+
+{% macro normalize_relative_date(date_column, reference_date) %}
+{%- set unit = relative_date_unit(date_column) -%}
+{%- set qty = relative_date_quantity(date_column) -%}
+{%- set ref = "CAST(" ~ reference_date ~ " AS TIMESTAMP)" -%}
+CAST(
+    CASE {{ unit }}
+        WHEN 'today'  THEN {{ ref }}
+        WHEN 'second' THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 SECOND
+        WHEN 'minute' THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 MINUTE
+        WHEN 'hour'   THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 HOUR
+        WHEN 'day'    THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 DAY
+        WHEN 'week'   THEN {{ ref }} - ({{ qty }}) * INTERVAL 7 DAY
+        WHEN 'month'  THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 MONTH
+        WHEN 'year'   THEN {{ ref }} - ({{ qty }}) * INTERVAL 1 YEAR
+        ELSE NULL
+    END
+AS DATE)
+{% endmacro %}
+
+
+{% macro relative_date_precision(date_column) %}
+CASE {{ relative_date_unit(date_column) }}
+    WHEN 'today'  THEN 'day'
+    WHEN 'second' THEN 'day'
+    WHEN 'minute' THEN 'day'
+    WHEN 'hour'   THEN 'day'
+    WHEN 'day'    THEN 'day'
+    WHEN 'week'   THEN 'week'
+    WHEN 'month'  THEN 'month'
+    WHEN 'year'   THEN 'year'
+    ELSE 'unknown'
+END
 {% endmacro %}

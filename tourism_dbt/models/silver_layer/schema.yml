@@ -1,121 +1,850 @@
 version: 2
 
+# =============================================================================
+# SILVER MODELS
+# Quy tắc chất lượng: not-null, unique (grain), accepted values / range,
+# coverage (row_count_ratio), số dòng trước/sau join (equal_row_count),
+# toàn vẹn tham chiếu với dimension (relationships, severity warn).
+# =============================================================================
 
 models:
-  -
-  # SILVER GOOGLE MAPS REVIEWS
-  - name: silver_travel_reviews
-    description: "Cleaned and standardized tourism reviews collected from Google Maps."
+
+  # SILVER PROVINCES (dimension)
+  - name: silver_provinces
+    description: '{{ doc("silver_provinces") }}'
+    data_tests:
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_provinces')
+            compare_distinct_column: province_id
+            compare_filter: "province_id IS NOT NULL AND province_name IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+      - expression_is_true:
+          arguments:
+            expression: "min_lon IS NULL OR min_lon <= max_lon"
+      - expression_is_true:
+          arguments:
+            expression: "min_lat IS NULL OR min_lat <= max_lat"
     columns:
-      - name: review_id
-        description: "Unique identifier of a Google Maps review."
+      - name: province_id
+        description: Mã tỉnh chuẩn 2 ký tự ('01', '79'...). Khóa chính.
         data_tests:
           - not_null
           - unique
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+        data_tests:
+          - not_null
+      - name: min_lon
+        description: Kinh độ cực tây của bounding box.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -180
+                max_value: 180
+      - name: min_lat
+        description: Vĩ độ cực nam của bounding box.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -90
+                max_value: 90
+      - name: max_lon
+        description: Kinh độ cực đông của bounding box.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -180
+                max_value: 180
+      - name: max_lat
+        description: Vĩ độ cực bắc của bounding box.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -90
+                max_value: 90
+      - name: center_lat
+        description: Vĩ độ tâm khung bao.
+      - name: center_lon
+        description: Kinh độ tâm khung bao.
+      - name: geojson_url
+        description: URL file ranh giới GeoJSON gốc.
+      - name: admin_scope
+        description: Phạm vi hành chính.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['current_34', 'legacy_63']
+      - name: province_set_version
+        description: Phiên bản bộ tỉnh/thành phố.
+      - name: fetched_at_utc
+        description: Thời điểm tải ranh giới (UTC).
+      - name: first_seen_crawl_date
+        description: Snapshot đầu tiên province xuất hiện.
+      - name: last_seen_crawl_date
+        description: Snapshot gần nhất province xuất hiện.
+      - name: snapshot_count
+        description: Số snapshot chứa province.
+      - name: bronze_run_id
+        description: run_id Bronze của bản ghi được giữ lại.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi Bronze.
 
+  # SILVER TAXONOMY (dimension)
+  - name: silver_taxonomy
+    description: '{{ doc("silver_taxonomy") }}'
+    data_tests:
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_taxonomy')
+            compare_distinct_column: category_id
+            compare_filter: "category_id IS NOT NULL AND category_group IS NOT NULL AND category_name IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+    columns:
+      - name: category_id
+        description: Mã loại hình du lịch (CAT001..CAT020). Khóa chính.
+        data_tests:
+          - not_null
+          - unique
+      - name: category_group
+        description: Nhóm phân loại cấp 1 (natural, cultural, accommodation...).
+        data_tests:
+          - not_null
+      - name: category_name
+        description: Nhóm phân loại cấp 2 (landscape, coastal, heritage...).
+        data_tests:
+          - not_null
+      - name: subcategory_name
+        description: Nhóm phân loại cấp 3 (mountain, beach, museum...).
+      - name: name_vi
+        description: Tên hiển thị tiếng Việt.
+      - name: name_en
+        description: Tên hiển thị tiếng Anh.
+      - name: first_seen_crawl_date
+        description: Snapshot đầu tiên category xuất hiện.
+      - name: last_seen_crawl_date
+        description: Snapshot gần nhất category xuất hiện.
+      - name: snapshot_count
+        description: Số snapshot chứa category.
+      - name: bronze_run_id
+        description: run_id Bronze.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi Bronze.
+
+  # SILVER PLACE CATEGORIES (bridge table)
+  - name: silver_place_categories
+    description: '{{ doc("silver_place_categories") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['place_id', 'category_id']
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_place_categories')
+            compare_distinct_column: "place_id || '##' || category_id"
+            compare_filter: "place_id IS NOT NULL AND category_id IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+    columns:
+      - name: place_category_id
+        description: Khóa ghép = place_id || '|' || category_id.
+        data_tests:
+          - not_null
+          - unique
       - name: place_id
-        description: "Identifier of the tourism destination."
+        description: ID địa điểm.
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm lấy từ silver_places.
+      - name: province_id
+        description: Mã tỉnh chuẩn lấy từ silver_places.
+      - name: province_name
+        description: Tên tỉnh lấy từ silver_places.
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+        data_tests:
+          - not_null
+      - name: category_id
+        description: Mã loại hình du lịch.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_taxonomy')
+                field: category_id
+      - name: category_group
+        description: Nhóm phân loại cấp 1 (ưu tiên silver_taxonomy).
+      - name: category_name
+        description: Nhóm phân loại cấp 2 (ưu tiên silver_taxonomy).
+      - name: subcategory_name
+        description: Nhóm phân loại cấp 3 (ưu tiên silver_taxonomy).
+      - name: category_name_vi
+        description: Tên tiếng Việt lấy từ silver_taxonomy.
+      - name: category_name_en
+        description: Tên tiếng Anh lấy từ silver_taxonomy.
+      - name: is_category_in_dim
+        description: TRUE nếu category_id tồn tại trong silver_taxonomy.
+        data_tests:
+          - not_null
+      - name: is_primary
+        description: TRUE nếu đây là loại hình chính của địa điểm.
+        data_tests:
+          - not_null
+      - name: classification_method
+        description: Phương pháp phân loại (osm_rule...).
+      - name: classification_confidence
+        description: Độ tin cậy phân loại.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['high', 'medium', 'low']
+      - name: bronze_crawl_date
+        description: Ngày snapshot phân loại.
+      - name: bronze_run_id
+        description: run_id Bronze.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi Bronze.
 
+  # SILVER PLACES (dimension)
+  - name: silver_places
+    description: '{{ doc("silver_places") }}'
+    data_tests:
+      # Coverage: mọi place_id hợp lệ ở staging đều phải có mặt đúng 1 lần
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_places')
+            compare_distinct_column: place_id
+            compare_filter: "place_id IS NOT NULL AND place_name IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+    columns:
+      - name: place_id
+        description: ID địa điểm nội bộ, dạng `OSM_<node|way|relation>_<osm_id>`. Khóa chính.
+        data_tests:
+          - not_null
+          - unique
+          - expression_is_true:
+              arguments:
+                expression: "REGEXP_FULL_MATCH(place_id, 'OSM_(node|way|relation)_[0-9]+')"
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm.
+        data_tests:
+          - not_null
+      - name: name_vi
+        description: Tên tiếng Việt từ OSM.
+      - name: name_en
+        description: Tên tiếng Anh từ OSM.
+      - name: province_id
+        description: Mã tỉnh chuẩn 2 ký tự ('01', '79'...). Nguồn chuẩn để join cho mọi bảng fact.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('silver_provinces')
+                field: province_id
+              config:
+                severity: warn
+      - name: province_name
+        description: Tên tỉnh (ưu tiên lấy từ silver_provinces).
+      - name: is_province_in_dim
+        description: TRUE nếu province_id tồn tại trong silver_provinces.
+        data_tests:
+          - not_null
+      - name: current_province_id
+        description: Mã tỉnh theo đơn vị hành chính hiện hành (34 tỉnh).
+      - name: current_province_name
+        description: Tên tỉnh hiện hành.
+      - name: legacy_province_id
+        description: Mã tỉnh theo đơn vị hành chính cũ (63 tỉnh).
+      - name: legacy_province_name
+        description: Tên tỉnh cũ.
+      - name: admin_scope
+        description: Phạm vi hành chính (current_34 / legacy_63).
+      - name: latitude
+        description: Vĩ độ; ngoài [-90, 90] => NULL.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -90
+                max_value: 90
+      - name: longitude
+        description: Kinh độ; ngoài [-180, 180] => NULL.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -180
+                max_value: 180
+      - name: osm_type
+        description: Loại đối tượng OSM.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['node', 'way', 'relation']
+              config:
+                severity: warn
+      - name: osm_id
+        description: ID đối tượng OSM.
+      - name: osm_tourism_tag
+        description: Tag `tourism` của OSM.
+      - name: osm_natural_tag
+        description: Tag `natural` của OSM.
+      - name: osm_historic_tag
+        description: Tag `historic` của OSM.
+      - name: osm_leisure_tag
+        description: Tag `leisure` của OSM.
+      - name: validation_status
+        description: Kết quả kiểm tra không gian.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['valid', 'review', 'invalid']
+              config:
+                severity: warn
+      - name: tourism_status
+        description: Kết quả phân loại du lịch.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['eligible', 'review', 'rejected']
+              config:
+                severity: warn
+      - name: tourism_reason
+        description: Lý do phân loại du lịch.
+      - name: tourism_confidence
+        description: Độ tin cậy phân loại.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['high', 'medium', 'low']
+              config:
+                severity: warn
+      - name: crawl_eligible
+        description: TRUE nếu được phép crawl tự động (NULL => FALSE).
+        data_tests:
+          - not_null
+      - name: classified_at_utc
+        description: Thời điểm phân loại (UTC).
+      - name: first_seen_crawl_date
+        description: Snapshot đầu tiên place xuất hiện.
+      - name: last_seen_crawl_date
+        description: Snapshot gần nhất place xuất hiện.
+      - name: snapshot_count
+        description: Số snapshot chứa place.
+      - name: is_in_latest_snapshot
+        description: TRUE nếu place có trong snapshot mới nhất.
+      - name: bronze_run_id
+        description: run_id Bronze của bản ghi được giữ lại.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi Bronze của bản ghi được giữ lại.
+
+  # SILVER GOOGLE MAPS REVIEWS
+  - name: silver_travel_reviews
+    description: '{{ doc("silver_travel_reviews") }}'
+    data_tests:
+      # Số dòng sau dedup + join = số review_id hợp lệ distinct ở staging (không mất, không fan-out)
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_google_maps_reviews')
+            compare_distinct_column: review_id
+            compare_filter: "review_id IS NOT NULL AND place_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+      # Coverage so với toàn bộ review_id ở Bronze (kể cả bản ghi thiếu trường)
+      - row_count_ratio:
+          arguments:
+            compare_model: ref('stg_google_maps_reviews')
+            compare_distinct_column: review_id
+            min_ratio: "{{ var('min_bronze_to_silver_ratio') }}"
+            max_ratio: 1.0
+      - expression_is_true:
+          arguments:
+            expression: "review_date IS NULL OR review_date <= CAST(crawled_at_utc AS DATE)"
+    columns:
+      - name: review_id
+        description: ID review của Google Maps. Khóa chính.
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm lấy từ silver_places (NULL nếu place không có trong dimension).
+      - name: province_id
+        description: Mã tỉnh chuẩn lấy từ silver_places.
+      - name: province_name
+        description: Tên tỉnh lấy từ silver_places.
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+        data_tests:
+          - not_null
       - name: rating
-        description: "Review rating from 1 to 5."
+        description: Số sao 1-5. Giá trị ngoài miền => NULL (data contract cho phép NULL).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: review_text
+        description: Nội dung review đã làm sạch; NULL nếu review chỉ chấm sao.
+      - name: has_review_text
+        description: TRUE nếu review có nội dung.
+      - name: review_date_raw
+        description: Chuỗi ngày tương đối gốc của quan sát được dùng để tính review_date.
+      - name: review_date
+        description: Ngày review ước lượng = ngày crawl - khoảng thời gian tương đối.
+      - name: review_date_precision
+        description: Độ chính xác của review_date.
         data_tests:
           - not_null
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
-
-      - name: review_text
-        description: "Cleaned review text. May be NULL when the original review contains no meaningful text."
-
-      - name: review_date_raw
-        description: "Original review date string collected from Google Maps."
-
-      - name: review_date
-        description: "Estimated review date derived from the original relative date and crawled_at_utc."
-
-      - name: review_date_precision
-        description: "Precision level of the normalized review date."
-        data_tests:
-          - accepted_values:
-              values: ['day', 'week', 'month', 'year', 'unknown']
-
+              arguments:
+                values: ['day', 'week', 'month', 'year', 'unknown']
+      - name: review_month
+        description: Tháng của review_date (ngày đầu tháng).
+      - name: is_edited
+        description: TRUE nếu review đã được chỉnh sửa ("Thời gian chỉnh sửa").
       - name: likes_count
-        description: "Number of likes associated with the review."
+        description: Số lượt thích tại lần crawl mới nhất; âm => NULL.
         data_tests:
           - not_negative
-
       - name: source
-        description: "Original platform from which the review was collected."
+        description: Nền tảng nguồn.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['google_maps']
-
+              arguments:
+                values: ['google_maps']
       - name: crawled_at_utc
-        description: "UTC timestamp when the review was collected."
+        description: Thời điểm crawl gần nhất (UTC).
         data_tests:
           - not_null
+      - name: first_crawled_at_utc
+        description: Thời điểm crawl đầu tiên (UTC).
+      - name: observation_count
+        description: Số lần review được crawl.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: bronze_run_id
+        description: run_id Bronze của lần crawl mới nhất.
 
   # SILVER YOUTUBE COMMENTS
   - name: silver_youtube_comments
-    description: "Cleaned and standardized YouTube comments associated with tourism destination videos."
+    description: '{{ doc("silver_youtube_comments") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['place_id', 'comment_key']
+      # Số dòng sau dedup + join = số khóa (place_id, comment_key) distinct hợp lệ ở staging
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_youtube_comments')
+            compare_distinct_column: "CONCAT_WS('##', place_id, COALESCE(comment_id, CONCAT_WS('||', video_id, COALESCE(author, ''), COALESCE(comment_text, ''))))"
+            compare_filter: "place_id IS NOT NULL AND video_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND (comment_id IS NOT NULL OR comment_text IS NOT NULL) AND COALESCE(bronze_record_status, 'success') = 'success'"
+      - expression_is_true:
+          arguments:
+            expression: "comment_created_at_utc IS NULL OR comment_created_at_utc <= crawled_at_utc + INTERVAL 1 DAY"
     columns:
       - name: place_id
-        description: "Identifier of the tourism destination."
+        description: ID địa điểm.
         data_tests:
           - not_null
-
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
       - name: place_name
-        description: "Name of the tourism destination."
-
+        description: Tên địa điểm (ưu tiên silver_places).
       - name: province_id
-        description: "Identifier of the province."
-
+        description: Mã tỉnh chuẩn 2 ký tự (ưu tiên silver_places).
       - name: province_name
-        description: "Name of the province."
-
+        description: Tên tỉnh (ưu tiên silver_places).
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+        data_tests:
+          - not_null
       - name: video_id
-        description: "Unique identifier of the YouTube video."
+        description: ID video chứa comment.
         data_tests:
           - not_null
-
       - name: video_title
-        description: "Title of the YouTube video."
-
-      - name: comment_id
-        description: "Unique identifier of the YouTube comment."
+        description: Tiêu đề video.
+      - name: comment_key
+        description: Khóa comment = comment_id, hoặc surrogate 'sk_' || md5(video_id, author, comment_text) khi nguồn không có ID.
         data_tests:
           - not_null
-          - unique
-
+      - name: comment_id
+        description: ID comment do nguồn cung cấp (NULL với dữ liệu historical).
+      - name: is_surrogate_comment_key
+        description: TRUE nếu comment_key là surrogate key.
+        data_tests:
+          - not_null
       - name: author
-        description: "Author of the YouTube comment."
-
+        description: Tác giả comment.
       - name: comment_text
-        description: "Cleaned text content of the YouTube comment."
-
+        description: Nội dung comment đã làm sạch.
       - name: likes
-        description: "Number of likes received by the YouTube comment."
+        description: Số lượt thích; âm => NULL.
         data_tests:
           - not_negative
-
       - name: is_reply
-        description: "Indicates whether the comment is a reply."
+        description: TRUE nếu là reply (NULL => FALSE).
         data_tests:
           - not_null
-
-      - name: comment_created_at
-        description: "Timestamp when the YouTube comment was created."
-
-      - name: crawled_at_utc
-        description: "UTC timestamp when the comment was collected."
-        data_tests:
-          - not_null
-
-      - name: source
-        description: "Original platform from which the comment was collected."
+      - name: comment_created_at_raw
+        description: Chuỗi thời điểm tạo comment gốc.
+      - name: comment_created_at_utc
+        description: Thời điểm tạo comment (UTC), chính xác hoặc ước lượng.
+      - name: comment_created_at_precision
+        description: Độ chính xác của comment_created_at_utc.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['youtube']
+              arguments:
+                values: ['exact', 'day', 'week', 'month', 'year', 'unknown']
+      - name: comment_created_date
+        description: Ngày tạo comment.
+      - name: crawled_at_utc
+        description: Thời điểm crawl gần nhất (UTC).
+        data_tests:
+          - not_null
+      - name: first_crawled_at_utc
+        description: Thời điểm crawl đầu tiên (UTC).
+      - name: observation_count
+        description: Số lần comment được crawl.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: source
+        description: Nền tảng nguồn.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['youtube']
+      - name: bronze_run_id
+        description: run_id Bronze của lần crawl mới nhất.
+
+  # SILVER YOUTUBE VIDEOS
+  - name: silver_youtube_videos
+    description: '{{ doc("silver_youtube_videos") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['place_id', 'video_id']
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_youtube_videos')
+            compare_distinct_column: "place_id || '##' || video_id"
+            compare_filter: "place_id IS NOT NULL AND video_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+      - expression_is_true:
+          arguments:
+            expression: "published_at_utc IS NULL OR published_at_utc <= crawled_at_utc + INTERVAL 1 DAY"
+    columns:
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm (ưu tiên silver_places).
+      - name: province_id
+        description: Mã tỉnh chuẩn 2 ký tự.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+        data_tests:
+          - not_null
+      - name: video_id
+        description: ID video YouTube.
+        data_tests:
+          - not_null
+      - name: video_title
+        description: Tiêu đề video.
+      - name: channel_id
+        description: ID kênh.
+      - name: channel_name
+        description: Tên kênh.
+      - name: search_query
+        description: Truy vấn tìm kiếm của lần crawl mới nhất.
+      - name: views
+        description: Lượt xem tại lần crawl mới nhất; âm => NULL.
+        data_tests:
+          - not_negative
+      - name: duration_seconds
+        description: Thời lượng (giây); âm => NULL.
+        data_tests:
+          - not_negative
+      - name: category
+        description: Danh mục YouTube.
+      - name: thumbnail_url
+        description: URL thumbnail.
+      - name: video_url
+        description: URL video.
+      - name: published_at_raw
+        description: Chuỗi thời điểm đăng gốc (có offset nguồn).
+      - name: published_at_utc
+        description: Thời điểm đăng (UTC); sau thời điểm crawl => NULL.
+      - name: published_date
+        description: Ngày đăng (UTC).
+      - name: published_month
+        description: Tháng đăng (ngày đầu tháng).
+      - name: crawled_at_utc
+        description: Thời điểm crawl gần nhất (UTC).
+        data_tests:
+          - not_null
+      - name: first_crawled_at_utc
+        description: Thời điểm crawl đầu tiên (UTC).
+      - name: observation_count
+        description: Số lần video được crawl cho place này.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: source
+        description: Nền tảng nguồn.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['youtube']
+      - name: bronze_run_id
+        description: run_id Bronze của lần crawl mới nhất.
+
+  # SILVER GOOGLE MAPS RATING SNAPSHOTS
+  - name: silver_google_maps_rating_snapshots
+    description: '{{ doc("silver_google_maps_rating_snapshots") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['place_id', 'snapshot_date']
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_google_maps_ratings')
+            compare_distinct_column: "place_id || '##' || CAST(CAST(crawled_at_utc AS DATE) AS VARCHAR)"
+            compare_filter: "place_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND crawl_status = 'SUCCESS' AND COALESCE(bronze_record_status, 'success') = 'success'"
+    columns:
+      - name: rating_snapshot_id
+        description: Khóa snapshot = place_id || '|' || snapshot_date.
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm (ưu tiên silver_places).
+      - name: province_id
+        description: Mã tỉnh chuẩn 2 ký tự.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+      - name: snapshot_date
+        description: Ngày snapshot (UTC).
+        data_tests:
+          - not_null
+      - name: crawled_at_utc
+        description: Thời điểm crawl được giữ lại trong ngày (mới nhất).
+      - name: google_maps_url
+        description: URL Google Maps đã crawl.
+      - name: google_rating
+        description: Rating trung bình 0-5; ngoài miền => NULL.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: google_review_count
+        description: Tổng số review hiển thị.
+        data_tests:
+          - not_negative
+      - name: rating_5_count
+        description: Số review 5 sao.
+        data_tests:
+          - not_negative
+      - name: rating_4_count
+        description: Số review 4 sao.
+        data_tests:
+          - not_negative
+      - name: rating_3_count
+        description: Số review 3 sao.
+        data_tests:
+          - not_negative
+      - name: rating_2_count
+        description: Số review 2 sao.
+        data_tests:
+          - not_negative
+      - name: rating_1_count
+        description: Số review 1 sao.
+        data_tests:
+          - not_negative
+      - name: rating_distribution_total
+        description: Tổng 5 mức sao (0 = nguồn không cung cấp phân phối).
+      - name: has_rating_value
+        description: TRUE nếu có google_rating.
+      - name: has_rating_distribution
+        description: TRUE nếu có phân phối rating (> 0).
+      - name: crawl_status
+        description: Luôn là 'SUCCESS' ở bảng này.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['SUCCESS']
+      - name: source
+        description: Nền tảng nguồn.
+      - name: bronze_run_id
+        description: run_id Bronze.
+
+  # TEMPORAL COVERAGE METADATA
+  - name: silver_place_temporal_coverage
+    description: '{{ doc("silver_place_temporal_coverage") }}'
+    data_tests:
+      # Số dòng sau 5 LEFT JOIN phải bằng số place trong dimension (không fan-out)
+      - equal_row_count:
+          arguments:
+            compare_model: ref('silver_places')
+      - expression_is_true:
+          arguments:
+            expression: "review_min_date IS NULL OR review_min_date <= review_max_date"
+      - expression_is_true:
+          arguments:
+            expression: "video_min_published_date IS NULL OR video_min_published_date <= video_max_published_date"
+      - expression_is_true:
+          arguments:
+            expression: "comment_min_date IS NULL OR comment_min_date <= comment_max_date"
+      - expression_is_true:
+          arguments:
+            expression: "total_active_month_count >= GREATEST(review_active_month_count, video_active_month_count, comment_active_month_count)"
+    columns:
+      - name: place_id
+        description: ID địa điểm (spine = silver_places).
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+      - name: place_name
+        description: Tên địa điểm.
+      - name: province_id
+        description: Mã tỉnh chuẩn.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: crawl_eligible
+        description: Place có được phép crawl tự động hay không.
+      - name: tourism_status
+        description: Trạng thái phân loại du lịch.
+      - name: review_count
+        description: Số review Google Maps (sau dedup).
+        data_tests: [not_null, not_negative]
+      - name: review_dated_count
+        description: Số review parse được ngày.
+        data_tests: [not_negative]
+      - name: review_min_date
+        description: Ngày review sớm nhất (ước lượng).
+      - name: review_max_date
+        description: Ngày review muộn nhất (ước lượng).
+      - name: review_active_month_count
+        description: Số tháng distinct có review (chỉ precision day/week/month).
+        data_tests: [not_null, not_negative]
+      - name: video_count
+        description: Số video distinct gắn với place.
+        data_tests: [not_null, not_negative]
+      - name: video_min_published_date
+        description: Ngày đăng video sớm nhất.
+      - name: video_max_published_date
+        description: Ngày đăng video muộn nhất.
+      - name: video_active_month_count
+        description: Số tháng distinct có video được đăng.
+        data_tests: [not_null, not_negative]
+      - name: comment_count
+        description: Số comment (sau dedup).
+        data_tests: [not_null, not_negative]
+      - name: comment_dated_count
+        description: Số comment xác định được thời điểm tạo.
+        data_tests: [not_negative]
+      - name: comment_min_date
+        description: Ngày comment sớm nhất.
+      - name: comment_max_date
+        description: Ngày comment muộn nhất.
+      - name: comment_active_month_count
+        description: Số tháng distinct có comment (precision exact/day/week/month).
+        data_tests: [not_null, not_negative]
+      - name: rating_snapshot_count
+        description: Số snapshot rating thành công (số ngày).
+        data_tests: [not_null, not_negative]
+      - name: rating_min_snapshot_date
+        description: Ngày snapshot rating đầu tiên.
+      - name: rating_max_snapshot_date
+        description: Ngày snapshot rating gần nhất.
+      - name: total_record_count
+        description: review_count + video_count + comment_count.
+        data_tests: [not_negative]
+      - name: total_active_month_count
+        description: Số tháng distinct có bất kỳ hoạt động nào (review, video, comment).
+        data_tests: [not_negative]
+      - name: first_activity_date
+        description: Ngày hoạt động sớm nhất trên mọi nguồn.
+      - name: last_activity_date
+        description: Ngày hoạt động gần nhất trên mọi nguồn.
+      - name: history_span_months
+        description: Số tháng từ first_activity_date đến last_activity_date (tính cả 2 đầu); 0 nếu không có dữ liệu.
+        data_tests: [not_negative]
+      - name: days_since_last_activity
+        description: Số ngày từ last_activity_date đến as_of_date.
+      - name: as_of_date
+        description: Ngày mốc đánh giá (var coverage_as_of_date hoặc ngày crawl lớn nhất).
+      - name: has_temporal_history
+        description: Đủ độ dài lịch sử và số tháng hoạt động tối thiểu.
+        data_tests: [not_null]
+      - name: has_recent_data
+        description: Có hoạt động trong cửa sổ gần đây.
+        data_tests: [not_null]
+      - name: is_sparse
+        description: Có dữ liệu nhưng quá ít tháng hoạt động.
+        data_tests: [not_null]
+      - name: has_rating_history
+        description: Có đủ số snapshot rating tối thiểu.
+        data_tests: [not_null]
+      - name: coverage_status
+        description: Phân loại coverage (xem bảng trong mô tả model).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['no_data', 'forecast_ready', 'sparse', 'recent_only', 'stale_history', 'partial']
+      - name: is_forecast_eligible
+        description: TRUE nếu place phù hợp cho forecasting (coverage_status = 'forecast_ready').
+        data_tests: [not_null]

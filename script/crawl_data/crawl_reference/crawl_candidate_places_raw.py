@@ -10,6 +10,7 @@ import requests
 
 from ..config import (
     DATA_ROOT,
+    REFERENCE_ROOT,
     MAX_RETRIES,
     MAX_WORKERS,
     OVERPASS_TIMEOUT_SECONDS,
@@ -35,8 +36,8 @@ from ..utils.ingestion_storage import BronzeWriter
 # CONFIG
 # ============================================================
 
-PROVINCES_FILE = DATA_ROOT / "provinces.csv"
-OUTPUT_FILE = DATA_ROOT / "candidate_places_raw.csv"
+PROVINCES_FILE = REFERENCE_ROOT / "provinces.csv"
+OUTPUT_FILE = REFERENCE_ROOT / "candidate_places_raw.csv"
 
 # Scope của job discovery theo pipeline.
 DISCOVERY_SCOPE = SCOPE_CURRENT_34

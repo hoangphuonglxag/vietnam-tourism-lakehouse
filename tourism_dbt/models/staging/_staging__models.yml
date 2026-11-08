@@ -1,0 +1,389 @@
+version: 2
+
+models:
+
+  # ---------------------------------------------------------------------------
+  - name: stg_google_maps_reviews
+    description: '{{ doc("stg_google_maps_reviews") }}'
+    columns:
+      - name: review_id
+        description: ID review của Google Maps. NULL nếu Bronze rỗng.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: place_id
+        description: ID địa điểm nội bộ (đã TRIM, rỗng => NULL).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: rating
+        description: Số sao đã ép sang BIGINT bằng TRY_CAST (sai định dạng => NULL). Chưa kiểm tra miền 1-5.
+      - name: review_text
+        description: Nội dung review đã làm sạch bằng macro clean_text.
+      - name: review_date_raw
+        description: Chuỗi ngày tương đối gốc (lowercase), ví dụ "một tháng trước".
+      - name: likes_count
+        description: Số lượt thích đã ép sang BIGINT. Chưa kiểm tra giá trị âm.
+      - name: source
+        description: Nền tảng nguồn (lowercase).
+      - name: crawled_at_utc
+        description: Thời điểm crawl, TIMESTAMP UTC.
+      - name: bronze_run_id
+        description: ID lần chạy ingestion ghi bản ghi vào Bronze.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze ('success' / 'quarantine').
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date của file Bronze.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze chứa bản ghi (truy vết lineage).
+
+  # ---------------------------------------------------------------------------
+  - name: stg_youtube_comments
+    description: '{{ doc("stg_youtube_comments") }}'
+    columns:
+      - name: place_id
+        description: ID địa điểm được gắn với video chứa comment.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm tại thời điểm crawl.
+      - name: province_id
+        description: Mã tỉnh đã chuẩn hóa 2 ký tự ('1' => '01').
+      - name: province_id_raw
+        description: Mã tỉnh gốc ở Bronze (giữ để đối soát).
+      - name: province_name
+        description: Tên tỉnh tại thời điểm crawl.
+      - name: video_id
+        description: ID video YouTube.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: video_title
+        description: Tiêu đề video đã làm sạch.
+      - name: comment_id
+        description: ID comment do nguồn cung cấp. NULL với dữ liệu historical.
+      - name: author
+        description: Tên hiển thị tác giả comment.
+      - name: comment_text
+        description: Nội dung comment (cột `text` ở Bronze) đã làm sạch.
+      - name: likes
+        description: Số lượt thích comment (BIGINT).
+      - name: is_reply
+        description: TRUE nếu là reply. Chuỗi "True"/"False" của pandas được ép sang BOOLEAN.
+      - name: comment_created_at_raw
+        description: Thời điểm tạo comment dạng chuỗi gốc (ISO hoặc tương đối), có thể NULL.
+      - name: crawled_at_utc
+        description: Thời điểm crawl, TIMESTAMP UTC (bản ghi không có offset được coi là UTC).
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_youtube_videos
+    description: '{{ doc("stg_youtube_videos") }}'
+    columns:
+      - name: place_id
+        description: ID địa điểm được gắn với video.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm tại thời điểm crawl.
+      - name: province_id
+        description: Mã tỉnh đã chuẩn hóa 2 ký tự.
+      - name: province_id_raw
+        description: Mã tỉnh gốc ở Bronze.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: search_query
+        description: Câu truy vấn tìm kiếm đã trả về video (cột `query` ở Bronze).
+      - name: video_id
+        description: ID video YouTube.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: video_title
+        description: Tiêu đề video (cột `title`) đã làm sạch.
+      - name: channel_id
+        description: ID kênh.
+      - name: channel_name
+        description: Tên kênh.
+      - name: views
+        description: Lượt xem tại thời điểm crawl.
+      - name: duration_seconds
+        description: Thời lượng video (giây).
+      - name: category
+        description: Danh mục YouTube.
+      - name: thumbnail_url
+        description: URL ảnh thumbnail.
+      - name: video_url
+        description: URL video.
+      - name: published_at_raw
+        description: Chuỗi thời điểm đăng gốc (có offset múi giờ nguồn).
+      - name: published_at_utc
+        description: Thời điểm đăng đã quy đổi về UTC.
+      - name: crawled_at_utc
+        description: Thời điểm crawl (cột `crawled_at` ở Bronze), TIMESTAMP UTC.
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_google_maps_ratings
+    description: '{{ doc("stg_google_maps_ratings") }}'
+    columns:
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm.
+      - name: province_id
+        description: Mã tỉnh đã chuẩn hóa 2 ký tự.
+      - name: province_id_raw
+        description: Mã tỉnh gốc ở Bronze.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: google_maps_url
+        description: URL tìm kiếm Google Maps đã dùng khi crawl.
+      - name: google_rating
+        description: Điểm rating trung bình (DOUBLE). Chưa kiểm tra miền 0-5.
+      - name: google_review_count
+        description: Tổng số review hiển thị.
+      - name: rating_5_count
+        description: Số review 5 sao (0 nếu nguồn không cung cấp phân phối).
+      - name: rating_4_count
+        description: Số review 4 sao.
+      - name: rating_3_count
+        description: Số review 3 sao.
+      - name: rating_2_count
+        description: Số review 2 sao.
+      - name: rating_1_count
+        description: Số review 1 sao.
+      - name: crawl_status
+        description: Trạng thái crawl đã chuẩn hóa chữ hoa (SUCCESS, FAILED_SEARCH, ...).
+      - name: error_message
+        description: Thông điệp lỗi nếu crawl thất bại.
+      - name: crawled_at_utc
+        description: Thời điểm crawl (cột `crawled_at` ở Bronze), TIMESTAMP UTC.
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_places
+    description: '{{ doc("stg_places") }}'
+    columns:
+      - name: place_id
+        description: ID địa điểm nội bộ (OSM_<type>_<id>).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm.
+      - name: name_vi
+        description: Tên tiếng Việt từ OSM (nếu có).
+      - name: name_en
+        description: Tên tiếng Anh từ OSM (nếu có).
+      - name: province_id
+        description: Mã tỉnh đã chuẩn hóa 2 ký tự.
+      - name: province_id_raw
+        description: Mã tỉnh gốc ở Bronze.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: current_province_id
+        description: Mã tỉnh theo đơn vị hành chính hiện hành (34 tỉnh), đã chuẩn hóa.
+      - name: current_province_name
+        description: Tên tỉnh hiện hành.
+      - name: legacy_province_id
+        description: Mã tỉnh theo đơn vị hành chính cũ (63 tỉnh), đã chuẩn hóa.
+      - name: legacy_province_name
+        description: Tên tỉnh cũ.
+      - name: admin_scope
+        description: Phạm vi hành chính của bản ghi (current_34 / legacy_63).
+      - name: latitude
+        description: Vĩ độ (DOUBLE).
+      - name: longitude
+        description: Kinh độ (DOUBLE).
+      - name: osm_type
+        description: Loại đối tượng OSM (node / way / relation).
+      - name: osm_id
+        description: ID đối tượng OSM (chuỗi).
+      - name: osm_tourism_tag
+        description: Tag `tourism` của OSM.
+      - name: osm_natural_tag
+        description: Tag `natural` của OSM.
+      - name: osm_historic_tag
+        description: Tag `historic` của OSM.
+      - name: osm_leisure_tag
+        description: Tag `leisure` của OSM.
+      - name: validation_status
+        description: Kết quả kiểm tra không gian (valid / review / invalid).
+      - name: tourism_status
+        description: Kết quả phân loại du lịch (eligible / review / rejected).
+      - name: tourism_reason
+        description: Lý do phân loại.
+      - name: tourism_confidence
+        description: Độ tin cậy phân loại (high / medium / low).
+      - name: crawl_eligible
+        description: TRUE nếu địa điểm được phép crawl tự động.
+      - name: classified_at_utc
+        description: Thời điểm phân loại (UTC).
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Ngày snapshot (lấy từ phân vùng crawl_date trong đường dẫn file).
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_provinces
+    description: '{{ doc("stg_provinces") }}'
+    columns:
+      - name: province_id
+        description: Mã tỉnh chuẩn hóa 2 ký tự ('01', '79'...).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: province_id_raw
+        description: Mã tỉnh gốc ở Bronze.
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: min_lon
+        description: Kinh độ cực tây của bounding box.
+      - name: min_lat
+        description: Vĩ độ cực nam của bounding box.
+      - name: max_lon
+        description: Kinh độ cực đông của bounding box.
+      - name: max_lat
+        description: Vĩ độ cực bắc của bounding box.
+      - name: geojson_url
+        description: URL file ranh giới GeoJSON gốc.
+      - name: admin_scope
+        description: Phạm vi hành chính (current_34 / legacy_63).
+      - name: province_set_version
+        description: Phiên bản bộ tỉnh/thành phố.
+      - name: fetched_at_utc
+        description: Thời điểm tải ranh giới tỉnh (UTC).
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_taxonomy
+    description: '{{ doc("stg_taxonomy") }}'
+    columns:
+      - name: category_id
+        description: Mã loại hình du lịch (CAT001..CAT020).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: category_group
+        description: Nhóm phân loại cấp 1 (cột `group` ở Bronze).
+      - name: category_name
+        description: Nhóm phân loại cấp 2 (cột `category` ở Bronze).
+      - name: subcategory_name
+        description: Nhóm phân loại cấp 3 (cột `subcategory` ở Bronze).
+      - name: name_vi
+        description: Tên hiển thị tiếng Việt.
+      - name: name_en
+        description: Tên hiển thị tiếng Anh.
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.
+
+  # ---------------------------------------------------------------------------
+  - name: stg_place_categories
+    description: '{{ doc("stg_place_categories") }}'
+    columns:
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: category_id
+        description: Mã loại hình du lịch.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: category_group
+        description: Nhóm phân loại cấp 1.
+      - name: category_name
+        description: Nhóm phân loại cấp 2.
+      - name: subcategory_name
+        description: Nhóm phân loại cấp 3.
+      - name: is_primary
+        description: TRUE nếu là loại hình chính của địa điểm.
+      - name: classification_method
+        description: Phương pháp phân loại (osm_rule...).
+      - name: classification_confidence
+        description: Độ tin cậy phân loại (high / medium / low).
+      - name: bronze_run_id
+        description: ID lần chạy ingestion.
+      - name: bronze_ingested_at_utc
+        description: Thời điểm ghi vào Bronze (UTC).
+      - name: bronze_record_status
+        description: Trạng thái quality gate Bronze.
+      - name: bronze_crawl_date
+        description: Phân vùng crawl_date.
+      - name: bronze_file_path
+        description: Đường dẫn file Bronze.

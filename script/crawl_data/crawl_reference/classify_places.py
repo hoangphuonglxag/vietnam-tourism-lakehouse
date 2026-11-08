@@ -13,7 +13,7 @@ from ..utils.quality_gate import evaluate_tourism_eligibility
 # CONFIG
 # ============================================================
 
-INPUT_FILE = DATA_ROOT / "candidate_places_validated.csv"
+INPUT_FILE = REFERENCE_ROOT / "candidate_places_validated.csv"
 
 REFERENCE_DIR = REFERENCE_ROOT
 PLACES_OUTPUT = REFERENCE_DIR / "places.csv"

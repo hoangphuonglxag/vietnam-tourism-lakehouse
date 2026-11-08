@@ -32,10 +32,8 @@ data/bronze/
 data/silver/
 data/gold/
 data/historical/
+data/reference/
 
-# Keep reference data
-!data/reference/
-!data/reference/*.csv
 
 # Python tooling
 .pytest_cache/
@@ -48,5 +46,6 @@ htmlcov/
 .DS_Store
 Thumbs.db
 desktop.ini
+*.Identifier
 
 /tourism_lakehouse/

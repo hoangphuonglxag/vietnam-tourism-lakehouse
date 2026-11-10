@@ -634,6 +634,117 @@ models:
       - name: bronze_run_id
         description: run_id Bronze của lần crawl mới nhất.
 
+  # ===========================================================================
+  # SILVER YOUTUBE VIDEO SNAPSHOTS (chuỗi thời gian lượt xem video)
+  # ===========================================================================
+  - name: silver_youtube_video_snapshots
+    description: '{{ doc("silver_youtube_video_snapshots") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['place_id', 'video_id', 'snapshot_date']
+      - equal_row_count:
+          arguments:
+            compare_model: ref('stg_youtube_videos')
+            compare_distinct_column: "place_id || '##' || video_id || '##' || CAST(CAST(crawled_at_utc AS DATE) AS VARCHAR)"
+            compare_filter: "place_id IS NOT NULL AND video_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+      - expression_is_true:
+          arguments:
+            expression: "prev_snapshot_date IS NULL OR prev_snapshot_date < snapshot_date"
+    columns:
+      - name: video_snapshot_id
+        description: Khóa snapshot = place_id || '|' || video_id || '|' || snapshot_date.
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: ID địa điểm.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_places')
+                field: place_id
+              config:
+                severity: warn
+      - name: place_name
+        description: Tên địa điểm (ưu tiên silver_places).
+      - name: province_id
+        description: Mã tỉnh chuẩn 2 ký tự.
+      - name: province_name
+        description: Tên tỉnh.
+      - name: is_place_in_dim
+        description: TRUE nếu place_id tồn tại trong silver_places.
+        data_tests:
+          - not_null
+      - name: video_id
+        description: ID video YouTube.
+        data_tests:
+          - not_null
+      - name: video_title
+        description: Tiêu đề video.
+      - name: channel_id
+        description: ID kênh.
+      - name: channel_name
+        description: Tên kênh.
+      - name: search_query
+        description: Truy vấn tìm kiếm.
+      - name: category
+        description: Danh mục YouTube.
+      - name: video_url
+        description: URL video.
+      - name: published_at_utc
+        description: Thời điểm đăng video (UTC).
+      - name: published_date
+        description: Ngày đăng video (UTC).
+      - name: snapshot_date
+        description: Ngày crawl snapshot (UTC).
+        data_tests:
+          - not_null
+      - name: crawled_at_utc
+        description: Thời điểm crawl được giữ lại trong ngày (mới nhất).
+        data_tests:
+          - not_null
+      - name: views
+        description: Lượt xem video tại ngày snapshot; âm => NULL.
+        data_tests:
+          - not_negative
+      - name: duration_seconds
+        description: Thời lượng video (giây); âm => NULL.
+        data_tests:
+          - not_negative
+      - name: snapshot_seq_num
+        description: Số thứ tự lần snapshot của (place_id, video_id) theo thời gian (1, 2, ...).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: prev_snapshot_date
+        description: Ngày snapshot liền trước của cùng (place_id, video_id); NULL ở lần đầu tiên.
+      - name: days_since_prev_snapshot
+        description: Số ngày giữa lần snapshot hiện tại và lần liền trước.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: prev_views
+        description: Lượt xem ở lần snapshot liền trước; NULL ở lần đầu tiên.
+        data_tests:
+          - not_negative
+      - name: views_delta
+        description: Lượng view tăng thêm so với lần snapshot liền trước (views - prev_views).
+      - name: views_daily_growth
+        description: Tốc độ tăng view trung bình mỗi ngày giữa 2 lần snapshot (views_delta / days_since_prev_snapshot).
+      - name: source
+        description: Nền tảng nguồn ('youtube').
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['youtube']
+      - name: bronze_run_id
+        description: run_id Bronze.
+
   # SILVER GOOGLE MAPS RATING SNAPSHOTS
   - name: silver_google_maps_rating_snapshots
     description: '{{ doc("silver_google_maps_rating_snapshots") }}'
@@ -715,6 +826,29 @@ models:
         description: TRUE nếu có google_rating.
       - name: has_rating_distribution
         description: TRUE nếu có phân phối rating (> 0).
+      - name: snapshot_seq_num
+        description: Số thứ tự lần snapshot của địa điểm theo thời gian (1, 2, ...).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: prev_snapshot_date
+        description: Ngày snapshot rating liền trước của cùng địa điểm; NULL ở lần đầu tiên.
+      - name: days_since_prev_snapshot
+        description: Số ngày giữa lần snapshot hiện tại và lần liền trước.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: prev_google_rating
+        description: Điểm google_rating ở lần snapshot liền trước.
+      - name: rating_delta
+        description: Biến động điểm đánh giá so với lần snapshot trước (google_rating - prev_google_rating).
+      - name: prev_google_review_count
+        description: Tổng số review ở lần snapshot liền trước.
+      - name: review_count_delta
+        description: Số lượng review tăng thêm so với lần snapshot trước (google_review_count - prev_google_review_count).
       - name: crawl_status
         description: Luôn là 'SUCCESS' ở bảng này.
         data_tests:
@@ -789,6 +923,16 @@ models:
       - name: video_active_month_count
         description: Số tháng distinct có video được đăng.
         data_tests: [not_null, not_negative]
+      - name: video_snapshot_count
+        description: Tổng số dòng quan sát (video_id, snapshot_date) của địa điểm trong silver_youtube_video_snapshots.
+        data_tests: [not_null, not_negative]
+      - name: video_snapshot_date_count
+        description: Số ngày crawl distinct có quan sát lượt xem video của địa điểm.
+        data_tests: [not_null, not_negative]
+      - name: video_min_snapshot_date
+        description: Ngày crawl snapshot video đầu tiên của địa điểm.
+      - name: video_max_snapshot_date
+        description: Ngày crawl snapshot video gần nhất của địa điểm.
       - name: comment_count
         description: Số comment (sau dedup).
         data_tests: [not_null, not_negative]
@@ -837,6 +981,9 @@ models:
         data_tests: [not_null]
       - name: has_rating_history
         description: Có đủ số snapshot rating tối thiểu.
+        data_tests: [not_null]
+      - name: has_video_view_history
+        description: Có từ 2 ngày snapshot lượt xem video trở lên để tính tăng trưởng view theo thời gian.
         data_tests: [not_null]
       - name: coverage_status
         description: Phân loại coverage (xem bảng trong mô tả model).

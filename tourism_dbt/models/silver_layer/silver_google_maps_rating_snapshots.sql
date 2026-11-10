@@ -54,8 +54,44 @@ with_distribution AS (
     SELECT
         *,
         COALESCE(rating_5_count, 0) + COALESCE(rating_4_count, 0) + COALESCE(rating_3_count, 0)
-            + COALESCE(rating_2_count, 0) + COALESCE(rating_1_count, 0)    AS rating_distribution_total
+            + COALESCE(rating_2_count, 0) + COALESCE(rating_1_count, 0)    AS rating_distribution_total,
+        ROW_NUMBER() OVER (
+            PARTITION BY place_id
+            ORDER BY snapshot_date ASC
+        )                                                                  AS snapshot_seq_num,
+        LAG(snapshot_date) OVER (
+            PARTITION BY place_id
+            ORDER BY snapshot_date ASC
+        )                                                                  AS prev_snapshot_date,
+        LAG(google_rating) OVER (
+            PARTITION BY place_id
+            ORDER BY snapshot_date ASC
+        )                                                                  AS prev_google_rating,
+        LAG(google_review_count) OVER (
+            PARTITION BY place_id
+            ORDER BY snapshot_date ASC
+        )                                                                  AS prev_google_review_count
     FROM cleaned
+
+),
+
+with_deltas AS (
+
+    SELECT
+        *,
+        CASE
+            WHEN prev_snapshot_date IS NOT NULL
+                THEN DATE_DIFF('day', prev_snapshot_date, snapshot_date)
+        END                                                                AS days_since_prev_snapshot,
+        CASE
+            WHEN google_rating IS NOT NULL AND prev_google_rating IS NOT NULL
+                THEN ROUND(google_rating - prev_google_rating, 4)
+        END                                                                AS rating_delta,
+        CASE
+            WHEN google_review_count IS NOT NULL AND prev_google_review_count IS NOT NULL
+                THEN google_review_count - prev_google_review_count
+        END                                                                AS review_count_delta
+    FROM with_distribution
 
 ),
 
@@ -85,11 +121,19 @@ enriched AS (
         (w.google_rating IS NOT NULL)                           AS has_rating_value,
         (w.rating_distribution_total > 0)                       AS has_rating_distribution,
 
+        w.snapshot_seq_num,
+        w.prev_snapshot_date,
+        w.days_since_prev_snapshot,
+        w.prev_google_rating,
+        w.rating_delta,
+        w.prev_google_review_count,
+        w.review_count_delta,
+
         w.crawl_status,
         'google_maps'                                           AS source,
         w.bronze_run_id
 
-    FROM with_distribution AS w
+    FROM with_deltas AS w
     LEFT JOIN {{ ref('silver_places') }} AS p
         ON w.place_id = p.place_id
 

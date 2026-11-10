@@ -98,6 +98,20 @@ Một video có thể gắn với nhiều place nên cùng một comment có th�
 {% enddocs %}
 
 
+{% docs silver_youtube_video_snapshots %}
+**Snapshot lượt xem video YouTube theo ngày (Silver)** — grain: **1 dòng / (`place_id`, `video_id`, `snapshot_date`)**.
+Bảng này giữ lại toàn bộ lịch sử `views` của mỗi video qua các ngày crawl để phân tích **tốc độ tăng trưởng lượt xem (`views_delta`, `views_daily_growth`) theo thời gian**, trong khi `silver_youtube_videos` giữ trạng thái mới nhất của từng video.
+
+| Bước | Xử lý | Nhóm quy tắc |
+|---|---|---|
+| 1 | Loại bản ghi thiếu `place_id` / `video_id` / `crawled_at_utc` hoặc quarantine; `snapshot_date = CAST(crawled_at_utc AS DATE)` | Dữ liệu thiếu, Timestamp |
+| 2 | Khử trùng lặp theo (`place_id`, `video_id`, `snapshot_date`), giữ lần crawl mới nhất trong ngày | Trùng lặp |
+| 3 | `views` / `duration_seconds` âm → NULL; `published_at_utc` sau thời điểm crawl > 1 ngày → NULL | Không hợp lệ |
+| 4 | Dùng hàm cửa sổ `LAG()` theo (`place_id`, `video_id`) sắp xếp `snapshot_date ASC` để tính: `snapshot_seq_num`, `prev_snapshot_date`, `days_since_prev_snapshot`, `prev_views`, `views_delta` ($\text{views}_t - \text{views}_{t-1}$) và `views_daily_growth` ($\Delta\text{views} / \Delta\text{days}$) | Phân tích tăng trưởng |
+| 5 | LEFT JOIN `silver_places` để chuẩn hóa place/province | Chuẩn hóa place/province |
+{% enddocs %}
+
+
 {% docs silver_google_maps_rating_snapshots %}
 **Snapshot rating Google Maps (Silver)** — grain: **1 dòng / (`place_id`, `snapshot_date`)**.
 Đây là chuỗi thời gian rating theo ngày của mỗi địa điểm.
@@ -109,6 +123,7 @@ Một video có thể gắn với nhiều place nên cùng một comment có th�
 | 3 | Nhiều lần crawl trong 1 ngày → giữ lần mới nhất | Trùng lặp |
 | 4 | `google_rating` ngoài 0–5 → NULL; các count âm → NULL | Không hợp lệ |
 | 5 | `rating_distribution_total`, `has_rating_distribution` (phân phối bằng 0 nghĩa là nguồn không cung cấp, không phải NULL), `has_rating_value` | Bổ sung |
+| 5b | Dùng `LAG()` theo `place_id` sắp xếp `snapshot_date ASC` để tính: `snapshot_seq_num`, `prev_snapshot_date`, `days_since_prev_snapshot`, `prev_google_rating`, `rating_delta`, `prev_google_review_count`, `review_count_delta` | Phân tích biến động |
 | 6 | LEFT JOIN `silver_places` để chuẩn hóa place/province | Chuẩn hóa place/province |
 {% enddocs %}
 

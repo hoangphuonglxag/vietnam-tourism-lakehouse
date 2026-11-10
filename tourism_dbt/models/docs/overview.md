@@ -15,7 +15,8 @@ Bronze (MinIO, JSONL, crawl_date=YYYY-MM-DD)
   ├── reference/place_categories ─► stg_place_categories     ─► silver_place_categories (bridge)
   ├── google_maps/reviews        ─► stg_google_maps_reviews  ─► silver_travel_reviews
   ├── google_maps/ratings        ─► stg_google_maps_ratings  ─► silver_google_maps_rating_snapshots
-  ├── youtube/videos             ─► stg_youtube_videos       ─► silver_youtube_videos
+  ├── youtube/videos             ─► stg_youtube_videos       ─┬► silver_youtube_videos
+  │                                                           └► silver_youtube_video_snapshots
   └── youtube/comments           ─► stg_youtube_comments     ─► silver_youtube_comments
                                                                   │
                      tất cả bảng Silver ─────────────────────────► silver_place_temporal_coverage

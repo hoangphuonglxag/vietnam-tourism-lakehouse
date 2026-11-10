@@ -25,6 +25,7 @@ SILVER_TABLES = [
     "silver_place_categories",
     "silver_travel_reviews",
     "silver_youtube_videos",
+    "silver_youtube_video_snapshots",
     "silver_youtube_comments",
     "silver_google_maps_rating_snapshots",
     "silver_place_temporal_coverage",

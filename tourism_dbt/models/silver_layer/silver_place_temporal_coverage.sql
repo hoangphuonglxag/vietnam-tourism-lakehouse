@@ -70,6 +70,19 @@ video_stats AS (
 
 ),
 
+video_snapshot_stats AS (
+
+    SELECT
+        place_id,
+        COUNT(*)                                            AS video_snapshot_count,
+        COUNT(DISTINCT snapshot_date)                       AS video_snapshot_date_count,
+        MIN(snapshot_date)                                  AS video_min_snapshot_date,
+        MAX(snapshot_date)                                  AS video_max_snapshot_date
+    FROM {{ ref('silver_youtube_video_snapshots') }}
+    GROUP BY place_id
+
+),
+
 comment_stats AS (
 
     SELECT
@@ -152,6 +165,10 @@ joined AS (
         v.video_min_published_date,
         v.video_max_published_date,
         COALESCE(v.video_active_month_count, 0)     AS video_active_month_count,
+        COALESCE(vs.video_snapshot_count, 0)        AS video_snapshot_count,
+        COALESCE(vs.video_snapshot_date_count, 0)   AS video_snapshot_date_count,
+        vs.video_min_snapshot_date,
+        vs.video_max_snapshot_date,
 
         COALESCE(c.comment_count, 0)                AS comment_count,
         COALESCE(c.comment_dated_count, 0)          AS comment_dated_count,
@@ -167,11 +184,12 @@ joined AS (
         ao.as_of_date
 
     FROM places AS p
-    LEFT JOIN review_stats   AS r  ON p.place_id = r.place_id
-    LEFT JOIN video_stats    AS v  ON p.place_id = v.place_id
-    LEFT JOIN comment_stats  AS c  ON p.place_id = c.place_id
-    LEFT JOIN rating_stats   AS rt ON p.place_id = rt.place_id
-    LEFT JOIN activity_stats AS a  ON p.place_id = a.place_id
+    LEFT JOIN review_stats         AS r  ON p.place_id = r.place_id
+    LEFT JOIN video_stats          AS v  ON p.place_id = v.place_id
+    LEFT JOIN video_snapshot_stats AS vs ON p.place_id = vs.place_id
+    LEFT JOIN comment_stats        AS c  ON p.place_id = c.place_id
+    LEFT JOIN rating_stats         AS rt ON p.place_id = rt.place_id
+    LEFT JOIN activity_stats       AS a  ON p.place_id = a.place_id
     CROSS JOIN as_of AS ao
 
 ),
@@ -213,7 +231,8 @@ classified AS (
         COALESCE(days_since_last_activity <= {{ recent_days }}, FALSE)      AS has_recent_data,
         (total_record_count > 0
             AND total_active_month_count <= {{ sparse_max_active_months }}) AS is_sparse,
-        (rating_snapshot_count >= {{ min_rating_snapshots }})               AS has_rating_history
+        (rating_snapshot_count >= {{ min_rating_snapshots }})               AS has_rating_history,
+        (video_snapshot_date_count >= {{ min_rating_snapshots }})           AS has_video_view_history
     FROM flags
 
 )
@@ -238,6 +257,10 @@ SELECT
     video_min_published_date,
     video_max_published_date,
     video_active_month_count,
+    video_snapshot_count,
+    video_snapshot_date_count,
+    video_min_snapshot_date,
+    video_max_snapshot_date,
 
     -- YouTube comments
     comment_count,
@@ -265,6 +288,7 @@ SELECT
     has_recent_data,
     is_sparse,
     has_rating_history,
+    has_video_view_history,
     CASE
         WHEN total_record_count = 0                         THEN 'no_data'
         WHEN has_temporal_history AND has_recent_data       THEN 'forecast_ready'

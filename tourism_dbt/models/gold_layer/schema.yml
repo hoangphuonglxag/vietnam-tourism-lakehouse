@@ -1,0 +1,715 @@
+version: 2
+
+# =============================================================================
+# GOLD MODELS (3 DATA MARTS — 6 TABLES)
+# Quy tắc chất lượng: not_null, unique, unique_combination_of_columns,
+# accepted_values, accepted_range, not_negative, expression_is_true, relationships.
+# =============================================================================
+
+models:
+
+  # ===========================================================================
+  # MART 1: MART_GROWTH_AND_TRENDS
+  # ===========================================================================
+
+  - name: gold_fct_place_monthly_growth
+    description: '{{ doc("gold_fct_place_monthly_growth") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - place_id
+              - activity_month
+      - expression_is_true:
+          arguments:
+            expression: "new_reviews_count > 0 OR new_videos_published_count > 0 OR new_comments_count > 0"
+      - expression_is_true:
+          arguments:
+            expression: "positive_reviews_count + neutral_reviews_count + negative_reviews_count <= new_reviews_count"
+    columns:
+      - name: place_month_id
+        description: Khóa chính tổng hợp (`place_id|activity_month`).
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: Mã định danh địa điểm du lịch.
+        data_tests:
+          - not_null
+      - name: place_name
+        description: Tên địa điểm du lịch chuẩn hóa.
+      - name: province_id
+        description: Mã tỉnh/thành phố (2 ký tự).
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+      - name: is_place_in_dim
+        description: Cờ đánh dấu place_id nằm trong danh mục chuẩn 1.741 địa điểm.
+        data_tests:
+          - not_null
+      - name: primary_category_id
+        description: Mã danh mục du lịch chính của địa điểm.
+      - name: primary_category_group
+        description: Nhóm danh mục du lịch cấp 1.
+      - name: primary_category_name
+        description: Tên danh mục du lịch cấp 2.
+      - name: activity_month
+        description: Tháng hoạt động (ngày đầu tháng YYYY-MM-01).
+        data_tests:
+          - not_null
+      - name: activity_year
+        description: Năm hoạt động.
+        data_tests:
+          - not_null
+      - name: activity_quarter
+        description: Quý hoạt động (1..4).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: new_reviews_count
+        description: Số lượng đánh giá Google Maps mới trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: new_reviews_with_text_count
+        description: Số lượng đánh giá có nội dung văn bản trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: monthly_avg_review_rating
+        description: Điểm đánh giá trung bình của các review trong tháng (1..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: positive_reviews_count
+        description: Số lượng đánh giá tích cực (4★ - 5★) trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: neutral_reviews_count
+        description: Số lượng đánh giá trung lập (3★) trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: negative_reviews_count
+        description: Số lượng đánh giá tiêu cực (1★ - 2★) trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: monthly_net_sentiment_pct
+        description: Tỷ lệ cảm xúc ròng trong tháng ((Tích cực - Tiêu cực) / Tổng có chấm sao * 100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -100
+                max_value: 100
+      - name: review_likes_sum
+        description: Tổng số lượt thích trên các review trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: new_videos_published_count
+        description: Số lượng video YouTube mới xuất bản trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: new_videos_current_views_sum
+        description: Tổng số lượt xem hiện tại của các video xuất bản trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: new_comments_count
+        description: Số lượng bình luận YouTube mới trong tháng.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: cumulative_reviews_count
+        description: Tổng số lượng đánh giá lũy kế của địa điểm tính đến tháng hiện tại.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: cumulative_videos_count
+        description: Tổng số lượng video YouTube lũy kế của địa điểm tính đến tháng hiện tại.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: prev_month_reviews_count
+        description: Số lượng đánh giá của kỳ hoạt động liền trước.
+        data_tests:
+          - not_negative
+      - name: mom_reviews_delta
+        description: Chênh lệch số lượng đánh giá so với kỳ hoạt động liền trước.
+      - name: mom_reviews_growth_pct
+        description: Tỷ lệ phần trăm tăng trưởng số lượng đánh giá so với kỳ trước.
+      - name: rolling_3m_reviews_avg
+        description: Trung bình trượt số lượng đánh giá trong 3 kỳ hoạt động gần nhất.
+        data_tests:
+          - not_null
+          - not_negative
+
+  - name: gold_fct_place_snapshot_trajectory
+    description: '{{ doc("gold_fct_place_snapshot_trajectory") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - place_id
+              - snapshot_date
+      - expression_is_true:
+          arguments:
+            expression: "has_google_maps_snapshot OR has_youtube_snapshot"
+      - expression_is_true:
+          arguments:
+            expression: "prev_snapshot_date IS NULL OR prev_snapshot_date < snapshot_date"
+    columns:
+      - name: place_snapshot_id
+        description: Khóa chính tổng hợp (`place_id|snapshot_date`).
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: Mã định danh địa điểm du lịch.
+        data_tests:
+          - not_null
+      - name: place_name
+        description: Tên địa điểm du lịch.
+      - name: province_id
+        description: Mã tỉnh/thành phố.
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+      - name: is_place_in_dim
+        description: Cờ đánh dấu địa điểm nằm trong danh mục chuẩn.
+        data_tests:
+          - not_null
+      - name: primary_category_id
+        description: Mã danh mục du lịch chính.
+      - name: primary_category_group
+        description: Nhóm danh mục du lịch cấp 1.
+      - name: primary_category_name
+        description: Tên danh mục du lịch cấp 2.
+      - name: snapshot_date
+        description: Ngày thu thập snapshot (UTC).
+        data_tests:
+          - not_null
+      - name: snapshot_seq_num
+        description: Thứ tự đợt snapshot của địa điểm theo thời gian (1, 2, 3...).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: prev_snapshot_date
+        description: Ngày thu thập snapshot liền trước của địa điểm.
+      - name: days_since_prev_snapshot
+        description: Số ngày cách đợt snapshot liền trước.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: has_google_maps_snapshot
+        description: Cờ đánh dấu có dữ liệu rating Google Maps trong ngày snapshot.
+        data_tests:
+          - not_null
+      - name: google_rating
+        description: Điểm đánh giá tổng hợp trên Google Maps (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: prev_google_rating
+        description: Điểm đánh giá Google Maps ở đợt snapshot trước.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: rating_delta
+        description: Biến động điểm đánh giá Google Maps giữa 2 đợt snapshot.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -5
+                max_value: 5
+      - name: google_review_count
+        description: Tổng số lượng đánh giá hiển thị trên Google Maps tại ngày snapshot.
+        data_tests:
+          - not_negative
+      - name: prev_google_review_count
+        description: Tổng số lượng đánh giá Google Maps ở đợt snapshot trước.
+        data_tests:
+          - not_negative
+      - name: review_count_delta
+        description: Chênh lệch tổng số lượng đánh giá Google Maps giữa 2 đợt snapshot.
+      - name: review_daily_velocity
+        description: Tốc độ tăng số lượng đánh giá trung bình mỗi ngày giữa 2 đợt snapshot.
+      - name: has_youtube_snapshot
+        description: Cờ đánh dấu có dữ liệu snapshot video YouTube trong ngày.
+        data_tests:
+          - not_null
+      - name: tracked_videos_count
+        description: Số lượng video YouTube của địa điểm được chụp trong ngày snapshot.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_youtube_views
+        description: Tổng lượt xem của các video thuộc địa điểm tại ngày snapshot.
+        data_tests:
+          - not_negative
+      - name: prev_total_youtube_views
+        description: Tổng lượt xem YouTube của địa điểm ở đợt snapshot liền trước.
+        data_tests:
+          - not_negative
+      - name: youtube_views_delta
+        description: Chênh lệch tổng lượt xem YouTube giữa 2 đợt snapshot.
+      - name: youtube_views_daily_growth
+        description: Tốc độ tăng trưởng lượt xem YouTube trung bình mỗi ngày giữa 2 đợt snapshot.
+
+  # ===========================================================================
+  # MART 2: MART_PLACE_REPUTATION_AND_VIRAL
+  # ===========================================================================
+
+  - name: gold_obt_place_360_profile
+    description: '{{ doc("gold_obt_place_360_profile") }}'
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "latitude IS NULL OR (latitude BETWEEN -90 AND 90)"
+      - expression_is_true:
+          arguments:
+            expression: "longitude IS NULL OR (longitude BETWEEN -180 AND 180)"
+    columns:
+      - name: place_id
+        description: Mã định danh địa điểm du lịch (khóa chính, 1-1 với silver_places).
+        data_tests:
+          - not_null
+          - unique
+      - name: place_name
+        description: Tên địa điểm du lịch.
+        data_tests:
+          - not_null
+      - name: province_id
+        description: Mã tỉnh/thành phố (2 ký tự).
+        data_tests:
+          - not_null
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+        data_tests:
+          - not_null
+      - name: category_count
+        description: Số lượng danh mục du lịch được gán cho địa điểm.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: latest_google_rating
+        description: Điểm đánh giá Google Maps ở đợt snapshot mới nhất (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: latest_google_review_count
+        description: Tổng số lượng đánh giá Google Maps ở đợt snapshot mới nhất.
+        data_tests:
+          - not_negative
+      - name: total_rating_delta
+        description: Tổng mức thay đổi điểm đánh giá Google Maps từ lần chụp đầu tiên đến mới nhất.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -5
+                max_value: 5
+      - name: rating_5_pct
+        description: Tỷ lệ phần trăm đánh giá 5 sao (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: rating_4_pct
+        description: Tỷ lệ phần trăm đánh giá 4 sao (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: rating_3_pct
+        description: Tỷ lệ phần trăm đánh giá 3 sao (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: rating_2_pct
+        description: Tỷ lệ phần trăm đánh giá 2 sao (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: rating_1_pct
+        description: Tỷ lệ phần trăm đánh giá 1 sao (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: net_sentiment_score
+        description: Điểm cảm xúc ròng của du khách (-100..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -100
+                max_value: 100
+      - name: rating_trend_direction
+        description: Xu hướng biến động điểm đánh giá qua các kỳ snapshot.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['improving', 'stable', 'declining', 'single_snapshot', 'no_data']
+      - name: crawled_review_count
+        description: Tổng số lượng đánh giá chi tiết đã thu thập cho địa điểm.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: crawled_avg_rating
+        description: Điểm đánh giá trung bình tính trên các review chi tiết đã thu thập (1..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: text_review_ratio
+        description: Tỷ lệ phần trăm review có nội dung bình luận văn bản (0..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: reviews_last_90d_count
+        description: Số lượng review trong 90 ngày gần nhất tính đến as_of_date.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: reviews_prev_90d_count
+        description: Số lượng review trong cửa sổ 90–180 ngày trước as_of_date.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: youtube_video_count
+        description: Tổng số lượng video YouTube quảng bá địa điểm.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: distinct_channel_count
+        description: Số lượng kênh YouTube khác nhau đã đăng video về địa điểm.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_youtube_views
+        description: Tổng số lượt xem YouTube của tất cả video thuộc địa điểm.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: views_growth_direction
+        description: Phân loại tốc độ tăng trưởng lượt xem YouTube của địa điểm.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['surging', 'growing', 'steady', 'stagnant', 'single_snapshot', 'no_video']
+      - name: coverage_status
+        description: Trạng thái độ phủ dữ liệu chuỗi thời gian từ silver_place_temporal_coverage.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['no_data', 'forecast_ready', 'sparse', 'recent_only', 'stale_history', 'partial']
+      - name: is_forecast_eligible
+        description: Cờ đánh dấu địa điểm đủ dữ liệu lịch sử và gần đây để dự báo chuỗi thời gian.
+        data_tests:
+          - not_null
+      - name: province_popularity_rank
+        description: Thứ hạng mức độ phổ biến của địa điểm trong phạm vi tỉnh/thành phố.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: national_popularity_rank
+        description: Thứ hạng mức độ phổ biến của địa điểm trên phạm vi toàn quốc (1..1741).
+        data_tests:
+          - not_null
+          - unique
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: place_development_stage
+        description: Phân cụm giai đoạn phát triển chiến lược của địa điểm.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Leading Hotspot'
+                  - 'Established Destination'
+                  - 'Rising Star'
+                  - 'Steady Destination'
+                  - 'Cooling / At Risk'
+                  - 'Emerging / Low Data'
+
+  - name: gold_fct_youtube_video_performance
+    description: '{{ doc("gold_fct_youtube_video_performance") }}'
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - place_id
+              - video_id
+    columns:
+      - name: place_video_id
+        description: Khóa chính tổng hợp (`place_id|video_id`).
+        data_tests:
+          - not_null
+          - unique
+      - name: place_id
+        description: Mã định danh địa điểm du lịch.
+        data_tests:
+          - not_null
+      - name: video_id
+        description: Mã định danh video YouTube.
+        data_tests:
+          - not_null
+      - name: is_place_in_dim
+        description: Cờ đánh dấu place_id nằm trong danh mục chuẩn 1.741 địa điểm.
+        data_tests:
+          - not_null
+      - name: duration_seconds
+        description: Thời lượng video tính bằng giây.
+        data_tests:
+          - not_negative
+      - name: video_age_days
+        description: Tuổi đời của video tính từ ngày đăng đến ngày snapshot mới nhất (ngày).
+        data_tests:
+          - not_negative
+      - name: snapshot_count
+        description: Số lượng đợt snapshot đã ghi nhận cho cặp (place_id, video_id).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: first_views
+        description: Lượt xem ở đợt snapshot đầu tiên.
+        data_tests:
+          - not_negative
+      - name: latest_views
+        description: Lượt xem ở đợt snapshot mới nhất.
+        data_tests:
+          - not_negative
+      - name: avg_daily_views_since_publish
+        description: Tốc độ thu hút lượt xem trung bình mỗi ngày kể từ khi xuất bản video.
+        data_tests:
+          - not_negative
+      - name: crawled_comment_count
+        description: Số lượng bình luận đã thu thập cho video.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: place_video_view_rank
+        description: Thứ hạng lượt xem của video trong phạm vi cùng một địa điểm.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+
+  # ===========================================================================
+  # MART 3: MART_REGIONAL_AND_CATEGORY
+  # ===========================================================================
+
+  - name: gold_fct_province_tourism_summary
+    description: '{{ doc("gold_fct_province_tourism_summary") }}'
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "active_places_count <= total_places_count"
+      - expression_is_true:
+          arguments:
+            expression: "forecast_ready_places_count <= total_places_count"
+    columns:
+      - name: province_id
+        description: Mã tỉnh/thành phố chuẩn 2 ký tự (khóa chính, 34 tỉnh/thành phố).
+        data_tests:
+          - not_null
+          - unique
+      - name: province_name
+        description: Tên tỉnh/thành phố.
+        data_tests:
+          - not_null
+      - name: total_places_count
+        description: Tổng số lượng địa điểm du lịch thuộc tỉnh trong danh mục chuẩn.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: active_places_count
+        description: Số lượng địa điểm có dữ liệu hoạt động (review hoặc video).
+        data_tests:
+          - not_null
+          - not_negative
+      - name: forecast_ready_places_count
+        description: Số lượng địa điểm đạt chuẩn forecast_ready.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: leading_hotspot_count
+        description: Số lượng địa điểm thuộc nhóm Leading Hotspot trong tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: rising_star_count
+        description: Số lượng địa điểm thuộc nhóm Rising Star trong tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: province_weighted_avg_rating
+        description: Điểm đánh giá trung bình gia quyền theo số lượng review của tỉnh (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: province_simple_avg_rating
+        description: Điểm đánh giá trung bình cộng giản đơn của các địa điểm trong tỉnh (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: total_google_review_count
+        description: Tổng số lượng đánh giá Google Maps của toàn tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_crawled_review_count
+        description: Tổng số lượng đánh giá văn bản chi tiết đã thu thập của toàn tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: province_net_sentiment_score
+        description: Điểm cảm xúc ròng trung bình của tỉnh (-100..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -100
+                max_value: 100
+      - name: total_youtube_videos_count
+        description: Tổng số lượng video YouTube của các địa điểm trong tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_youtube_views
+        description: Tổng số lượt xem YouTube của các địa điểm trong tỉnh.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: national_tourism_rank
+        description: Thứ hạng du lịch toàn quốc của tỉnh/thành phố (1..34).
+        data_tests:
+          - not_null
+          - unique
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 34
+
+  - name: gold_fct_category_tourism_summary
+    description: '{{ doc("gold_fct_category_tourism_summary") }}'
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "primary_places_count <= total_places_count"
+    columns:
+      - name: category_id
+        description: Mã loại hình du lịch chuẩn (CAT001..CAT020, khóa chính).
+        data_tests:
+          - not_null
+          - unique
+      - name: category_group
+        description: Nhóm phân loại cấp 1.
+        data_tests:
+          - not_null
+      - name: category_name
+        description: Nhóm phân loại cấp 2.
+        data_tests:
+          - not_null
+      - name: total_places_count
+        description: Tổng số lượng địa điểm được gán loại hình du lịch này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: primary_places_count
+        description: Số lượng địa điểm lấy loại hình này làm danh mục chính (is_primary = true).
+        data_tests:
+          - not_null
+          - not_negative
+      - name: provinces_covered_count
+        description: Số lượng tỉnh/thành phố có sự hiện diện của loại hình du lịch này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: category_weighted_avg_rating
+        description: Điểm đánh giá trung bình gia quyền của loại hình du lịch (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: category_simple_avg_rating
+        description: Điểm đánh giá trung bình cộng giản đơn của loại hình du lịch (0..5).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 5
+      - name: total_google_review_count
+        description: Tổng số lượng đánh giá Google Maps thuộc loại hình này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_crawled_review_count
+        description: Tổng số lượng đánh giá chi tiết đã thu thập thuộc loại hình này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: category_net_sentiment_score
+        description: Điểm cảm xúc ròng trung bình của loại hình du lịch (-100..100).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: -100
+                max_value: 100
+      - name: total_youtube_videos_count
+        description: Tổng số lượng video YouTube thuộc loại hình du lịch này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: total_youtube_views
+        description: Tổng số lượt xem YouTube thuộc loại hình du lịch này.
+        data_tests:
+          - not_null
+          - not_negative
+      - name: category_popularity_rank
+        description: Thứ hạng mức độ phổ biến của loại hình du lịch (1..19).
+        data_tests:
+          - not_null
+          - unique
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 19

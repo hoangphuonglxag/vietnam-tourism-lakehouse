@@ -31,11 +31,43 @@ SILVER_TABLES = [
     "silver_place_temporal_coverage",
 ]
 
+GOLD_TABLES = [
+    "gold_fct_place_monthly_growth",
+    "gold_fct_place_snapshot_trajectory",
+    "gold_obt_place_360_profile",
+    "gold_fct_youtube_video_performance",
+    "gold_fct_province_tourism_summary",
+    "gold_fct_category_tourism_summary",
+]
 
-def ensure_warehouse() -> None:
+LAYER_CONFIGS = {
+    "silver": {
+        "warehouse": WAREHOUSE,
+        "namespace": NAMESPACE,
+        "s3_prefix": S3_KEY_PREFIX,
+        "tables": SILVER_TABLES,
+    },
+    "gold": {
+        "warehouse": WAREHOUSE,
+        "namespace": os.getenv("ICEBERG_GOLD_NAMESPACE", "gold"),
+        "s3_prefix": S3_KEY_PREFIX,
+        "tables": GOLD_TABLES,
+    },
+}
+
+
+def get_layer_config(layer: str = "silver") -> dict:
+    """Return warehouse, namespace, s3_prefix, and table list for the given layer."""
+    normalized = layer.strip().lower()
+    if normalized not in LAYER_CONFIGS:
+        raise ValueError(f"Unsupported layer '{layer}'. Choose from: {list(LAYER_CONFIGS.keys())}")
+    return LAYER_CONFIGS[normalized]
+
+
+def ensure_warehouse(warehouse_name: str = WAREHOUSE, s3_prefix: str = S3_KEY_PREFIX) -> None:
     """
     Ensure Lakekeeper is bootstrapped and the target warehouse exists
-    pointing to s3://<S3_BUCKET>/<S3_KEY_PREFIX> on MinIO.
+    pointing to s3://<S3_BUCKET>/<s3_prefix> on MinIO.
     """
     info_resp = requests.get(f"{LAKEKEEPER_BASE_URL}/management/v1/info", timeout=15)
     info_resp.raise_for_status()
@@ -56,17 +88,17 @@ def ensure_warehouse() -> None:
     wh_resp.raise_for_status()
     warehouses = wh_resp.json().get("warehouses", [])
 
-    if any(w.get("name") == WAREHOUSE for w in warehouses):
+    if any(w.get("name") == warehouse_name for w in warehouses):
         return
 
-    print(f"Creating Lakekeeper warehouse '{WAREHOUSE}' -> s3://{S3_BUCKET}/{S3_KEY_PREFIX}")
+    print(f"Creating Lakekeeper warehouse '{warehouse_name}' -> s3://{S3_BUCKET}/{s3_prefix}")
     payload = {
-        "warehouse-name": WAREHOUSE,
+        "warehouse-name": warehouse_name,
         "project-id": project_id,
         "storage-profile": {
             "type": "s3",
             "bucket": S3_BUCKET,
-            "key-prefix": S3_KEY_PREFIX,
+            "key-prefix": s3_prefix,
             "region": S3_REGION,
             "endpoint": S3_ENDPOINT,
             "path-style-access": True,
@@ -92,18 +124,20 @@ def ensure_warehouse() -> None:
     create_resp.raise_for_status()
 
 
-def get_catalog():
+def get_catalog(layer: str = "silver"):
     """
-    Connect to Lakekeeper's Iceberg REST Catalog (auto-initializing the warehouse if needed).
+    Connect to Lakekeeper's Iceberg REST Catalog for the specified layer
+    (auto-initializing the warehouse if needed).
     """
-    ensure_warehouse()
+    cfg = get_layer_config(layer)
+    ensure_warehouse(warehouse_name=cfg["warehouse"], s3_prefix=cfg["s3_prefix"])
 
     catalog = load_catalog(
-        CATALOG_NAME,
+        f"{CATALOG_NAME}_{layer}",
         **{
             "type": "rest",
             "uri": LAKEKEEPER_URI,
-            "warehouse": WAREHOUSE,
+            "warehouse": cfg["warehouse"],
             "s3.endpoint": S3_ENDPOINT,
             "s3.access-key-id": S3_ACCESS_KEY,
             "s3.secret-access-key": S3_SECRET_KEY,
@@ -120,24 +154,17 @@ def main():
     print("Testing Lakekeeper REST Catalog")
     print("========================================")
 
-    catalog = get_catalog()
+    for layer_name, cfg in LAYER_CONFIGS.items():
+        catalog = get_catalog(layer_name)
+        ns = cfg["namespace"]
 
-    print()
-    print("Catalog connected successfully.")
-    print()
-    print("Namespaces:")
-
-    namespaces = catalog.list_namespaces()
-    for namespace in namespaces:
-        print(f"  - {namespace}")
-
-    if not catalog.namespace_exists(NAMESPACE):
         print()
-        print(f"Creating namespace: {NAMESPACE}")
-        catalog.create_namespace(NAMESPACE)
-    else:
-        print()
-        print(f"Namespace already exists: {NAMESPACE}")
+        print(f"Layer '{layer_name}' -> Warehouse '{cfg['warehouse']}' connected.")
+        if not catalog.namespace_exists(ns):
+            print(f"  Creating namespace: {ns}")
+            catalog.create_namespace(ns)
+        else:
+            print(f"  Namespace already exists: {ns}")
 
     print()
     print("========================================")

@@ -351,7 +351,7 @@ models:
           arguments:
             compare_model: ref('stg_google_maps_reviews')
             compare_distinct_column: review_id
-            compare_filter: "review_id IS NOT NULL AND place_id IS NOT NULL AND crawled_at_utc IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
+            compare_filter: "review_id IS NOT NULL AND place_id IS NOT NULL AND UPPER(place_id) <> 'TEST' AND crawled_at_utc IS NOT NULL AND COALESCE(bronze_record_status, 'success') = 'success'"
       # Coverage so với toàn bộ review_id ở Bronze (kể cả bản ghi thiếu trường)
       - row_count_ratio:
           arguments:
@@ -379,11 +379,17 @@ models:
               config:
                 severity: warn
       - name: place_name
-        description: Tên địa điểm lấy từ silver_places (NULL nếu place không có trong dimension).
+        description: Tên địa điểm (ưu tiên silver_places, fallback sang metadata lịch sử).
+        data_tests:
+          - not_null
       - name: province_id
-        description: Mã tỉnh chuẩn lấy từ silver_places.
+        description: Mã tỉnh chuẩn 2 ký tự (ưu tiên silver_places, fallback sang metadata lịch sử).
+        data_tests:
+          - not_null
       - name: province_name
-        description: Tên tỉnh lấy từ silver_places.
+        description: Tên tỉnh (ưu tiên silver_places, fallback sang metadata lịch sử).
+        data_tests:
+          - not_null
       - name: is_place_in_dim
         description: TRUE nếu place_id tồn tại trong silver_places.
         data_tests:

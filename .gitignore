@@ -27,6 +27,7 @@ tmp/
 RUNBOOK_INGESTION_BRONZE.txt
 
 # Generated data
+data/
 data.zip
 data/bronze/
 data/silver/

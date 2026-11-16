@@ -2,13 +2,52 @@
 
 WITH valid_records AS (
 
-    -- BƯỚC 1: loại bản ghi thiếu khóa / quarantine
+    -- BƯỚC 1: loại bản ghi thiếu khóa / bản ghi test giả / quarantine
     SELECT *
     FROM {{ ref('stg_google_maps_reviews') }}
     WHERE review_id IS NOT NULL
       AND place_id IS NOT NULL
+      AND UPPER(place_id) <> 'TEST'
       AND crawled_at_utc IS NOT NULL
       AND COALESCE(bronze_record_status, 'success') = 'success'
+
+),
+
+fallback_place_metadata AS (
+
+    -- Bổ sung metadata địa điểm từ nguồn Google Maps Ratings & YouTube Videos cho các place lịch sử ngoài silver_places
+    SELECT
+        place_id,
+        place_name,
+        province_id,
+        province_name
+    FROM (
+        SELECT
+            place_id,
+            place_name,
+            province_id,
+            province_name,
+            crawled_at_utc,
+            1 AS source_priority
+        FROM {{ ref('stg_google_maps_ratings') }}
+        WHERE place_id IS NOT NULL AND place_name IS NOT NULL
+
+        UNION ALL
+
+        SELECT
+            place_id,
+            place_name,
+            province_id,
+            province_name,
+            crawled_at_utc,
+            2 AS source_priority
+        FROM {{ ref('stg_youtube_videos') }}
+        WHERE place_id IS NOT NULL AND place_name IS NOT NULL
+    )
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY place_id
+        ORDER BY source_priority ASC, crawled_at_utc DESC NULLS LAST
+    ) = 1
 
 ),
 
@@ -117,14 +156,14 @@ cleaned AS (
 
 enriched AS (
 
-    -- BƯỚC 7: chuẩn hóa place/province theo dimension (LEFT JOIN, place_id unique ở dim)
+    -- BƯỚC 7: chuẩn hóa place/province ưu tiên silver_places, fallback sang metadata lịch sử
     SELECT
         c.review_id,
         c.place_id,
-        p.place_name,
-        p.province_id,
-        p.province_name,
-        (p.place_id IS NOT NULL)        AS is_place_in_dim,
+        COALESCE(p.place_name, fb.place_name)                           AS place_name,
+        COALESCE(p.province_id, fb.province_id)                         AS province_id,
+        COALESCE(p.province_name, prov.province_name, fb.province_name) AS province_name,
+        (p.place_id IS NOT NULL)                                        AS is_place_in_dim,
 
         c.rating,
         c.review_text,
@@ -145,6 +184,10 @@ enriched AS (
     FROM cleaned AS c
     LEFT JOIN {{ ref('silver_places') }} AS p
         ON c.place_id = p.place_id
+    LEFT JOIN fallback_place_metadata AS fb
+        ON c.place_id = fb.place_id
+    LEFT JOIN {{ ref('silver_provinces') }} AS prov
+        ON COALESCE(p.province_id, fb.province_id) = prov.province_id
 
 )
 

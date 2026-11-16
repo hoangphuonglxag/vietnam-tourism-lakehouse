@@ -92,6 +92,18 @@ OSM_RULES = {
         ("natural", "coastal", "cape")
     ],
 
+    ("natural", "spring"): [
+        ("natural", "landscape", "waterfall")
+    ],
+
+    ("natural", "hot_spring"): [
+        ("natural", "landscape", "waterfall")
+    ],
+
+    ("natural", "cliff"): [
+        ("natural", "landscape", "mountain")
+    ],
+
     ("historic", "monument"): [
         ("heritage", "historical", "monument")
     ],
@@ -120,6 +132,10 @@ OSM_RULES = {
         ("heritage", "historical", "monument")
     ],
 
+    ("historic", "heritage"): [
+        ("heritage", "historical", "monument")
+    ],
+
     ("tourism", "museum"): [
         ("culture", "museum", "museum")
     ],
@@ -130,6 +146,14 @@ OSM_RULES = {
 
     ("tourism", "gallery"): [
         ("culture", "arts", "gallery")
+    ],
+
+    ("tourism", "artwork"): [
+        ("culture", "arts", "gallery")
+    ],
+
+    ("tourism", "aquarium"): [
+        ("recreation", "amusement", "zoo")
     ],
 
     ("tourism", "viewpoint"): [
@@ -145,6 +169,14 @@ OSM_RULES = {
     ],
 
     ("leisure", "park"): [
+        ("recreation", "park", "public_park")
+    ],
+
+    ("leisure", "garden"): [
+        ("recreation", "park", "public_park")
+    ],
+
+    ("leisure", "nature_reserve"): [
         ("recreation", "park", "public_park")
     ],
 
@@ -221,11 +253,7 @@ def classify_row(row):
 
     tourism = row.get("tourism")
 
-    if (
-        pd.notna(tourism)
-        and tourism == "attraction"
-        and not categories
-    ):
+    if not categories:
         categories.append(
             ("other", "attraction", "general_attraction")
         )

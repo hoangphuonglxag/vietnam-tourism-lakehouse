@@ -15,6 +15,9 @@ from ..config import (
     YOUTUBE_COMMENTS_FILE,
     YOUTUBE_VIDEOS_FILE,
     MAX_COMMENTS_PER_VIDEO,
+    SUCCESS,
+    classify_error,
+    is_success_status,
     ensure_data_directories,
     env_bool,
     env_int,
@@ -24,7 +27,6 @@ from ..utils.ingestion_storage import BronzeWriter, CheckpointStore, new_run_id
 from ..metrics.ingestion import RunMetrics
 from ..utils.crawl_plan import load_crawl_plan, run_context, successful_item_ids
 from ...alerts.discord import crawl_progress
-from ..utils import SUCCESS, classify_error, is_success_status
 
 
 COMMENT_COLUMNS = [
@@ -178,11 +180,16 @@ def run() -> None:
             video_id = str(video.get("video_id", ""))
             if not video_id:
                 metrics.mark("skipped")
+                remaining -= 1
                 continue
             try:
                 records = crawl_video(client, video, max_comments)
                 for record in records:
-                    record["crawled_at_utc"] = record.pop("crawled_at", "")
+                    record["crawled_at_utc"] = str(
+                        record.get("crawled_at_utc")
+                        or record.pop("crawled_at", None)
+                        or pd.Timestamp.utcnow().isoformat()
+                    )
                 new_records = []
                 for record in records:
                     key = _comment_key(record)
@@ -208,12 +215,22 @@ def run() -> None:
             report = metrics.write()
             crawl_progress("youtube_comments", report, remaining)
             time.sleep(delay_seconds)
-            if remaining == 0:
-                bronze_comments.write(bronze_comment_records)
-                bronze_log.write(bronze_log_records)
+
+        if bronze_comment_records:
+            bronze_comments.write(bronze_comment_records)
+        if bronze_log_records:
+            bronze_log.write(bronze_log_records)
     report = metrics.finish()
-    if report["failed"]:
-        raise RuntimeError(f"YouTube comments had {report['failed']} failed videos")
+    failed_count = int(report.get("failed", 0))
+    success_count = int(report.get("success", 0))
+    if failed_count > 0 and success_count == 0:
+        raise RuntimeError(f"YouTube comments failed completely: {failed_count} failed videos and 0 succeeded")
+    elif failed_count > 0:
+        print(
+            f"[WARNING] YouTube comments had {failed_count} failed videos out of {report.get('total', 0)} "
+            f"(success: {success_count}, rate: {report.get('success_rate', 0):.1%}). Continuing downstream.",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

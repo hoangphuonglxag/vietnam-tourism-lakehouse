@@ -47,6 +47,9 @@ BLOCKED_RE = re.compile(
     re.IGNORECASE,
 )
 
+CARD_IDS_JS = """() => [...new Set([...document.querySelectorAll('[data-review-id]')]
+  .map(e => e.getAttribute('data-review-id')).filter(Boolean))]"""
+
 COUNT_JS = """() => new Set([...document.querySelectorAll('[data-review-id]')]
   .map(e => e.getAttribute('data-review-id')).filter(Boolean)).size"""
 
@@ -116,10 +119,25 @@ class GoogleMapsReviewsCrawler:
         self.context = context
         self.page = context.new_page()
         self.page.set_default_timeout(timeout_ms)
+        # Block heavy assets: images, media, fonts to accelerate loading & reduce RAM
+        self._setup_resource_blocking()
         self.last_status = "NOT_STARTED"
         self.last_total_reviews: int | None = None
         self.last_found_name = ""
         self.last_url = ""
+
+    def _setup_resource_blocking(self) -> None:
+        def intercept(route: Any) -> None:
+            resource_type = route.request.resource_type
+            if resource_type in {"image", "media", "font"}:
+                route.abort()
+            else:
+                route.continue_()
+
+        try:
+            self.page.route("**/*", intercept)
+        except Exception:
+            pass
 
     def close(self) -> None:
         try:
@@ -127,7 +145,12 @@ class GoogleMapsReviewsCrawler:
         except Exception:
             pass
 
-    def crawl_place(self, place: Place, max_count: int | None = None) -> list[Review]:
+    def crawl_place(
+        self,
+        place: Place,
+        max_count: int | None = None,
+        existing_ids: set[str] | None = None,
+    ) -> list[Review]:
         if max_count is None:
             max_count = MAX_REVIEWS_PER_PLACE
         self.last_status = "FAILED"
@@ -137,7 +160,10 @@ class GoogleMapsReviewsCrawler:
 
         self._open_place(place)
         if not self._open_reviews_tab():
-            raise RuntimeError("Không mở được tab Bài đánh giá hoặc review không tải.")
+            # Địa điểm không có mục đánh giá hoặc Google Maps chỉ hiển thị dạng overview
+            print(f"[INFO] Địa điểm không có reviews công khai: {place.place_name}", flush=True)
+            self.last_status = "EMPTY"
+            return []
 
         # Giữ nguyên luồng crawl_review: cố gắng chọn Mới nhất nhưng vẫn crawl
         # nếu Google thay đổi UI khiến không thể xác nhận được menu sắp xếp.
@@ -145,7 +171,7 @@ class GoogleMapsReviewsCrawler:
             print(f"[WARN] Không xác nhận được sort Mới nhất: {place.place_name}", flush=True)
 
         self.last_total_reviews = self._get_total_review_count()
-        rows = self._scroll_and_collect(max_count)
+        rows = self._scroll_and_collect(max_count, existing_ids=existing_ids)
         if not rows:
             self.last_status = "EMPTY"
             return []
@@ -219,8 +245,11 @@ class GoogleMapsReviewsCrawler:
         self.last_url = self.page.url
 
     def _open_reviews_tab(self) -> bool:
+        # Nếu trang không có tab (chỉ có 'Tổng quan', 'Giới thiệu'), kiểm tra xem có reviews nào không
+        # Nếu có nút "Bài đánh giá", bấm vào; nếu không có tab nhưng có nút xem đánh giá thì bấm vào nút đó.
         for reload_no in range(2):
             if reload_no:
+                print("[INFO] Reload lại trang để tải lại giao diện tab...", flush=True)
                 self.page.reload(wait_until="domcontentloaded", timeout=30_000)
                 self._handle_consent()
                 self._check_blocked()
@@ -228,18 +257,27 @@ class GoogleMapsReviewsCrawler:
             for attempt in range(1, 4):
                 try:
                     tab = self.page.get_by_role("tab", name=TAB_RE).first
-                    tab.wait_for(state="visible", timeout=5_000)
-                    tab.scroll_into_view_if_needed()
-                    tab.click(timeout=5_000)
-                    try:
-                        self.page.wait_for_function(TAB_SELECTED_JS, timeout=5_000)
-                    except Exception:
-                        pass
-                    self.page.wait_for_selector(CARD, timeout=10_000)
-                    return True
+                    if tab.is_visible(timeout=2_000):
+                        tab.scroll_into_view_if_needed()
+                        tab.click(timeout=3_000)
+                        try:
+                            self.page.wait_for_function(TAB_SELECTED_JS, timeout=3_000)
+                        except Exception:
+                            pass
+                        self.page.wait_for_selector(CARD, timeout=5_000)
+                        return True
+                    
+                    # Thử tìm nút xem tất cả bài đánh giá (More reviews / Xem thêm bài đánh giá)
+                    btn = self.page.locator("button[aria-label*='đánh giá'], button[aria-label*='review'], button:has-text('bài đánh giá')").first
+                    if btn.is_visible(timeout=1_500):
+                        btn.click(timeout=3_000)
+                        self.page.wait_for_selector(CARD, timeout=5_000)
+                        return True
                 except Exception:
                     self._check_blocked()
-                    self.page.wait_for_timeout(1_000 * attempt)
+                
+                self.page.wait_for_timeout(1_000 * attempt)
+
         return False
 
     def _sort_by_newest(self) -> bool:
@@ -335,12 +373,22 @@ class GoogleMapsReviewsCrawler:
             return None
         return {key: info.get(key) for key in ("scrollTop", "scrollHeight", "clientHeight", "tag", "role", "cls")}
 
-    def _scroll_and_collect(self, max_count: int) -> list[dict[str, Any]]:
+    def _scroll_and_collect(
+        self,
+        max_count: int,
+        existing_ids: set[str] | None = None,
+    ) -> list[dict[str, Any]]:
         def count_reviews() -> int:
             try:
                 return int(self.page.evaluate(COUNT_JS))
             except Exception:
                 return 0
+
+        def current_ids() -> list[str]:
+            try:
+                return list(self.page.evaluate(CARD_IDS_JS) or [])
+            except Exception:
+                return []
 
         last = count_reviews()
         if max_count and max_count > 0 and last >= max_count:
@@ -367,9 +415,21 @@ class GoogleMapsReviewsCrawler:
             else:
                 # A real keyboard event is a fallback when the scroll panel is not found.
                 self.page.keyboard.press("End")
-            self.page.wait_for_timeout(1_000)
+            self.page.wait_for_timeout(800)
             after_scroll = self._get_scroll_debug()
             now = count_reviews()
+
+            # Early-stopping (Incremental check):
+            # Vì danh sách đã được sắp xếp "Mới nhất" (Newest), nếu phát hiện
+            # các reviews hiện tại đã có trong existing_ids (đã cào từ trước),
+            # ta dừng cuộn ngay lập tức để tiết kiệm thời gian.
+            if existing_ids and now > 0:
+                visible_ids = current_ids()
+                known_count = sum(1 for rid in visible_ids if rid in existing_ids)
+                # Nếu đã gặp từ 3 bài review cũ trở lên, ngừng cuộn ngay
+                if known_count >= 3:
+                    break
+
             if now > last:
                 last = now
                 stagnant = 0

@@ -101,6 +101,24 @@ _OPERATION_DATA = {
     "comments": YOUTUBE_COMMENTS_FILE,
 }
 
+CORE_TOURISM_TAGS = {
+    "attraction",
+    "theme_park",
+    "museum",
+    "gallery",
+    "zoo",
+    "aquarium",
+    "hotel",
+    "resort",
+    "viewpoint",
+    "guest_house",
+    "hostel",
+    "motel",
+}
+CORE_NATURAL_TAGS = {"cave_entrance", "beach", "hot_spring"}
+CORE_HISTORIC_TAGS = {"castle", "archaeological_site", "ruins"}
+CORE_LEISURE_TAGS = {"water_park", "nature_reserve"}
+
 
 def _normalize(value: object) -> str:
     decomposed = unicodedata.normalize("NFKD", str(value or ""))
@@ -224,10 +242,46 @@ def _known_category_terms() -> set[str]:
     }
 
 
+def _load_places_from_minio_or_local() -> pd.DataFrame:
+    """Load curated places with priority: MinIO Bronze S3 -> Local Reference File."""
+    import os
+    s3_uri = os.getenv("TLCN_BRONZE_S3_URI", "s3://lakehouse/bronze").rstrip("/")
+    endpoint = os.getenv("S3_ENDPOINT", "http://minio:9000")
+    key = os.getenv("MINIO_ROOT_USER", "lakehouse_admin")
+    secret = os.getenv("MINIO_ROOT_PASSWORD", "minIO123")
+    region = os.getenv("AWS_REGION", "us-east-1")
+
+    # 1. Thử đọc trực tiếp từ MinIO S3 Object Storage (Cloud-Native Bronze)
+    try:
+        import s3fs
+        s3 = s3fs.S3FileSystem(
+            key=key,
+            secret=secret,
+            client_kwargs={"endpoint_url": endpoint, "region_name": region},
+        )
+        bucket_prefix = s3_uri.removeprefix("s3://") + "/places"
+        if s3.exists(bucket_prefix):
+            all_files = s3.glob(f"{bucket_prefix}/**/*.jsonl")
+            if all_files:
+                # Đọc partition mới nhất trên MinIO
+                latest_file = sorted(all_files)[-1]
+                with s3.open(latest_file, "r", encoding="utf-8") as f:
+                    lines = [json.loads(line) for line in f if line.strip()]
+                    if lines:
+                        df = pd.DataFrame(lines).fillna("")
+                        return df
+    except Exception:
+        pass
+
+    # 2. Fallback sang file local nếu chưa có MinIO hoặc chạy ngoài container
+    if PLACES_FILE.exists():
+        return pd.read_csv(PLACES_FILE, dtype=str, encoding="utf-8-sig").fillna("")
+
+    raise FileNotFoundError(f"Curated places reference is missing in both MinIO S3 and local path: {PLACES_FILE}")
+
+
 def _load_places(request: dict[str, Any]) -> pd.DataFrame:
-    if not PLACES_FILE.exists():
-        raise FileNotFoundError(f"Curated places reference is missing: {PLACES_FILE}")
-    places = pd.read_csv(PLACES_FILE, dtype=str, encoding="utf-8-sig").fillna("")
+    places = _load_places_from_minio_or_local()
     required = {"place_id", "place_name", "province_id", "province_name"}
     missing = sorted(required - set(places.columns))
     if missing:
@@ -236,7 +290,7 @@ def _load_places(request: dict[str, Any]) -> pd.DataFrame:
     if "validation_status" in places:
         places = places[places["validation_status"].str.lower() == "valid"]
     if "crawl_eligible" in places:
-        places = places[places["crawl_eligible"].str.lower().isin({"true", "1", "yes"})]
+        places = places[places["crawl_eligible"].astype(str).str.lower().isin({"true", "1", "yes"})]
     else:
         raise ValueError(
             "Missing crawl_eligible column in curated places reference"
@@ -262,6 +316,28 @@ def _load_places(request: dict[str, Any]) -> pd.DataFrame:
                 f"or not crawl eligible: {missing}"
             )
         places = places[places["place_id"].astype(str).isin(requested)]
+
+    core_only = request.get("core_only")
+    if core_only is None:
+        core_only = True if not requested_place_ids else False
+    elif isinstance(core_only, str):
+        core_only = core_only.lower() in {"true", "1", "yes"}
+    else:
+        core_only = bool(core_only)
+
+    if core_only and not requested_place_ids:
+        c_tourism = places["tourism"].fillna("") if "tourism" in places.columns else pd.Series("", index=places.index)
+        c_natural = places["natural"].fillna("") if "natural" in places.columns else pd.Series("", index=places.index)
+        c_historic = places["historic"].fillna("") if "historic" in places.columns else pd.Series("", index=places.index)
+        c_leisure = places["leisure"].fillna("") if "leisure" in places.columns else pd.Series("", index=places.index)
+
+        is_core = (
+            c_tourism.isin(CORE_TOURISM_TAGS)
+            | c_natural.isin(CORE_NATURAL_TAGS)
+            | c_historic.isin(CORE_HISTORIC_TAGS)
+            | c_leisure.isin(CORE_LEISURE_TAGS)
+        )
+        places = places[is_core]
 
     category = request.get("category")
     if category is not None and (not isinstance(category, str) or not category.strip()):
@@ -465,6 +541,24 @@ def build_crawl_plan(
             ]
             should_run = bool(item_ids)
             operation = _OPERATIONS[dataset]
+
+            # Xây dựng items_map để phân tầng hạn mức (Tiered Limits) theo Category:
+            # - Tier 1 (attraction, museum, theme_park, historic...): cào sâu 100 reviews
+            # - Tier 2 (viewpoint, peak, beach, cave...): cào vừa 30 reviews
+            # - Tier 3 (các điểm nhỏ khác / utility / park): cào nhẹ 10 reviews
+            items_map: dict[str, dict[str, Any]] = {}
+            if dataset == "reviews" and should_run:
+                place_categories = _load_category_terms()
+                for pid in item_ids:
+                    cat_terms = (place_categories.get(pid) or "").lower()
+                    if any(term in cat_terms for term in ("attraction", "museum", "theme_park", "monument", "historic", "resort")):
+                        limit = 100
+                    elif any(term in cat_terms for term in ("viewpoint", "peak", "beach", "cave", "waterfall")):
+                        limit = 30
+                    else:
+                        limit = 15
+                    items_map[pid] = {"max_reviews": limit}
+
             decisions[dataset] = {
                 "operation": operation,
                 "should_run": should_run and not dry_run,
@@ -475,6 +569,7 @@ def build_crawl_plan(
                 "item_type": "place",
                 "item_ids": item_ids,
                 "place_ids": item_ids,
+                "items_map": items_map,
                 "freshness_days": freshness[dataset],
             }
             if dataset == "videos":

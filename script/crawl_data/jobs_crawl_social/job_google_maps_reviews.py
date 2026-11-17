@@ -3,7 +3,10 @@ from __future__ import annotations
 import csv
 import os
 import signal
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import pandas as pd
 from playwright.sync_api import sync_playwright
@@ -152,65 +155,134 @@ def run() -> None:
         return
     bronze = BronzeWriter("google_maps/reviews", "google_maps", run_id=run_id, crawler_version="google-maps-review-1")
 
+    concurrency = max(1, env_int("GOOGLE_MAPS_REVIEWS_CONCURRENCY", 3))
+    concurrency = min(concurrency, len(data))
+    lock = threading.Lock()
+    is_stopped = False
+    sync_csv = env_bool("TLCN_EXPORT_HISTORICAL_CSV", True)
+
     def stop_handler(signum: int, frame: object) -> None:
-        report = metrics.finish("stopped")
-        crawl_progress("google_maps_reviews", report, remaining, stopped=True)
+        nonlocal is_stopped
+        is_stopped = True
+        with lock:
+            report = metrics.finish("stopped")
+            crawl_progress("google_maps_reviews", report, remaining, stopped=True)
         raise SystemExit(143)
 
     signal.signal(signal.SIGTERM, stop_handler)
 
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=headless)
-        context = browser.new_context(locale="vi-VN", timezone_id="Asia/Ho_Chi_Minh")
-        crawler = GoogleMapsReviewsCrawler(context)
+    def process_place(crawler: GoogleMapsReviewsCrawler, row: dict[str, Any]) -> None:
+        nonlocal remaining
+        if is_stopped:
+            return
+        if not row.get("place_id"):
+            with lock:
+                metrics.mark("skipped")
+            return
+        if not plan and not refresh_success and checkpoint.is_fresh(
+            str(row["place_id"]),
+            int(row.get("crawl_interval_days") or 30),
+        ):
+            with lock:
+                metrics.mark("skipped")
+            return
+
+        place = Place(
+            place_id=str(row["place_id"]),
+            place_name=str(row.get("place_name") or row.get("name_vi") or row.get("name_en") or ""),
+            province_name=str(row.get("province_name", "")),
+            latitude=str(row.get("latitude", "")),
+            longitude=str(row.get("longitude", "")),
+        )
+        target_limit = None
+        if plan:
+            decision_item = decision.get("items_map", {}).get(str(row["place_id"]), {})
+            target_limit = decision_item.get("max_reviews")
+        if not target_limit and row.get("max_reviews"):
+            try:
+                target_limit = int(row["max_reviews"])
+            except ValueError:
+                pass
+
         try:
-            for row in data.to_dict("records"):
-                if not row.get("place_id"):
-                    metrics.mark("skipped")
-                    continue
-                if not plan and not refresh_success and checkpoint.is_fresh(
-                    str(row["place_id"]),
-                    int(row.get("crawl_interval_days") or 30),
-                ):
-                    metrics.mark("skipped")
-                    continue
-                place = Place(
-                    place_id=str(row["place_id"]),
-                    place_name=str(row.get("place_name") or row.get("name_vi") or row.get("name_en") or ""),
-                    province_name=str(row.get("province_name", "")),
-                    latitude=str(row.get("latitude", "")),
-                    longitude=str(row.get("longitude", "")),
-                )
-                try:
-                    reviews = crawler.crawl_place(place)
-                    new_reviews = _append(reviews, existing_ids)
-                    metrics.add("reviews_found", len(reviews))
-                    metrics.add("new_reviews", new_reviews)
-                    bronze.write([review.__dict__ for review in reviews], source_id=place.place_id)
-                    if not reviews:
-                        metrics.add("empty_reviews", 1)
-                        checkpoint.mark(place.place_id, "EMPTY")
-                        metrics.mark("empty")
-                    else:
-                        checkpoint.mark(place.place_id, "SUCCESS")
-                        metrics.mark("success")
-                except Exception as error:
-                    checkpoint.mark(place.place_id, type(error).__name__, error_message=str(error))
-                    metrics.mark("failed")
-                    print(f"[ERROR] place_id={place.place_id}: {error}", flush=True)
-                remaining -= 1
-                report = metrics.write()
-                crawl_progress("google_maps_reviews", report, remaining)
-                time.sleep(delay_seconds)
-        finally:
-            crawler.close()
-            browser.close()
+            reviews = crawler.crawl_place(
+                place,
+                max_count=target_limit,
+                existing_ids=existing_ids if not refresh_success else None,
+            )
+            error = None
+        except Exception as error_obj:
+            reviews = []
+            error = error_obj
+
+        with lock:
+            if error is not None:
+                checkpoint.mark(place.place_id, type(error).__name__, error_message=str(error))
+                metrics.mark("failed")
+                print(f"[ERROR] place_id={place.place_id}: {error}", flush=True)
+            else:
+                new_reviews = _append(reviews, existing_ids) if sync_csv else len(reviews)
+                metrics.add("reviews_found", len(reviews))
+                metrics.add("new_reviews", new_reviews)
+                bronze.write([review.__dict__ for review in reviews], source_id=place.place_id)
+                if not reviews:
+                    metrics.add("empty_reviews", 1)
+                    checkpoint.mark(place.place_id, "EMPTY")
+                    metrics.mark("empty")
+                else:
+                    checkpoint.mark(place.place_id, "SUCCESS")
+                    metrics.mark("success")
+
+            remaining -= 1
+            report = metrics.write()
+            crawl_progress("google_maps_reviews", report, remaining)
+
+    def worker_thread(worker_id: int, worker_rows: list[dict[str, Any]]) -> None:
+        if not worker_rows or is_stopped:
+            return
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=headless)
+            context = browser.new_context(locale="vi-VN", timezone_id="Asia/Ho_Chi_Minh")
+            crawler = GoogleMapsReviewsCrawler(context)
+            try:
+                for row in worker_rows:
+                    if is_stopped:
+                        break
+                    process_place(crawler, row)
+                    time.sleep(delay_seconds)
+            finally:
+                crawler.close()
+                browser.close()
+
+    records = data.to_dict("records")
+    batches: list[list[dict[str, Any]]] = [[] for _ in range(concurrency)]
+    for i, record in enumerate(records):
+        batches[i % concurrency].append(record)
+
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = [
+            executor.submit(worker_thread, idx + 1, batch)
+            for idx, batch in enumerate(batches)
+            if batch
+        ]
+        for future in futures:
+            future.result()
     report = metrics.finish()
     if env_bool("GOOGLE_MAPS_REVIEWS_REQUIRE_DATA", False):
         if report["reviews_found"] == 0:
             raise RuntimeError("Review smoke test found no reviews")
-    if report["failed"]:
-        raise RuntimeError(f"Google Maps reviews had {report['failed']} failed places")
+    failed_count = int(report.get("failed", 0))
+    success_count = int(report.get("success", 0))
+    empty_count = int(report.get("empty", 0))
+    valid_count = success_count + empty_count
+    if failed_count > 0 and valid_count == 0:
+        raise RuntimeError(f"Google Maps reviews failed completely: {failed_count} failed places and 0 succeeded")
+    elif failed_count > 0:
+        print(
+            f"[WARNING] Google Maps reviews had {failed_count} failed places out of {report.get('total', 0)} "
+            f"(success: {success_count}, empty: {empty_count}). Continuing downstream.",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

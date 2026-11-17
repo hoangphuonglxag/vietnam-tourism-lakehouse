@@ -9,6 +9,7 @@ x-airflow-common: &airflow-common
     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${AIRFLOW_DB_NAME}
     - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    - AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT=120
     - AIRFLOW__WEBSERVER__SECRET_KEY=dev-airflow-secret-key-tourism-lakehouse-2026
     - DUCKDB_S3_ENDPOINT=minio:9000
     - S3_ENDPOINT=http://minio:9000
@@ -134,12 +135,29 @@ services:
   airflow-webserver:
     <<: *airflow-common
     command: webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=dev-airflow-secret-key-tourism-lakehouse-2026
+      - AIRFLOW__WEBSERVER__WORKERS=2
+      - AIRFLOW__WEBSERVER__WEB_SERVER_MASTER_TIMEOUT=300
+      - AIRFLOW__WEBSERVER__WEB_SERVER_WORKER_TIMEOUT=300
+      - AIRFLOW__WEBSERVER__WORKER_REFRESH_INTERVAL=3600
+      - DUCKDB_S3_ENDPOINT=minio:9000
+      - S3_ENDPOINT=http://minio:9000
+      - LAKEKEEPER_URI=http://lakekeeper:8181/catalog
+      - AWS_REGION=${AWS_REGION}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - PYTHONPATH=/opt/airflow/project
     ports:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
       retries: 5
+      start_period: 180s
     depends_on:
       airflow-init:
         condition: service_completed_successfully

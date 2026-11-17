@@ -2,8 +2,8 @@
 
 # Vietnam Tourism Lakehouse — dbt project
 
-Project dbt này điều phối luồng **Bronze → Staging → Silver** cho dữ liệu du lịch Việt Nam,
-chạy trên **DuckDB** và đọc trực tiếp Bronze (JSONL) trên **MinIO** qua `httpfs`.
+Project dbt này điều phối luồng **Bronze → Staging → Silver → Gold** cho dữ liệu du lịch Việt Nam,
+chạy trên **DuckDB**, đọc trực tiếp Bronze (JSONL) trên **MinIO** qua `httpfs`, và đồng bộ cả lớp **Silver** lẫn **Gold** lên **Apache Iceberg** (Lakekeeper REST Catalog + MinIO).
 
 ## Kiến trúc
 
@@ -20,6 +20,17 @@ Bronze (MinIO, JSONL, crawl_date=YYYY-MM-DD)
   └── youtube/comments           ─► stg_youtube_comments     ─► silver_youtube_comments
                                                                   │
                      tất cả bảng Silver ─────────────────────────► silver_place_temporal_coverage
+                                                                  │
+Gold (3 Data Marts — 6 Bảng Phân tích OLAP / BI) ◄────────────────┘
+  ├── Mart 1 (mart_growth_and_trends)
+  │     ├── gold_fct_place_monthly_growth
+  │     └── gold_fct_place_snapshot_trajectory
+  ├── Mart 2 (mart_place_reputation_and_viral)
+  │     ├── gold_obt_place_360_profile
+  │     └── gold_fct_youtube_video_performance
+  └── Mart 3 (mart_regional_and_category)
+        ├── gold_fct_province_tourism_summary
+        └── gold_fct_category_tourism_summary
 ```
 
 ## Nguyên tắc từng lớp
@@ -27,18 +38,8 @@ Bronze (MinIO, JSONL, crawl_date=YYYY-MM-DD)
 | Lớp | Materialization | Nhiệm vụ |
 |---|---|---|
 | Staging (`models/staging`) | view | 1 model / 1 dataset Bronze. Đổi tên cột, ép kiểu an toàn (`TRY_CAST`), chuẩn hóa NULL / text / timestamp UTC / `province_id`. **Không** lọc, **không** dedup, **không** join. |
-| Silver (`models/silver_layer`) | table | Lọc dữ liệu thiếu khóa, khử trùng lặp theo khóa nghiệp vụ, kiểm tra miền giá trị (giá trị không hợp lệ → NULL), chuẩn hóa `place_id` / `province_id` theo dimension `silver_places`, tính Temporal Coverage Metadata. |
-
-## Xử lý dữ liệu ở lớp Silver
-
-1. **Chuẩn hóa kiểu dữ liệu** — macro `to_int`, `to_double`, `to_bool`, `to_utc_timestamp`.
-2. **Chuẩn hóa `place_id`** — TRIM, rỗng → NULL; đối chiếu với `silver_places` (cờ `is_place_in_dim`, test `relationships`).
-3. **Chuẩn hóa `province_id`** — macro `normalize_province_id` (`'1'` → `'01'`), ưu tiên giá trị trong dimension.
-4. **Chuẩn hóa timestamp** — mọi cột `*_utc` là `TIMESTAMP` UTC; ngày tương đối của Google Maps được ước lượng bằng `normalize_relative_date` kèm cột độ chính xác.
-5. **Dữ liệu thiếu** — bản ghi thiếu khóa nghiệp vụ bị loại; chuỗi rỗng / `nan` → NULL.
-6. **Dữ liệu trùng lặp** — macro `deduplicate_by_key` (giữ lần crawl mới nhất).
-7. **Trường không hợp lệ** — rating ngoài 1–5, count âm, thời điểm ở tương lai → NULL.
-8. **Temporal Coverage Metadata** — `silver_place_temporal_coverage`.
+| Silver (`models/silver_layer`) | table | Lọc dữ liệu thiếu khóa, khử trùng lặp theo khóa nghiệp vụ, kiểm tra miền giá trị (giá trị không hợp lệ → NULL), chuẩn hóa `place_id` / `province_id` theo dimension `silver_places`, tính biến động chuỗi thời gian (`LAG`) và Temporal Coverage Metadata. |
+| Gold (`models/gold_layer`) | table | Xây dựng 3 Data Marts (6 bảng Fact/OBT) phục vụ trực tiếp phân tích tăng trưởng lượt xem, biến động rating, hồ sơ 360° phân cụm xu hướng địa điểm, và thống kê theo Tỉnh/Thành phố & Loại hình du lịch. |
 
 ## Quy tắc kiểm tra chất lượng
 
@@ -46,16 +47,16 @@ Bronze (MinIO, JSONL, crawl_date=YYYY-MM-DD)
 |---|---|
 | not-null | test `not_null` trên khóa và cột bắt buộc |
 | unique | `unique`, `unique_combination_of_columns` theo grain từng bảng |
-| accepted values | `accepted_values`, `accepted_range` |
+| accepted values | `accepted_values`, `accepted_range`, `not_negative` |
 | coverage | `row_count_ratio`, singular test `raw_to_silver_google_maps_coverage`, `monthly_review_coverage` |
-| số dòng trước / sau join | `equal_row_count`, singular test `assert_coverage_counts_match_silver_facts` |
+| số dòng trước / sau join | `equal_row_count`, singular test `assert_coverage_counts_match_silver_facts`, `assert_gold_metrics_reconcile_with_silver` |
 
 ## Lệnh thường dùng
 
 ```bash
-dbt build --select tag:silver+        # chạy + test toàn bộ Silver
-dbt test  --select silver_layer       # chỉ test Silver
-dbt docs generate && dbt docs serve   # xem tài liệu
+dbt build --select +tag:silver        # chạy + test toàn bộ Staging & Silver
+dbt build --select tag:gold           # chạy + test toàn bộ Gold Data Marts
+dbt docs generate && dbt docs serve   # xem tài liệu & Lineage Graph
 ```
 
 {% enddocs %}
@@ -69,4 +70,3 @@ của nguồn (hầu hết là chuỗi), kèm metadata ingestion: `run_id`, `sou
 Bản ghi không qua quality gate được ghi vào `quarantine/` và không được đọc ở đây.
 Đường dẫn gốc cấu hình bằng var `bronze_root` (mặc định env `TLCN_BRONZE_S3_URI`).
 {% enddocs %}
-

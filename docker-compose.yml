@@ -18,6 +18,7 @@ x-airflow-common: &airflow-common
     - MINIO_ROOT_USER=${MINIO_ROOT_USER}
     - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     - PYTHONPATH=/opt/airflow/project
+    - DUCKDB_PATH=/opt/airflow/project/data/duckdb/tourism_lakehouse.duckdb
     - DBT_LOG_PATH=/tmp/dbt_logs
     - DBT_TARGET_PATH=/tmp/dbt_target
   volumes:

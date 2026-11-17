@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 
 PROJECT_DIR = "/opt/airflow/project"
@@ -14,7 +15,7 @@ from script.alerts.discord import dag_success, task_failure
 
 with DAG(
     dag_id="dag_transform_silver_layer",
-    description="Bronze -> Staging -> Silver (dbt + DuckDB) -> Apache Iceberg (Lakekeeper + MinIO)",
+    description="Bronze -> Staging -> Silver (dbt + DuckDB) -> Apache Iceberg (Lakekeeper + MinIO) -> Trigger Gold DAG",
     start_date=datetime(2026, 1, 1),
     schedule=None,
     catchup=False,
@@ -23,6 +24,8 @@ with DAG(
     on_failure_callback=task_failure,
     on_success_callback=dag_success,
     default_args={
+        "retries": 2,
+        "retry_delay": timedelta(minutes=1),
         "on_failure_callback": task_failure,
     },
 ) as dag:
@@ -60,7 +63,7 @@ with DAG(
 
         cd {PROJECT_DIR}
 
-        python3 iceberg/writer.py
+        python3 iceberg/writer.py --layer silver
 
         echo ""
         echo "ICEBERG WRITE SUCCESS"
@@ -80,13 +83,22 @@ with DAG(
 
         cd {PROJECT_DIR}
 
-        python3 iceberg/check_table.py
+        python3 iceberg/check_table.py --layer silver
 
         echo ""
         echo "ICEBERG VALIDATION SUCCESS"
         """,
     )
 
+    # TASK 4: Automatically trigger Gold layer DAG after Silver is validated
+
+    trigger_gold_layer = TriggerDagRunOperator(
+        task_id="trigger_gold_layer",
+        trigger_dag_id="dag_transform_gold_layer",
+        wait_for_completion=False,
+        reset_dag_run=True,
+    )
+
     # Dependency
 
-    dbt_build_silver >> write_silver_iceberg >> validate_silver_iceberg
+    dbt_build_silver >> write_silver_iceberg >> validate_silver_iceberg >> trigger_gold_layer

@@ -4,7 +4,7 @@ tourism_dbt:
   outputs:
     dev:
       type: duckdb
-      path: /tmp/tourism_lakehouse.duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../data/duckdb/tourism_lakehouse.duckdb') }}"
       schema: main
 
       threads: 1

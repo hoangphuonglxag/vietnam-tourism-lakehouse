@@ -40,6 +40,26 @@ vars:
   # Số snapshot rating tối thiểu để coi là có lịch sử rating.
   coverage_min_rating_snapshots: 2
 
+  # ---------------------------------------------------------------------------
+  # GOLD LAYER — ngưỡng phân loại xu hướng (có thể override bằng --vars)
+  # ---------------------------------------------------------------------------
+  # Mức thay đổi google_rating (first -> latest) để coi là improving / declining.
+  gold_rating_trend_threshold: 0.05
+  # % tăng view (like-for-like trên các video có >= 2 snapshot) để coi là surging / growing.
+  gold_views_surging_pct: 20
+  gold_views_growing_pct: 5
+  # % tăng google_review_count (first -> latest) để coi là đang tăng trưởng.
+  gold_review_count_growth_pct: 5
+  # Động lượng review 90 ngày gần nhất so với 90 ngày trước đó (%).
+  gold_review_momentum_growth_pct: 20
+  gold_review_momentum_decline_pct: -30
+  # Số review tối thiểu trong cửa sổ 90 ngày để động lượng có ý nghĩa thống kê.
+  gold_review_momentum_min_reviews: 5
+  # popularity_score (0-100) tối thiểu để coi là địa điểm quy mô lớn.
+  gold_large_scale_min_score: 70
+  # Tháng bắt đầu tối thiểu của chuỗi thời gian tháng (tránh spine quá dài do video rất cũ).
+  gold_monthly_spine_start: '2015-01-01'
+
 
 models:
   tourism_dbt:
@@ -52,3 +72,7 @@ models:
     silver_layer:
       +materialized: table
       +tags: ['silver']
+
+    gold_layer:
+      +materialized: table
+      +tags: ['gold']

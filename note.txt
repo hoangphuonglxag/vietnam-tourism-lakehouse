@@ -11,10 +11,14 @@ hoàn toàn giữa tầng Lưu trữ (Storage) và tầng Tính toán (Compute),
 
 1. TẦNG 1: INGESTION & DATA QUALITY GATEWAY (Crawl & Bronze)
    - Nguồn dữ liệu: 
-     * OpenStreetMap (OSM): Tổng cộng 7,155 địa điểm thô (candidate places) trên 34 tỉnh/thành. 
-       Qua bộ lọc thẩm định chất lượng tọa độ và phân loại du lịch (Scoping Gate), hệ thống chọn lọc 
-       ra 1,741 địa điểm du lịch cốt lõi (Core Tourism Places: danh thắng, di tích, bãi biển, bảo tàng, resort...) 
-       để loại bỏ rác (trạm xăng, cây ATM, dải phân cách...) trước khi cào dữ liệu xã hội.
+     * OpenStreetMap (OSM): 
+       + Toàn quốc (Master Scope): 7,155 địa điểm thô trên 34 tỉnh/thành (chuẩn bị cho việc mở rộng quy mô toàn quốc).
+       + Phạm vi thực nghiệm Lakehouse hiện tại (Pilot Region): 1,741 địa điểm thuộc 4 tỉnh/thành Miền Trung 
+         trọng điểm (Đà Nẵng: 1,283; Huế: 384; Quảng Ngãi: 70; Quảng Trị: 4).
+       + Cơ chế Scoping & Quality Gate: Phân loại tự động theo tourism_status (eligible/review/rejected) 
+         và cờ crawl_eligible để tập trung thu thập dữ liệu xã hội cho các điểm du lịch cốt lõi (danh thắng, 
+         di tích, bãi biển, bảo tàng, resort...) và loại bỏ rác (cây ATM, trạm xăng, dải phân cách...).
+       + Toàn bộ 1,741 điểm này đã đi qua Silver (silver_places) và Gold (gold_obt_place_360_profile).
      * Google Maps: Ratings & Reviews trải nghiệm thực tế của du khách.
      * YouTube: Travel Videos & Comments truyền thông số.
    - Công nghệ: Python, Playwright (Headless Browser), ytscrape, Airflow Ingestion DAGs.

@@ -1,8 +1,8 @@
 import pandas as pd
 
-df = pd.read_csv("E:\PJ\vietnam-tourism-lakehouse\data\places.csv", dtype=str, encoding="utf-8-sig").fillna("")
+df = pd.read_csv("D:\PJ\vietnam-tourism-lakehouse\data\places.csv", dtype=str, encoding="utf-8-sig").fillna("")
 
-print("File:", "E:\PJ\vietnam-tourism-lakehouse\data\places.csv")
+print("File:", "D:\PJ\vietnam-tourism-lakehouse\data\places.csv")
 print("Columns:", df.columns.tolist())
 print("Total places:", len(df))
 

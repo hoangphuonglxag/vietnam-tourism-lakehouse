@@ -1,0 +1,10 @@
+# Bắt buộc Linguist tính file SQL hoặc Notebook vào thống kê
+*.sql linguist-detectable=true
+*.ipynb linguist-detectable=true
+
+# Hoặc muốn hiển thị cả file YAML trong thống kê:
+*.yml linguist-detectable=true
+*.yaml linguist-detectable=true
+
+# Bỏ qua một thư mục không muốn tính vào tỉ lệ:
+my_huge_folder/* linguist-vendored

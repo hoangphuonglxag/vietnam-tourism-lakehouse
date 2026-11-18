@@ -9,7 +9,6 @@ PROJECT_DIR = "/opt/airflow/project"
 sys.path.insert(0, PROJECT_DIR)
 
 from script.alerts.discord import dag_success, task_failure
-from script.crawl_data.utils.crawl_plan import build_crawl_plan
 
 from airflow.models.param import Param
 
@@ -28,6 +27,8 @@ def job_command(module: str, exports: tuple[str, ...] = ()) -> str:
 
 
 def build_plan_task(**context: object) -> str:
+    from script.crawl_data.utils.crawl_plan import build_crawl_plan
+
     dag_run = context.get("dag_run")
     request = getattr(dag_run, "conf", None) or {}
     run_id = str(getattr(dag_run, "run_id", "manual"))
@@ -69,13 +70,18 @@ with DAG(
     default_args={"on_failure_callback": task_failure},
     params={
         "place_ids": Param(
-            ["OSM_node_4346215389"],
+            [],
             type="array",
             items={"type": "string"},
-            description="Danh sách place_id cần crawl",
+            description="Danh sách place_id cần crawl (để trống [] để crawl toàn bộ theo bộ lọc core_only)",
         ),
         "datasets": Param(
-            ["google_reviews"],
+            [
+                "google_reviews",
+                "google_ratings",
+                "youtube_videos",
+                "youtube_comments",
+            ],
             type="array",
             items={
                 "type": "string",
@@ -89,14 +95,19 @@ with DAG(
             description="Các dataset cần chạy",
         ),
         "dry_run": Param(
-            True,
+            False,
             type="boolean",
-            description="True chỉ lập kế hoạch, False cho phép crawl",
+            description="True chỉ lập kế hoạch, False cho phép crawl thật",
         ),
         "force_refresh": Param(
             False,
             type="boolean",
-            description="Bỏ qua freshness khi lập kế hoạch",
+            description="True: Cào lại Snapshot toàn bộ (bỏ qua freshness). False: Chạy Incremental (chỉ cào dữ liệu mới/stale).",
+        ),
+        "core_only": Param(
+            True,
+            type="boolean",
+            description="Chỉ cào các điểm du lịch cốt lõi (Core Tourism POIs: danh thắng, di tích, bảo tàng, resort...)",
         ),
         "freshness_days": Param(
             {

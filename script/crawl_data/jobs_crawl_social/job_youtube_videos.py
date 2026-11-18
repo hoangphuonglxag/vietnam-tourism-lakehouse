@@ -189,8 +189,16 @@ def run() -> None:
                 bronze_candidates.write(bronze_candidate_records)
                 bronze_log.write(bronze_log_records)
     report = metrics.finish()
-    if report["failed"]:
-        raise RuntimeError(f"YouTube videos had {report['failed']} failed places")
+    failed_count = int(report.get("failed", 0))
+    success_count = int(report.get("success", 0))
+    if failed_count > 0 and success_count == 0:
+        raise RuntimeError(f"YouTube videos failed completely: {failed_count} failed places and 0 succeeded")
+    elif failed_count > 0:
+        print(
+            f"[WARNING] YouTube videos had {failed_count} failed places out of {report.get('total', 0)} "
+            f"(success: {success_count}, rate: {report.get('success_rate', 0):.1%}). Continuing downstream.",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

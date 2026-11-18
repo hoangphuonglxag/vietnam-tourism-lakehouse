@@ -42,26 +42,17 @@ def generate_queries(place: dict[str, str]) -> list[str]:
     category_terms = _values(place, "category_terms")
 
     intents = (
-        "review",
-        "khám phá",
         "du lịch",
-        "tham quan",
+        "review du lịch",
+        "kinh nghiệm du lịch",
+        "khám phá",
         "trải nghiệm",
+        "tham quan",
     )
 
     queries: list[str] = []
 
-    for identity in identities:
-        for context in contexts:
-            query = f'"{identity}" "{context}"'.strip()
-            if query and query not in queries:
-                queries.append(query)
-
-    for term in category_terms[:3]:
-        query = f'"{name}" "{province}" "{term}"'.strip()
-        if query not in queries:
-            queries.append(query)
-
+    # Ưu tiên các query có từ khóa ý định du lịch (Tourism Intent) để tránh dính MV ca nhạc
     for intent in intents:
         query = f'"{name}" "{province}" {intent}'.strip()
         if query not in queries:
@@ -71,6 +62,17 @@ def generate_queries(place: dict[str, str]) -> list[str]:
         for term in category_terms[:2]:
             query = f'"{name}" "{province}" {intent} "{term}"'.strip()
             if query not in queries:
+                queries.append(query)
+
+    for term in category_terms[:3]:
+        query = f'"{name}" "{province}" "{term}"'.strip()
+        if query not in queries:
+            queries.append(query)
+
+    for identity in identities:
+        for context in contexts:
+            query = f'"{identity}" "{context}"'.strip()
+            if query and query not in queries:
                 queries.append(query)
 
     return queries
@@ -150,27 +152,32 @@ def resolve_video(
         normalize_text(value)
         for value in _values(place, "negative_keywords")
     ]
-    global_negative = {
-        "karaoke",
-        "remix",
-        "nhạc",
-        "lyric",
-        "audio",
-        "mp3",
-        "beat",
-        "cover",
-        "nhac",
+    global_negative_phrases = (
+        "official mv", "music video", "phim ca nhạc", "bài hát", "ca sĩ",
+        "liên khúc", "tân cổ", "bolero", "nhạc sống", "nhạc trẻ", "nhạc trữ tình",
+        "hài kịch", "gameshow", "game show", "phim ngắn", "tập full", "official trailer",
+        "teaser trailer", "parody", "dance practice", "remix tik tok", "nhac che",
+        "nhạc chế", "nhạc chế", "rap việt", "châu khải phong", "karaoke",
+    )
+    global_negative_words = {
+        "karaoke", "remix", "nhạc", "nhac", "lyric", "lyrics", "audio", "mp3",
+        "beat", "cover", "mv", "mashup", "acoustic", "liveshow", "ost", "soundtrack",
+        "album", "single", "casi", "edm", "dj", "parody", "dance", "vpop", "kpop",
+        "hài", "hai", "game", "gaming", "shorts", "tiktok", "reaction",
     }
 
     words = set(searchable.split())
     negative_match = (
         any(term and term in searchable for term in negative_terms)
-        or bool(global_negative & words)
+        or any(phrase in searchable for phrase in global_negative_phrases)
+        or bool(global_negative_words & words)
     )
 
     video_category = normalize_text(video.get("category", ""))
-    if video_category in ("music", "âm nhạc", "nhạc", "nhac"):
-        negative_match = True
+    if video_category in ("music", "âm nhạc", "nhạc", "nhac", "gaming", "entertainment"):
+        # Nếu danh mục là music/gaming hoặc tiêu đề có dấu hiệu giải trí âm nhạc
+        if negative_match or any(w in words for w in {"mv", "song", "ca", "hát"}):
+            negative_match = True
 
     score = (
         0.50 * name_score

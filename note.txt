@@ -1,5 +1,47 @@
-bao cao tien do 117/9/26
+KHáCH DU LịCH qUốC Tế ĐếN mỘT Số TrọNG Điểm DU LịCH NĂm 2018
+1 TP. hồ chí Minh 7.500.000 2 hà nội 5.740.000 3 Quảng ninh 5.200.000 4 Quảng nam 3.780.000 5 Đà nẵng 2.875.000 6 Khánh hòa 2.800.000 7 Thừa Thiên-huế 1.951.461 8 ninh Bình 876.930 9 hải Phòng 857.000 10 lào cai 718.585 11 Bình Thuận 675.000 12 Kiên giang 580.000 13 lâm Đồng 485.000 14 Bà Rịa - Vũng Tàu 424.000 15 cần Thơ (*) 363.800 16 Bình Dương 300.000 17 Bình Định 286.463 18 hà giang 273.193 19 Quảng Bình 180.000 20 Quảng Trị 168.000 21 Điện Biên 150.000 22 nghệ an 128.70
 
-Google Maps có thể trả về cùng một review card nhiều lần khi scroll/lazy-load, đặc biệt khi DOM được cập nhật lại.
+KHáCH DU LịCH qUốC Tế ĐếN việT NAm CHiA THeO THáNG, 2017-2018
 
-da khac phuc
+Tháng Năm 2017 (lượt khách) Năm 2018 (lượt khách) Tăng trưởng (%) Tháng 1 1.007.238 1.430.242 42,0 Tháng 2 1.199.421 1.431.845 19,4 Tháng 3 1.005.821 1.343.314 33,6 Tháng 4 1.071.650 1.341.913 25,2 Tháng 5 972.844 1.161.114 19,4 Tháng 6 949.362 1.183.102 24,6 Tháng 7 1.036.880 1.188.817 14,7 Tháng 8 1.229.163 1.323.546 7,
+Tháng Năm 2017 (lượt khách) Năm 2018 (lượt khách) Tăng trưởng (%) Tháng 9 975.952 1.212.597 24,2 Tháng 10 1.024.899 1.205.157 17,6 Tháng 11 1.172.568 1.301.909 11,0 Tháng 12 1.276.353 1.374.235 7,7 Tổng 12.922.151 15.497.791 19,9
+
+
+
+GIAI ĐOẠN 1: Chuẩn bị Dữ liệu Hạt nhân (Seed & Master Metadata)
+Nguồn gốc: Dữ liệu bắt nguồn từ OpenStreetMap (OSM) với hơn 10.890 điểm ban đầu trên 34 tỉnh.
+Thẩm định chất lượng (Data Cleansing): Loại bỏ các điểm lỗi tọa độ, nằm ngoài hải phận hoặc ranh giới hành chính.
+Lưu trữ chuẩn (Single Source of Truth): Lưu trữ tập trung tại s3://lakehouse/bronze/places/ trên MinIO (và đồng bộ dự phòng tại data/reference/places.csv).
+GIAI ĐOẠN 2: Điều phối & Lập Kế hoạch (Orchestration & Crawl Planning)
+
+Khi bạn nhấn Trigger DAG trên Airflow, task build_crawl_plan chạy trong ~15 giây để tính toán chiến lược:
+
+Cánh cổng 1 - Scoping (core_only: true): Tự động loại bỏ các đỉnh núi hoang, cây ATM, vườn hoa dải phân cách... Chỉ giữ lại 1.326 địa điểm du lịch cốt lõi của 34 tỉnh (Danh thắng, bảo tàng, di tích, resort, bãi biển, hang động).
+Cánh cổng 2 - Freshness Check: Kiểm tra mốc thời gian lần cào cuối (crawled_at_utc). Nếu địa điểm này đã được cào trong vòng freshness_days: 14, hệ thống sẽ SKIP ngay lập tức, không tốn 1 giây tài nguyên.
+Cánh cổng 3 - Phân tầng hạn mức (Tier Limits): Gán số lượng review tối đa cho từng loại địa điểm để tối ưu thời gian (Danh thắng lớn: 100 review; bãi biển/điểm ngắm cảnh: 30; điểm phụ: 15).
+GIAI ĐOẠN 3: Thu thập Song song Đa luồng (Concurrent Ingestion)
+
+Sau khi có kế hoạch (JSON Plan), Airflow kích hoạt 2 nhánh chạy song song:
+
+Nhánh Google Maps Reviews (3 Workers song song):
+
+3 Trình duyệt Playwright độc lập chia nhau danh sách theo cơ chế xoay vòng (Round-Robin).
+Tối ưu phần cứng: Chặn nạp ảnh, video và font chữ, giúp mỗi worker chỉ tốn ~150MB RAM (chạy cực êm trên chip i3 của bạn).
+Cơ chế tự phục hồi: Nếu giao diện tab đánh giá chưa nạp kịp, bot tự động F5 reload trang. Nếu địa điểm thiên nhiên không có review, bot ghi nhận trạng thái EMPTY an toàn mà không làm sập pipeline.
+Watermark Early-Stopping: Khi cuộn trang, bot kiểm tra ID bài đánh giá. Ngay khi gặp 3 bài review cũ liên tiếp đã có trong database, bot dừng cuộn ngay lập tức ➔ Chỉ mất 3–5 giây cho mỗi lần cào cập nhật!
+
+Nhánh YouTube (Videos & Comments):
+
+Tourism Intent First: Tự động tạo query có chủ đích du lịch ("Cầu Rồng" "Đà Nẵng" du lịch review) thay vì tìm kiếm tên trơ trọi.
+Negative Filter Gate: Quét toàn bộ tiêu đề/mô tả/danh mục để chặn 100% các MV ca nhạc, bài hát remix TikTok, gameshow, hài kịch.
+Sau khi chọn lọc được các Travel Vlog chân thực, hệ thống cào tiếp toàn bộ bình luận của những video này.
+GIAI ĐOẠN 4: Quản trị Trạng thái & Hạ cánh vào Bronze Layer
+Khóa an toàn luồng (threading.Lock): Khi 3 workers cào xong, khâu ghi dữ liệu được bảo vệ bằng Lock để tránh hiện tượng tranh chấp (Race Condition).
+MinIO Object Storage (S3 Bronze Layer):
+Dữ liệu được ghi theo định dạng chuẩn JSON Lines (.jsonl), phân vùng Hive Partition theo ngày cào:
+s3://lakehouse/bronze/{dataset}/crawl_date=YYYY-MM-DD/part-...jsonl
+Dữ liệu thô được giữ nguyên vẹn 100% (Raw & Immutable) để phục vụ việc kiểm toán dữ liệu (Auditability) sau này.
+Lưu vết Checkpoint State (_state/*.jsonl):
+Ghi nhớ trạng thái SUCCESS hoặc EMPTY của từng ID ngay tức thì.
+Tính năng Resume from Failure: Nếu nửa đêm lỡ bị rớt mạng Wi-Fi hoặc cúp điện, sáng mai bạn bật máy chạy lại, hệ thống sẽ bỏ qua các điểm đã cào xong và cào tiếp tục từ điểm bị gián đoạn, không bao giờ bị mất dữ liệu hay phải chạy lại từ đầu!
+Offline Backup: Tự động append dữ liệu mới vào các file CSV lịch sử trên máy tính để có bản sao lưu offline.

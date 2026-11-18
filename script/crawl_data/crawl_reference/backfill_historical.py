@@ -20,9 +20,14 @@ DATASETS = {
 
 
 def _normalise_columns(data: pd.DataFrame, dataset: str) -> pd.DataFrame:
-    if dataset in {"google_maps/reviews", "youtube/comments"} and "crawled_at_utc" not in data:
-        if "crawled_at" in data:
+    if dataset in {"google_maps/reviews", "youtube/comments"}:
+        if "crawled_at_utc" not in data and "crawled_at" in data:
             data = data.rename(columns={"crawled_at": "crawled_at_utc"})
+        if "crawled_at_utc" in data:
+            data["crawled_at_utc"] = data["crawled_at_utc"].fillna("").astype(str)
+            mask = data["crawled_at_utc"] == ""
+            if mask.any():
+                data.loc[mask, "crawled_at_utc"] = "2026-08-30T00:00:00.000000"
     return data
 
 

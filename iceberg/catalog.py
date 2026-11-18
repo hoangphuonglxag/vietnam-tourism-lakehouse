@@ -142,6 +142,7 @@ def get_catalog(layer: str = "silver"):
             "s3.access-key-id": S3_ACCESS_KEY,
             "s3.secret-access-key": S3_SECRET_KEY,
             "s3.region": S3_REGION,
+            "s3.path-style-access": "true",
         },
     )
 

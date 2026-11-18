@@ -10,8 +10,13 @@ Hệ thống được thiết kế theo chuẩn Modern Data Lakehouse (Medallion
 hoàn toàn giữa tầng Lưu trữ (Storage) và tầng Tính toán (Compute), gồm 4 tầng chính:
 
 1. TẦNG 1: INGESTION & DATA QUALITY GATEWAY (Crawl & Bronze)
-   - Nguồn dữ liệu: OpenStreetMap (OSM - 1,741 điểm du lịch), Google Maps (Ratings & Reviews), 
-     và YouTube (Travel Videos & Comments).
+   - Nguồn dữ liệu: 
+     * OpenStreetMap (OSM): Tổng cộng 7,155 địa điểm thô (candidate places) trên 34 tỉnh/thành. 
+       Qua bộ lọc thẩm định chất lượng tọa độ và phân loại du lịch (Scoping Gate), hệ thống chọn lọc 
+       ra 1,741 địa điểm du lịch cốt lõi (Core Tourism Places: danh thắng, di tích, bãi biển, bảo tàng, resort...) 
+       để loại bỏ rác (trạm xăng, cây ATM, dải phân cách...) trước khi cào dữ liệu xã hội.
+     * Google Maps: Ratings & Reviews trải nghiệm thực tế của du khách.
+     * YouTube: Travel Videos & Comments truyền thông số.
    - Công nghệ: Python, Playwright (Headless Browser), ytscrape, Airflow Ingestion DAGs.
    - Định dạng lưu trữ: JSON Lines (.jsonl), phân vùng Hive Partitioning:
      s3://lakehouse/bronze/{dataset}/crawl_date=YYYY-MM-DD/part-*.jsonl

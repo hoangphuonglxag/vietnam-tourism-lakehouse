@@ -1,10 +1,13 @@
-# Bắt buộc Linguist tính file SQL hoặc Notebook vào thống kê
+# SQL files
 *.sql linguist-detectable=true
+*.sql linguist-language=SQL
+
+# Jupyter Notebook
 *.ipynb linguist-detectable=true
+*.ipynb linguist-language=Jupyter Notebook
 
-# Hoặc muốn hiển thị cả file YAML trong thống kê:
+# YAML configuration
 *.yml linguist-detectable=true
+*.yml linguist-language=YAML
 *.yaml linguist-detectable=true
-
-# Bỏ qua một thư mục không muốn tính vào tỉ lệ:
-my_huge_folder/* linguist-vendored
+*.yaml linguist-language=YAML

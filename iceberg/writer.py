@@ -49,7 +49,17 @@ def write_table_to_iceberg(catalog, namespace: str, table_name: str, arrow_table
             schema=arrow_table.schema,
         )
 
-    table.overwrite(arrow_table)
+    for attempt in range(1, 4):
+        try:
+            table.overwrite(arrow_table)
+            break
+        except Exception as e:
+            if attempt == 3:
+                raise
+            print(f"  [WARNING] Transient write error on {identifier} (attempt {attempt}/3): {e}. Retrying in 3s...")
+            import time
+            time.sleep(3)
+            table = catalog.load_table(identifier)
 
     print(f"  -> Location : {table.location()}")
     print(f"  -> Rows     : {arrow_table.num_rows:,}")

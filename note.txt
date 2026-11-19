@@ -11,14 +11,27 @@ hoàn toàn giữa tầng Lưu trữ (Storage) và tầng Tính toán (Compute),
 
 1. TẦNG 1: INGESTION & DATA QUALITY GATEWAY (Crawl & Bronze)
    - Nguồn dữ liệu: 
-     * OpenStreetMap (OSM): 
-       + Toàn quốc (Master Scope): 7,155 địa điểm thô trên 34 tỉnh/thành (chuẩn bị cho việc mở rộng quy mô toàn quốc).
-       + Phạm vi thực nghiệm Lakehouse hiện tại (Pilot Region): 1,741 địa điểm thuộc 4 tỉnh/thành Miền Trung 
-         trọng điểm (Đà Nẵng: 1,283; Huế: 384; Quảng Ngãi: 70; Quảng Trị: 4).
-       + Cơ chế Scoping & Quality Gate: Phân loại tự động theo tourism_status (eligible/review/rejected) 
-         và cờ crawl_eligible để tập trung thu thập dữ liệu xã hội cho các điểm du lịch cốt lõi (danh thắng, 
-         di tích, bãi biển, bảo tàng, resort...) và loại bỏ rác (cây ATM, trạm xăng, dải phân cách...).
-       + Toàn bộ 1,741 điểm này đã đi qua Silver (silver_places) và Gold (gold_obt_place_360_profile).
+     * OpenStreetMap (OSM) - BỘ LỌC CHẤT LƯỢNG & PHÂN LOẠI 7,155 ĐỊA ĐIỂM (DATA QUALITY GATE):
+       + Master Scope (Toàn quốc): Tổng cộng 7,155 địa điểm cào thô từ OSM trên 34 tỉnh/thành.
+       + Cơ chế kiểm định & phân loại 2 tầng (Two-level Quality Gate):
+         [Tầng 1 - Kỹ thuật & Tọa độ: validation_status]
+           - valid (5,954 điểm): Tọa độ chuẩn xác, nằm trong hải phận/biên giới VN, đầy đủ tên gọi.
+           - review (1,201 điểm): Tọa độ hoặc thông tin hành chính có nghi vấn, cần rà soát lại.
+         [Tầng 2 - Nghiệp vụ Du lịch: tourism_status]
+           - eligible (2,217 điểm ~ 2.2k): Điểm đến du lịch chính thức (danh lam thắng cảnh, di tích 
+             lịch sử, bảo tàng, khu bảo tồn, resort, bãi biển...).
+           - review (4,812 điểm): Tiện ích dân sinh phụ trợ (quán ăn nhỏ, trạm dừng, dịch vụ lân cận).
+           - rejected (126 điểm - Error/Rác): Bị loại bỏ hoàn toàn (cây ATM, trạm xăng, dải phân cách, 
+             gara sửa xe bị gắn tag nhầm trên OSM).
+         [Điều kiện cấp phép cào mạng xã hội: crawl_eligible]
+           - crawl_eligible = (validation_status == 'valid') VÀ (tourism_status == 'eligible')
+             -> Ra đúng 1,763 điểm du lịch cốt lõi an toàn tuyệt đối trên toàn quốc để chạy cào.
+       + Nguyên tắc bảo toàn dữ liệu: Toàn bộ nhãn validation_status, tourism_status và cờ crawl_eligible 
+         đều được GIỮ NGUYÊN 100% trên Silver (silver_places) và Gold (gold_obt_place_360_profile). 
+         Trên Power BI có thể tạo Slicer lọc riêng từng nhóm này để đánh giá chất lượng dữ liệu.
+       + Phạm vi thực nghiệm hiện tại trong Lakehouse (Pilot Region): 1,741 địa điểm thuộc cụm 4 tỉnh 
+         Miền Trung trọng điểm (Đà Nẵng: 1,283; Huế: 384; Quảng Ngãi: 70; Quảng Trị: 4). Toàn bộ 
+         dữ liệu 34 tỉnh đã sẵn sàng ở master catalog để scale-out toàn quốc.
      * Google Maps: Ratings & Reviews trải nghiệm thực tế của du khách.
      * YouTube: Travel Videos & Comments truyền thông số.
    - Công nghệ: Python, Playwright (Headless Browser), ytscrape, Airflow Ingestion DAGs.

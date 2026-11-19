@@ -163,18 +163,86 @@ SỰ CỐ 4: Gặp lỗi `PermissionError: Access Denied` khi PyIceberg ghi bả
 IV. KẾ HOẠCH PHÂN TÍCH LỚP GOLD & THIẾT KẾ DASHBOARD POWER BI
 ----------------------------------------------------------------------------------------
 
-1. CẤU TRÚC 6 BẢNG DATA MARTS TẦNG GOLD (ĐÃ XÂY DỰNG XONG 100% TRÊN ICEBERG):
-   - `gold_obt_place_360_profile` (1,741 dòng, 53 cột): Bảng phẳng One Big Table tổng hợp toàn diện 
-     ratings, reviews, video viral, bình luận tích cực/tiêu cực và vòng đời phát triển của từng địa điểm.
-   - `gold_fct_place_monthly_growth` (59,359 dòng, 29 cột): Dữ liệu chuỗi thời gian theo tháng đo lường 
-     tăng trưởng review, độ quan tâm và tính mùa vụ du lịch.
-   - `gold_fct_youtube_video_performance` (35,315 dòng, 26 cột): Đo lường hiệu suất views, likes, comments 
-     và tỷ lệ tương tác (Engagement Rate) của các video du lịch.
-   - `gold_fct_place_snapshot_trajectory` (8,581 dòng, 33 cột): Lịch sử biến thiên điểm rating theo từng 
-     mốc thời gian snapshot để phân tích độ ổn định dịch vụ.
-   - `gold_fct_province_tourism_summary` (34 dòng, 30 cột): Xếp hạng du lịch quốc gia, so sánh năng lực 
-     cạnh tranh giữa 34 tỉnh/thành.
-   - `gold_fct_category_tourism_summary` (19 dòng, 21 cột): Đánh giá sức hút theo thể loại (Biển, Núi, Di tích...).
+1. PHÂN TÍCH CHUYÊN SÂU CẤU TRÚC 6 BẢNG DATA MARTS TẦNG GOLD (HOÀN THIỆN 100% TRÊN ICEBERG):
+
+   A. gold_obt_place_360_profile (1,741 dòng, 53 cột - One Big Table trung tâm):
+      - Grain: 1 dòng / 1 địa điểm du lịch (place_id).
+      - Mục đích: Bảng phẳng tổng thể tích hợp toàn cảnh uy tín và sức hút của từng địa điểm.
+      - Cụm Uy tín & Cảm xúc:
+        + latest_google_rating, latest_google_review_count: Rating và tổng review hiện tại.
+        + rating_5_pct -> rating_1_pct: Cơ cấu % phân bố sao đánh giá (1★ đến 5★).
+        + net_sentiment_score = (%5★ + %4★) - (%2★ + %1★): Điểm cảm xúc du khách.
+      - Cụm Động lượng Đánh giá (Review Momentum):
+        + reviews_last_90d_count vs reviews_prev_90d_count: Lượng review 90 ngày gần nhất so với 90 ngày trước.
+        + recent_review_momentum_pct: Tốc độ bứt phá đánh giá gần đây (báo hiệu điểm đang hot hay nguội dần).
+      - Cụm Sức hút Mạng xã hội (YouTube Buzz):
+        + total_youtube_views, youtube_video_count, distinct_channel_count: Quy mô truyền thông.
+        + top_video_id, top_video_title: Video đại diện có lượt xem lớn nhất về địa điểm.
+      - Cụm Phân loại Vòng đời Phát triển (place_development_stage):
+        + Tự động gắn nhãn 5 giai đoạn: 'Established Destination' (Đại thụ uy tín), 'Rising Star' (Ngôi sao đang lên), 
+          'Steady Destination' (Ổn định), 'Cooling / At Risk' (Có dấu hiệu giảm sút/rủi ro), 'Emerging / Low Data' (Mới nổi).
+
+   B. gold_fct_place_monthly_growth (59,359 dòng, 29 cột - Fact Chuỗi thời gian theo tháng):
+      - Grain: 1 dòng / (place_id, activity_month).
+      - Mục đích: Giám sát xu hướng dài hạn, tính mùa vụ (seasonality) và chu kỳ đón khách qua từng tháng/năm.
+      - Các chỉ số cốt lõi:
+        + new_reviews_count, rated_reviews_count: Số lượt khách đánh giá phát sinh mới trong tháng.
+        + monthly_avg_review_rating: Điểm đánh giá trung bình riêng trong tháng (đo lường chất lượng dịch vụ mùa cao điểm).
+        + new_videos_published_count, new_videos_current_views_sum: Số video mới ra lò và lượng view mang lại.
+        + mom_reviews_growth_pct: Tăng trưởng review so với tháng liền kề trước đó (Month-over-Month %).
+        + rolling_3m_reviews_avg: Trung bình trượt 3 tháng (3-Month Moving Average) giúp khử nhiễu ngắn hạn.
+        + cumulative_reviews_count, cumulative_videos_count: Số lũy kế theo thời gian.
+
+   C. gold_fct_youtube_video_performance (35,315 dòng, 26 cột - Fact Hiệu suất Video):
+      - Grain: 1 dòng / 1 video YouTube (place_video_id = place_id + video_id).
+      - Mục đích: Đo lường mức độ viral và sức ảnh hưởng của cộng đồng Travel Vlogger/KOLs đối với địa điểm.
+      - Các chỉ số cốt lõi:
+        + channel_name, video_title, published_date, duration_seconds: Thuộc tính nội dung.
+        + latest_views, crawled_comment_count: Quy mô tiếp cận và lượng thảo luận của khán giả.
+        + avg_daily_views_since_publish: Tốc độ tăng view trung bình mỗi ngày từ khi video xuất bản.
+        + snapshot_daily_view_growth: Vận tốc tăng view giữa các lần cào liên tiếp (đo độ viral tức thì).
+        + place_video_view_rank: Thứ hạng video có lượt xem lớn nhất của từng địa điểm (Top 1, Top 2, Top 3...).
+
+   D. gold_fct_place_snapshot_trajectory (8,581 dòng, 33 cột - Fact Quỹ đạo Snapshot):
+      - Grain: 1 dòng / (place_id, snapshot_date).
+      - Mục đích: Giám sát độ ổn định dịch vụ theo thời gian thực giữa các mốc cào dữ liệu, cảnh báo sớm khủng hoảng.
+      - Các chỉ số cốt lõi:
+        + google_rating vs prev_google_rating -> rating_delta: Mức độ biến động điểm số giữa 2 đợt kiểm tra.
+        + google_review_count vs prev_google_review_count -> review_count_delta: Số review tăng thêm.
+        + review_daily_velocity: Vận tốc review/ngày (phát hiện hiện tượng 'bão review' - Review Bombing).
+        + youtube_views_daily_growth: Tốc độ tăng view YouTube tương ứng giữa các snapshot.
+
+   E. gold_fct_province_tourism_summary (34 dòng, 30 cột - Fact Tổng hợp 34 Tỉnh/Thành):
+      - Grain: 1 dòng / 1 tỉnh, thành phố (province_id).
+      - Mục đích: Báo cáo vĩ mô (Macro Level) phục vụ so sánh năng lực cạnh tranh du lịch giữa các tỉnh/thành cả nước.
+      - Các chỉ số cốt lõi:
+        + total_places_count, active_places_count: Quy mô tài nguyên du lịch của tỉnh.
+        + province_weighted_avg_rating: Điểm rating bình quân có trọng số (weighted by review count) giúp phản ánh 
+          chính xác độ hài lòng, không bị lệch bởi các điểm ít review.
+        + province_net_sentiment_score: Chỉ số hài lòng ròng toàn tỉnh.
+        + total_youtube_views, avg_views_per_place: Mức độ phủ sóng truyền thông số.
+        + top_place_name_by_views, top_place_name_by_reviews: Điểm du lịch biểu tượng 'đầu tàu' của tỉnh.
+        + national_tourism_rank: Thứ hạng cạnh tranh du lịch toàn quốc.
+
+   F. gold_fct_category_tourism_summary (19 dòng, 21 cột - Fact Thống kê Loại hình Du lịch):
+      - Grain: 1 dòng / 1 thể loại du lịch (category_id: Bãi biển, Thác nước, Di tích lịch sử, Bảo tàng, Resort...).
+      - Mục đích: Phân tích thị hiếu du khách: Loại hình nào đang được yêu thích nhất? Loại hình nào đang hút view YouTube?
+      - Các chỉ số cốt lõi:
+        + name_vi, total_places_count: Tên và quy mô số lượng điểm thuộc thể loại.
+        + category_weighted_avg_rating, category_net_sentiment_score: Đánh giá chất lượng trải nghiệm của thể loại.
+        + total_youtube_views, avg_views_per_place: Sức hút truyền thông của loại hình.
+        + category_popularity_rank: Xếp hạng mức độ ưa chuộng của du khách.
+
+   G. MÔ HÌNH DỮ LIỆU KHI KẾT NỐI VÀO POWER BI (STAR SCHEMA):
+      - Bảng trung tâm (Dimension/Master Table): gold_obt_place_360_profile (place_id làm khóa chính).
+      - Các bảng Fact nhánh liên kết quan hệ 1 - Nhiều (1:*):
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_place_monthly_growth (qua place_id).
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_youtube_video_performance (qua place_id).
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_place_snapshot_trajectory (qua place_id).
+      - Hai bảng tổng hợp cấp cao độc lập làm KPI Cards & Tổng quan vĩ mô:
+        * gold_fct_province_tourism_summary (Bản đồ & So sánh 34 tỉnh/thành).
+        * gold_fct_category_tourism_summary (Cơ cấu 19 loại hình du lịch).
+
 
 2. THIẾT KẾ BỘ DASHBOARD POWER BI 3 TRANG:
 

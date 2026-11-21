@@ -1,0 +1,932 @@
+cultureInfo en-US
+
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "gold_obt_place_360_profile.province_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "province_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tỉnh/Thành": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Tỉnh / Thành": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Tỉnh": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.total_places": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Total Places"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Số điểm du lịch": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Điểm Du Lịch": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.primary_category_group": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "primary_category_group"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Nhóm Loại Hình": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.total_youtube_views": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Total YouTube Views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lượt Xem Youtube": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.weighted_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Weighted Rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rating Trung Bình": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.total_google_reviews": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Total Google Reviews"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Đánh Giá Google": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Lượng đánh giá": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.place_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "place_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Điểm đến": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.place_development_stage": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "place_development_stage"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Giai đoạn": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.media_score": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Media Score"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Chỉ số truyền thông (log10 lượt xem)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.avg_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Avg Rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Google rating": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.leading_hotspots": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Leading Hotspots"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Điểm Sáng Dẫn Đầu": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.latest_google_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "latest_google_rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rating": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.total_youtube_views1": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "total_youtube_views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lượt xem": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.hidden_gems": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Hidden Gems"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Ngọc Ẩn": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_obt_place_360_profile.tourist_traps": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_obt_place_360_profile",
+			          "ConceptualProperty": "Tourist Traps"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Bẫy Truyền Thông": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_category_tourism_summary.name_vi": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_category_tourism_summary",
+			          "ConceptualProperty": "name_vi"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Loại hình": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_category_tourism_summary.category_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_category_tourism_summary",
+			          "ConceptualProperty": "Category Rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rating có trọng số": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.province_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "province_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tỉnh/Thành": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.total_places_count": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "total_places_count"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Điểm du lịch": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.province_weighted_avg_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "province_weighted_avg_rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rating TB": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.total_google_review_count": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "total_google_review_count"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Đánh giá": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.total_youtube_views": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "total_youtube_views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lượt xem": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_province_tourism_summary.top_place_name_by_views": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_province_tourism_summary",
+			          "ConceptualProperty": "top_place_name_by_views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Điểm đến đầu tàu": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.published_month": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "published_month"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tháng xuất bản": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.video_count": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "Video Count"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Số video": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Video Du Lịch": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.video_comments": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "Video Comments"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Bình Luận": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.video_views": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "Video Views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lượt Xem": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.video_title": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "video_title"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tiêu đề video": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.channel_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "channel_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Kênh": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.place_name": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "place_name"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Điểm đến": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.latest_views": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "latest_views"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Lượt xem": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.crawled_comment_count": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "crawled_comment_count"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Bình luận": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_youtube_video_performance.channel_count": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "Channel Count"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Kênh Sáng Tạo": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.new_reviews": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "New Reviews"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Review Mới": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.activity_year": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "activity_year"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Năm": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.avg_monthly_rating": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "Avg Monthly Rating"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rating trung bình": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Rating Theo Tháng": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.new_videos": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "New Videos"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Video mới": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.positive_reviews": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "Positive Reviews"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tích cực": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.neutral_reviews": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "Neutral Reviews"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Trung lập": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.negative_reviews": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "Negative Reviews"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Tiêu cực": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.active_places": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "Active Places"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Địa Điểm Hoạt Động": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

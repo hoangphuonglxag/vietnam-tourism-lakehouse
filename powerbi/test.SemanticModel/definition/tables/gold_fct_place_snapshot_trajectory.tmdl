@@ -1,0 +1,320 @@
+table gold_fct_place_snapshot_trajectory
+	lineageTag: e7cf48c0-2b53-400b-b43e-41a0be0eabee
+
+	column place_snapshot_id
+		dataType: string
+		lineageTag: 7a0ca8f8-2aed-4aa3-ad55-3dabfcf684e7
+		summarizeBy: none
+		sourceColumn: place_snapshot_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_id
+		dataType: string
+		lineageTag: d0d3cb70-09a8-432c-bc67-8dd0fb346c63
+		summarizeBy: none
+		sourceColumn: place_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_name
+		dataType: string
+		lineageTag: c1565326-8b27-4ee2-a280-fe4ba34e73d2
+		summarizeBy: none
+		sourceColumn: place_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_id
+		dataType: string
+		lineageTag: 6d41dcf6-9925-40e8-99c8-697535172c93
+		summarizeBy: none
+		sourceColumn: province_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_name
+		dataType: string
+		lineageTag: 69299427-e3b5-4996-af92-680687f4233a
+		summarizeBy: none
+		sourceColumn: province_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_id
+		dataType: string
+		lineageTag: 803049b1-effc-4c5d-980a-fd934744a221
+		summarizeBy: none
+		sourceColumn: primary_category_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_group
+		dataType: string
+		lineageTag: 01ef7012-874e-45fb-9273-eb157aaa600a
+		summarizeBy: none
+		sourceColumn: primary_category_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_name
+		dataType: string
+		lineageTag: 20779c9d-6b69-4b32-9dc6-90388c2af7d3
+		summarizeBy: none
+		sourceColumn: primary_category_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: adb66a64-b58f-4585-be18-98355ce4a2c3
+		summarizeBy: none
+		sourceColumn: snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: 9125aa9f-25db-4d92-a36b-9b550a019388
+			defaultHierarchy: LocalDateTable_bacf2bfd-6180-4256-b19d-76331c9ee22e.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column snapshot_seq_num
+		dataType: double
+		lineageTag: fcb52028-eac5-4fd3-9d94-7c5295679811
+		summarizeBy: sum
+		sourceColumn: snapshot_seq_num
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column prev_snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: b24fab4d-fd09-43fd-ae54-7019df9e2524
+		summarizeBy: none
+		sourceColumn: prev_snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: 478551e2-b75c-42d2-ac94-fb18ca3339c9
+			defaultHierarchy: LocalDateTable_2fa86537-c3c3-4ea4-903d-10c395278c87.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column days_since_prev_snapshot
+		dataType: double
+		lineageTag: d2c56b4f-f1ec-421d-b794-a53984d49a0b
+		summarizeBy: sum
+		sourceColumn: days_since_prev_snapshot
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column google_rating
+		dataType: double
+		lineageTag: c5a776bd-9f3d-4ce9-9b78-4eadea267917
+		summarizeBy: sum
+		sourceColumn: google_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column prev_google_rating
+		dataType: double
+		lineageTag: 27351826-6947-4bb9-b644-ae4871972935
+		summarizeBy: sum
+		sourceColumn: prev_google_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_delta
+		dataType: double
+		lineageTag: f06c1d85-a7a7-468b-876c-e0558c21d1cd
+		summarizeBy: sum
+		sourceColumn: rating_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column google_review_count
+		dataType: double
+		lineageTag: 8bba5b5c-68b0-42a8-a0ef-07321305d23f
+		summarizeBy: sum
+		sourceColumn: google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column prev_google_review_count
+		dataType: double
+		lineageTag: 9211be5d-f4d8-48c0-a6fb-e5918d8f46f5
+		summarizeBy: sum
+		sourceColumn: prev_google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column review_count_delta
+		dataType: double
+		lineageTag: 81c7a444-9c97-4795-aa93-985ef0ac8e0c
+		summarizeBy: sum
+		sourceColumn: review_count_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column review_daily_velocity
+		dataType: double
+		lineageTag: a1f834f6-7ba1-4690-9c18-b830b356fa30
+		summarizeBy: sum
+		sourceColumn: review_daily_velocity
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_5_count
+		dataType: double
+		lineageTag: c19213a9-fed7-4c29-b928-6bebce0ad9a1
+		summarizeBy: sum
+		sourceColumn: rating_5_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_4_count
+		dataType: double
+		lineageTag: 60761f28-0019-48ae-ae2c-424beb371783
+		summarizeBy: sum
+		sourceColumn: rating_4_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_3_count
+		dataType: double
+		lineageTag: f726ed71-4322-4cd1-8774-c33538c590c0
+		summarizeBy: sum
+		sourceColumn: rating_3_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_2_count
+		dataType: double
+		lineageTag: f6b9033c-a8fb-4216-9ee7-d103ba94b38f
+		summarizeBy: sum
+		sourceColumn: rating_2_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_1_count
+		dataType: double
+		lineageTag: 83e5213a-11f6-4f9e-aff2-cdb01ab7669f
+		summarizeBy: sum
+		sourceColumn: rating_1_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_distribution_total
+		dataType: double
+		lineageTag: 44e60bb4-fa98-4d15-9436-00b1bd891507
+		summarizeBy: sum
+		sourceColumn: rating_distribution_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column tracked_videos_count
+		dataType: double
+		lineageTag: a2a8a916-1882-4d13-af01-bf9b396673a0
+		summarizeBy: sum
+		sourceColumn: tracked_videos_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views
+		dataType: double
+		lineageTag: d5fbf1f0-44f7-45d0-8820-ce352283e7ad
+		summarizeBy: sum
+		sourceColumn: total_youtube_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column prev_total_youtube_views
+		dataType: double
+		lineageTag: 8c42f642-f66d-4b1d-9c52-ed393eec31b8
+		summarizeBy: sum
+		sourceColumn: prev_total_youtube_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column youtube_views_delta
+		dataType: double
+		lineageTag: facda789-7df6-4102-b7d8-960e5c25d488
+		summarizeBy: sum
+		sourceColumn: youtube_views_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column youtube_views_daily_growth
+		dataType: double
+		lineageTag: b10cad65-e4ff-48d9-8a80-b78c108803e3
+		summarizeBy: sum
+		sourceColumn: youtube_views_daily_growth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition gold_fct_place_snapshot_trajectory = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_fct_place_snapshot_trajectory",Kind="Table"]}[Data],
+				    TextCols = Table.ColumnsOfType(raw_Table, {type text, type nullable text}),
+				    FixedUtf8 = Table.TransformColumns(
+				        raw_Table,
+				        List.Transform(
+				            TextCols,
+				            (c) => {c, (v) => if v = null then null else let b = Text.ToBinary(v, 1252), u = try Text.FromBinary(b, TextEncoding.Utf8) otherwise v in if Text.Contains(u, Character.FromNumber(65533)) then v else u, type nullable text}
+				        )
+				    )
+				in
+				    FixedUtf8
+
+	annotation PBI_ResultType = Table
+

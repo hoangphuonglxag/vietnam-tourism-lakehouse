@@ -1,0 +1,294 @@
+table gold_fct_youtube_video_performance
+	lineageTag: 59c89b0d-2b30-4114-949d-4c7b846d6767
+
+	measure 'Video Count' = DISTINCTCOUNT('gold_fct_youtube_video_performance'[video_id])
+		formatString: #,0
+		lineageTag: 417aec34-26f1-4f2d-b971-43191669afc7
+
+	measure 'Video Views' = SUM('gold_fct_youtube_video_performance'[latest_views])
+		formatString: #,0
+		lineageTag: 46868e12-b1be-49cf-9836-14ed9762ba2a
+
+	measure 'Video Comments' = SUM('gold_fct_youtube_video_performance'[crawled_comment_count])
+		formatString: #,0
+		lineageTag: 6736f0d5-4fc1-4f02-a531-53186e5b0b4b
+
+	measure 'Channel Count' = DISTINCTCOUNT('gold_fct_youtube_video_performance'[channel_name])
+		formatString: #,0
+		lineageTag: 860727b4-93c6-4f58-9ed2-4bdca292ec20
+
+	column place_video_id
+		dataType: string
+		lineageTag: 8c1b25de-09a8-4859-b381-d1dc90afb187
+		summarizeBy: none
+		sourceColumn: place_video_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_id
+		dataType: string
+		lineageTag: c38208a8-c47d-4de7-aea6-2e71c352c4e2
+		summarizeBy: none
+		sourceColumn: place_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_name
+		dataType: string
+		lineageTag: b3f9f6e9-9f78-4d8e-a3af-9e8ac1a78485
+		summarizeBy: none
+		sourceColumn: place_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_id
+		dataType: string
+		lineageTag: 5d1d00bc-ff01-4546-b07b-f2fee5bcf7a8
+		summarizeBy: none
+		sourceColumn: province_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_name
+		dataType: string
+		lineageTag: a652835f-0b99-4a0a-a2b2-cbae17cfc866
+		summarizeBy: none
+		sourceColumn: province_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column video_id
+		dataType: string
+		lineageTag: eeef0000-d97f-4966-8e68-adfc8628c665
+		summarizeBy: none
+		sourceColumn: video_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column video_title
+		dataType: string
+		lineageTag: 170da28b-744a-4535-af0c-8b840171c169
+		summarizeBy: none
+		sourceColumn: video_title
+
+		annotation SummarizationSetBy = Automatic
+
+	column channel_id
+		dataType: string
+		lineageTag: 107aed21-b9a0-4a27-bffe-a4d0cea682ac
+		summarizeBy: none
+		sourceColumn: channel_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column channel_name
+		dataType: string
+		lineageTag: b7a0f58b-d600-4e78-a9c9-61f7412a36cb
+		summarizeBy: none
+		sourceColumn: channel_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: e318ee77-6896-4d81-838d-c1fae07f52dc
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column video_url
+		dataType: string
+		lineageTag: 95741505-2161-438d-902b-b2e17f0a7c44
+		summarizeBy: none
+		sourceColumn: video_url
+
+		annotation SummarizationSetBy = Automatic
+
+	column published_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 765d258e-f46c-4445-bf37-b0a453224e16
+		summarizeBy: none
+		sourceColumn: published_date
+
+		variation Variation
+			isDefault
+			relationship: 00c4f6dd-15ea-42be-8a0b-6f70acecb988
+			defaultHierarchy: LocalDateTable_cf953e24-3fd1-47d5-a555-b21d168d9854.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column published_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e35eac5d-da2c-46d3-bd75-6f5799a29903
+		summarizeBy: none
+		sourceColumn: published_month
+
+		variation Variation
+			isDefault
+			relationship: abb282bc-c55c-4fd2-bba7-c5014644f4c2
+			defaultHierarchy: LocalDateTable_f50896f9-7992-4b2d-9424-4689549b0133.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column duration_seconds
+		dataType: double
+		lineageTag: ac94bc53-e874-4e05-8b44-ed5dac62caa0
+		summarizeBy: sum
+		sourceColumn: duration_seconds
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column video_age_days
+		dataType: double
+		lineageTag: 1d24333e-9f2f-4969-9b4b-cc20b3f481b8
+		summarizeBy: sum
+		sourceColumn: video_age_days
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column first_snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 8f16a18d-ed3d-4a3a-82e7-19fb7ff68e02
+		summarizeBy: none
+		sourceColumn: first_snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: a72ce847-c9e9-4d1e-899d-8321cb1e3dbd
+			defaultHierarchy: LocalDateTable_16c2b9f7-e707-49d0-85ca-93966137fdb1.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column latest_snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9a9d6d86-54e7-424b-bf45-006be8f3879b
+		summarizeBy: none
+		sourceColumn: latest_snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: f93cae17-cfa6-498f-a088-ccd269f1cae6
+			defaultHierarchy: LocalDateTable_a05070ab-17de-4b9e-9925-41a7c4ec20e2.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column snapshot_count
+		dataType: double
+		lineageTag: 7d88e5f8-8c3f-4568-b20a-2d4b35aaafb6
+		summarizeBy: sum
+		sourceColumn: snapshot_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column first_views
+		dataType: double
+		lineageTag: adb75b68-8a8c-4b9c-9175-cf92f7e490aa
+		summarizeBy: sum
+		sourceColumn: first_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column latest_views
+		dataType: double
+		formatString: #,0
+		lineageTag: 8c02d665-f647-4180-a37a-ddf221fa09b6
+		summarizeBy: sum
+		sourceColumn: latest_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_views_delta
+		dataType: double
+		lineageTag: 0b765d70-6dba-4b82-bf2d-d56567125d0c
+		summarizeBy: sum
+		sourceColumn: total_views_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_daily_views_since_publish
+		dataType: double
+		lineageTag: fb1252a9-0f85-417b-8561-8e8da350c891
+		summarizeBy: sum
+		sourceColumn: avg_daily_views_since_publish
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column snapshot_daily_view_growth
+		dataType: double
+		lineageTag: f481a5a4-7e2d-4fea-acf5-fad03026c56e
+		summarizeBy: sum
+		sourceColumn: snapshot_daily_view_growth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column crawled_comment_count
+		dataType: double
+		formatString: #,0
+		lineageTag: 7cfa3815-9251-4153-bf0f-76f583b6bb4e
+		summarizeBy: sum
+		sourceColumn: crawled_comment_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column place_video_view_rank
+		dataType: double
+		lineageTag: af8dd0af-e19b-4593-a8b6-d7d84f0e2a09
+		summarizeBy: sum
+		sourceColumn: place_video_view_rank
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition gold_fct_youtube_video_performance = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_fct_youtube_video_performance",Kind="Table"]}[Data],
+				    TextCols = Table.ColumnsOfType(raw_Table, {type text, type nullable text}),
+				    FixedUtf8 = Table.TransformColumns(
+				        raw_Table,
+				        List.Transform(
+				            TextCols,
+				            (c) => {c, (v) => if v = null then null else let b = Text.ToBinary(v, 1252), u = try Text.FromBinary(b, TextEncoding.Utf8) otherwise v in if Text.Contains(u, Character.FromNumber(65533)) then v else u, type nullable text}
+				        )
+				    )
+				in
+				    FixedUtf8
+
+	annotation PBI_ResultType = Table
+

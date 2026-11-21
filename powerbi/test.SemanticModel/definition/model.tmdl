@@ -1,0 +1,34 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["gold_obt_place_360_profile","gold_fct_youtube_video_performance","gold_fct_province_tourism_summary","gold_fct_place_snapshot_trajectory","gold_fct_place_monthly_growth","gold_fct_category_tourism_summary"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table gold_obt_place_360_profile
+ref table DateTableTemplate_e0a2bb49-8c43-42c4-9fa6-80757a7f9cd2
+ref table LocalDateTable_aeb04238-7675-4b4d-af7c-4e1219a1620d
+ref table LocalDateTable_494e3ad8-3383-4ccb-9c5a-1e3607c89fb9
+ref table gold_fct_youtube_video_performance
+ref table LocalDateTable_cf953e24-3fd1-47d5-a555-b21d168d9854
+ref table LocalDateTable_f50896f9-7992-4b2d-9424-4689549b0133
+ref table LocalDateTable_16c2b9f7-e707-49d0-85ca-93966137fdb1
+ref table LocalDateTable_a05070ab-17de-4b9e-9925-41a7c4ec20e2
+ref table gold_fct_province_tourism_summary
+ref table gold_fct_place_snapshot_trajectory
+ref table LocalDateTable_bacf2bfd-6180-4256-b19d-76331c9ee22e
+ref table LocalDateTable_2fa86537-c3c3-4ea4-903d-10c395278c87
+ref table gold_fct_place_monthly_growth
+ref table LocalDateTable_c27911e2-ee63-4a65-8a21-5b9314278f08
+ref table gold_fct_category_tourism_summary
+
+ref cultureInfo en-US
+

@@ -1,0 +1,962 @@
+{
+  "provinces": [
+    {
+      "province_name": "Đà Nẵng",
+      "total_places_count": 1283,
+      "province_weighted_avg_rating": 4.47,
+      "total_google_review_count": "600",
+      "total_youtube_views": "10100962",
+      "top_place_name_by_views": "Đèo Hải Vân"
+    },
+    {
+      "province_name": "Huế",
+      "total_places_count": 384,
+      "province_weighted_avg_rating": 4.5,
+      "total_google_review_count": "249",
+      "total_youtube_views": "1495222",
+      "top_place_name_by_views": "Hổ Quyền"
+    },
+    {
+      "province_name": "Quảng Ngãi",
+      "total_places_count": 70,
+      "province_weighted_avg_rating": 4.38,
+      "total_google_review_count": "0",
+      "total_youtube_views": "4125",
+      "top_place_name_by_views": "Bảo tàng tỉnh Quảng Ngãi"
+    },
+    {
+      "province_name": "Quảng Trị",
+      "total_places_count": 4,
+      "province_weighted_avg_rating": 5.0,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": "Máy xay gạo Nguyên"
+    },
+    {
+      "province_name": "Điện Biên",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Lai Châu",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Sơn La",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Lào Cai",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Thái Nguyên",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Lạng Sơn",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Quảng Ninh",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Bắc Ninh",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Phú Thọ",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Hải Phòng",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Hưng Yên",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Ninh Bình",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Thanh Hoá",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Nghệ An",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Hà Tĩnh",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Gia Lai",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Khánh Hoà",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Đắk Lắk",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Lâm Đồng",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Đồng Nai",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Hồ Chí Minh",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Tây Ninh",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Đồng Tháp",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Vĩnh Long",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "An Giang",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Cần Thơ",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Cà Mau",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Hà Nội",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Cao Bằng",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    },
+    {
+      "province_name": "Tuyên Quang",
+      "total_places_count": 0,
+      "province_weighted_avg_rating": null,
+      "total_google_review_count": "0",
+      "total_youtube_views": "0",
+      "top_place_name_by_views": null
+    }
+  ],
+  "categories": [
+    {
+      "category_name": "hotel",
+      "name_vi": "Khách sạn",
+      "total_places_count": 918,
+      "category_weighted_avg_rating": null,
+      "total_youtube_views": "0"
+    },
+    {
+      "category_name": "attraction",
+      "name_vi": "Điểm tham quan",
+      "total_places_count": 183,
+      "category_weighted_avg_rating": 4.5,
+      "total_youtube_views": "9340345"
+    },
+    {
+      "category_name": "viewpoint",
+      "name_vi": "Điểm ngắm cảnh",
+      "total_places_count": 138,
+      "category_weighted_avg_rating": 4.51,
+      "total_youtube_views": "11086"
+    },
+    {
+      "category_name": "historical",
+      "name_vi": "Di tích đổ nát",
+      "total_places_count": 72,
+      "category_weighted_avg_rating": 4.44,
+      "total_youtube_views": "224571"
+    },
+    {
+      "category_name": "historical",
+      "name_vi": "Di tích",
+      "total_places_count": 67,
+      "category_weighted_avg_rating": 4.54,
+      "total_youtube_views": "488247"
+    },
+    {
+      "category_name": "park",
+      "name_vi": "Công viên",
+      "total_places_count": 64,
+      "category_weighted_avg_rating": null,
+      "total_youtube_views": "0"
+    },
+    {
+      "category_name": "landscape",
+      "name_vi": "Núi",
+      "total_places_count": 62,
+      "category_weighted_avg_rating": null,
+      "total_youtube_views": "524"
+    },
+    {
+      "category_name": "museum",
+      "name_vi": "Bảo tàng",
+      "total_places_count": 51,
+      "category_weighted_avg_rating": 4.42,
+      "total_youtube_views": "81612"
+    }
+  ],
+  "videos": [
+    {
+      "video_title": "TÀU HOẢ VIỆT NAM - HÀNH TRÌNH TỪ HUẾ ĐẾN ĐÀ NẴNG - TOÀN CẢNH ĐẸP TRÊN ĐÈO HẢI VÂN",
+      "channel_name": "Quân Nguyễn Channel",
+      "latest_views": 3126141,
+      "crawled_comment_count": 2,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Lý do Cầu Vàng Đà Nẵng không bóng người",
+      "channel_name": "Challenge Me - Hãy Thách Thức Tôi",
+      "latest_views": 2092366,
+      "crawled_comment_count": 50,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Sun World Ba Na Hills | \"Cầu Vàng\" Đà Nẵng - TOP 10 Điểm đến tuyệt vời nhất thế giới năm 2018",
+      "channel_name": "Sun World",
+      "latest_views": 1023854,
+      "crawled_comment_count": 3,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "HÀNH TRÌNH ĐẦU MÁY | NGẮM CẢNH ĐÈO HẢI VÂN TUYỆT ĐẸP TRÊN ĐOÀN TÀU DI SẢN MIỀN TRUNG HUẾ - ĐÀ NẴNG",
+      "channel_name": "TP Channel",
+      "latest_views": 845846,
+      "crawled_comment_count": 62,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Đừng lãng quên Hổ Quyền - 'đấu trường La Mã' của Việt Nam",
+      "channel_name": "Challenge Me - Hãy Thách Thức Tôi",
+      "latest_views": 666485,
+      "crawled_comment_count": 68,
+      "province_name": "Huế"
+    },
+    {
+      "video_title": "Khám phá núi Ngũ Hành Sơn Đà Nẵng, review chi tiết núi Thủy Sơn, chùa Linh Ứng, chùa Tam Thai",
+      "channel_name": "BONG NGO MARIO",
+      "latest_views": 356762,
+      "crawled_comment_count": 0,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Thung lũng của các vị thần Chăm Pa - Thánh địa Mỹ Sơn Quảng Nam",
+      "channel_name": "BONG NGO MARIO",
+      "latest_views": 348816,
+      "crawled_comment_count": 0,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Chen chúc tại Cầu Vàng trên đỉnh Bà Nà Hills Ấn Tượng Thế Giới | DU LỊCH ĐÀ NẴNG",
+      "channel_name": "Tung Tăng TV",
+      "latest_views": 316854,
+      "crawled_comment_count": 50,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Gia Đình MiMi Lần Đầu Tới Cầu Rồng Đà Nẵng Xem Phun Lửa: Truy Tìm Ổ Khóa Tình Yêu Và Phát Hiện...",
+      "channel_name": "MiMi Family Vlog",
+      "latest_views": 251986,
+      "crawled_comment_count": 0,
+      "province_name": "Đà Nẵng"
+    },
+    {
+      "video_title": "Phượt Đà Nẵng Ôm Cua Đèo Hải Vân | HÀNH TRÌNH XUYÊN VIỆT NGÀY 3",
+      "channel_name": "Lê Gia Huy",
+      "latest_views": 251981,
+      "crawled_comment_count": 0,
+      "province_name": "Đà Nẵng"
+    }
+  ],
+  "channels": [
+    {
+      "channel_name": "Quân Nguyễn Channel",
+      "video_count": 2,
+      "total_views": 3126141,
+      "total_comments": 79
+    },
+    {
+      "channel_name": "Challenge Me - Hãy Thách Thức Tôi",
+      "video_count": 217,
+      "total_views": 2758851,
+      "total_comments": 3462
+    },
+    {
+      "channel_name": "Sun World",
+      "video_count": 10,
+      "total_views": 1023854,
+      "total_comments": 8
+    },
+    {
+      "channel_name": "TP Channel",
+      "video_count": 3,
+      "total_views": 845846,
+      "total_comments": 126
+    },
+    {
+      "channel_name": "BONG NGO MARIO",
+      "video_count": 215,
+      "total_views": 705578,
+      "total_comments": 2351
+    },
+    {
+      "channel_name": "Tung Tăng TV",
+      "video_count": 275,
+      "total_views": 548348,
+      "total_comments": 2976
+    },
+    {
+      "channel_name": "MiMi Family Vlog",
+      "video_count": 6,
+      "total_views": 251986,
+      "total_comments": 200
+    },
+    {
+      "channel_name": "Lê Gia Huy",
+      "video_count": 1,
+      "total_views": 251981,
+      "total_comments": 0
+    }
+  ],
+  "growth": [
+    {
+      "month": "2024-12-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-01-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-02-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-03-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-04-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-05-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-06-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-07-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-08-01",
+      "reviews": 0,
+      "rating": null
+    },
+    {
+      "month": "2025-09-01",
+      "reviews": 998,
+      "rating": null
+    },
+    {
+      "month": "2025-10-01",
+      "reviews": 9918,
+      "rating": 5.0
+    },
+    {
+      "month": "2025-11-01",
+      "reviews": 1025,
+      "rating": 3.0
+    },
+    {
+      "month": "2025-12-01",
+      "reviews": 1186,
+      "rating": 3.0
+    },
+    {
+      "month": "2026-01-01",
+      "reviews": 1379,
+      "rating": null
+    },
+    {
+      "month": "2026-02-01",
+      "reviews": 1507,
+      "rating": 5.0
+    },
+    {
+      "month": "2026-03-01",
+      "reviews": 1925,
+      "rating": 5.0
+    },
+    {
+      "month": "2026-04-01",
+      "reviews": 2465,
+      "rating": 4.5
+    },
+    {
+      "month": "2026-05-01",
+      "reviews": 3012,
+      "rating": null
+    },
+    {
+      "month": "2026-06-01",
+      "reviews": 2881,
+      "rating": 4.0
+    },
+    {
+      "month": "2026-07-01",
+      "reviews": 3922,
+      "rating": 5.0
+    },
+    {
+      "month": "2026-08-01",
+      "reviews": 5687,
+      "rating": null
+    },
+    {
+      "month": "2026-09-01",
+      "reviews": 11817,
+      "rating": 5.0
+    },
+    {
+      "month": "2026-10-01",
+      "reviews": 5184,
+      "rating": 5.0
+    },
+    {
+      "month": "2026-11-01",
+      "reviews": 0,
+      "rating": null
+    }
+  ],
+  "stages": [
+    {
+      "place_development_stage": "Emerging / Low Data",
+      "place_count": 1620
+    },
+    {
+      "place_development_stage": "Steady Destination",
+      "place_count": 47
+    },
+    {
+      "place_development_stage": "Rising Star",
+      "place_count": 41
+    },
+    {
+      "place_development_stage": "Cooling / At Risk",
+      "place_count": 28
+    },
+    {
+      "place_development_stage": "Established Destination",
+      "place_count": 5
+    }
+  ],
+  "scatter": [
+    {
+      "place_name": "Đèo Hải Vân",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.9,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "4242433",
+      "place_development_stage": "Established Destination"
+    },
+    {
+      "place_name": "Cầu Vàng",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "3589159",
+      "place_development_stage": "Established Destination"
+    },
+    {
+      "place_name": "Cầu Rồng",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "902621",
+      "place_development_stage": "Established Destination"
+    },
+    {
+      "place_name": "Hổ Quyền",
+      "province_name": "Huế",
+      "latest_google_rating": 4.2,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "784686",
+      "place_development_stage": "Cooling / At Risk"
+    },
+    {
+      "place_name": "Thánh địa Mỹ Sơn",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "606922",
+      "place_development_stage": "Established Destination"
+    },
+    {
+      "place_name": "Ngũ Hành Sơn",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.4,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "561981",
+      "place_development_stage": "Established Destination"
+    },
+    {
+      "place_name": "Cung An Định",
+      "province_name": "Huế",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "205948",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Tử Cấm Thành",
+      "province_name": "Huế",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "162653",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Điện Cần Chánh",
+      "province_name": "Huế",
+      "latest_google_rating": 4.4,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "132241",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Điện Kiến Trung",
+      "province_name": "Huế",
+      "latest_google_rating": 4.7,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "90025",
+      "place_development_stage": "Cooling / At Risk"
+    },
+    {
+      "place_name": "Bãi Đá",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.1,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "55430",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Điện Thái Hòa",
+      "province_name": "Huế",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "28255",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Hoàng Thành Huế",
+      "province_name": "Huế",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "25987",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Điện Càn Thành",
+      "province_name": "Huế",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "17678",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Bảo tàng Cổ vật Cung đình Huế",
+      "province_name": "Huế",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "17043",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Linh Phong Bảo Tháp",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.8,
+      "latest_google_review_count": 34,
+      "total_youtube_views": "11373",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Làng truyền thống Cơ Tu",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.2,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "10331",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Fantasy Park",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.4,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "10002",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Bảo tàng Đà Nẵng",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.2,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "8181",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Sun World Bà Nà Hills",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "7617",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Đàn Xã Tắc",
+      "province_name": "Huế",
+      "latest_google_rating": 4.2,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "7201",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Rào chắn",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.0,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "6441",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Bãi biển Tiên Sa",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.0,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "6281",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Điện Phụng Tiên",
+      "province_name": "Huế",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "5286",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Bảo tàng Mỹ thuật Đà Nẵng",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "4504",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Hải Vọng Đài",
+      "province_name": "Huế",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "4330",
+      "place_development_stage": "Cooling / At Risk"
+    },
+    {
+      "place_name": "Bảo tàng tỉnh Quảng Ngãi",
+      "province_name": "Quảng Ngãi",
+      "latest_google_rating": 4.1,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "4125",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Chùa Báo Quốc",
+      "province_name": "Huế",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 249,
+      "total_youtube_views": "3746",
+      "place_development_stage": "Cooling / At Risk"
+    },
+    {
+      "place_name": "Bảo tàng Quân khu 5",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.3,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "3079",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Bảo tàng Nghệ thuật Điêu khắc Chăm Đà Nẵng",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.2,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "2131",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "VinWonders Nam Hội An",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.9,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "1926",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Bãi Xoan",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.0,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "1230",
+      "place_development_stage": "Steady Destination"
+    },
+    {
+      "place_name": "Tháp Bằng An",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.7,
+      "latest_google_review_count": 109,
+      "total_youtube_views": "959",
+      "place_development_stage": "Rising Star"
+    },
+    {
+      "place_name": "Chùa Cầu",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.3,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "747",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Thác Nhị Hồ",
+      "province_name": "Huế",
+      "latest_google_rating": 5.0,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "701",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Nhà thờ Tộc Nguyễn Văn",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 5.0,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "350",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Điện Khôn Thái",
+      "province_name": "Huế",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "235",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Trung tâm Nghệ thuật Điềm Phùng Thị",
+      "province_name": "Huế",
+      "latest_google_rating": 4.7,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "152",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Bảo tàng Phật giáo",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.8,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "131",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Tượng Phật Phước Lý",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "87",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Sunset spot",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.7,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "64",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Trú Vũ Trà Quán",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.6,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "30",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Thác Tóc Tiên",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.3,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "19",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "My Son Museum",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.5,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "9",
+      "place_development_stage": "Emerging / Low Data"
+    },
+    {
+      "place_name": "Da Nang view",
+      "province_name": "Đà Nẵng",
+      "latest_google_rating": 4.7,
+      "latest_google_review_count": 0,
+      "total_youtube_views": "2",
+      "place_development_stage": "Emerging / Low Data"
+    }
+  ]
+}

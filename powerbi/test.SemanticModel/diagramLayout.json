@@ -1,0 +1,100 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 251.40414861748852
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 867.529494139587,
+            "y": 353.72586239053749
+          },
+          "nodeIndex": "gold_fct_category_tourism_summary",
+          "nodeLineageTag": "c7664ee4-ff7d-40ff-bb9a-da8a49a1f332",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 6.5294941395870865,
+            "y": 635.78515333643145
+          },
+          "nodeIndex": "gold_fct_place_monthly_growth",
+          "nodeLineageTag": "441a17c9-5bc3-4eb9-9b07-fd7bdda1b38c",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 657.77091590763212,
+            "y": 0
+          },
+          "nodeIndex": "gold_fct_place_snapshot_trajectory",
+          "nodeLineageTag": "e7cf48c0-2b53-400b-b43e-41a0be0eabee",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 0,
+            "y": 288.6221833760635
+          },
+          "nodeIndex": "gold_fct_province_tourism_summary",
+          "nodeLineageTag": "9cf8e756-2b0a-446e-8b7d-4c1f7940f8e6",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 280.28554094775211,
+            "y": 657.451724781075
+          },
+          "nodeIndex": "gold_fct_youtube_video_performance",
+          "nodeLineageTag": "59c89b0d-2b30-4114-949d-4c7b846d6767",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 432.13430589858251,
+            "y": 327.552720086183
+          },
+          "nodeIndex": "gold_obt_place_360_profile",
+          "nodeLineageTag": "3eb5179c-545c-4c86-9a52-3d93ed960159",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 5
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 79.553182037699813,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

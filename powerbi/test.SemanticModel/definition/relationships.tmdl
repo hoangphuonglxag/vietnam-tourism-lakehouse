@@ -1,0 +1,61 @@
+relationship 3550bdc3-db5a-42df-b6e8-90eae546ec81
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_obt_place_360_profile.latest_rating_snapshot_date
+	toColumn: LocalDateTable_aeb04238-7675-4b4d-af7c-4e1219a1620d.Date
+
+relationship 2b4e9d7c-08d9-4f05-a49a-a0d2dbaad269
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_obt_place_360_profile.first_rating_snapshot_date
+	toColumn: LocalDateTable_494e3ad8-3383-4ccb-9c5a-1e3607c89fb9.Date
+
+relationship 00c4f6dd-15ea-42be-8a0b-6f70acecb988
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_youtube_video_performance.published_date
+	toColumn: LocalDateTable_cf953e24-3fd1-47d5-a555-b21d168d9854.Date
+
+relationship abb282bc-c55c-4fd2-bba7-c5014644f4c2
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_youtube_video_performance.published_month
+	toColumn: LocalDateTable_f50896f9-7992-4b2d-9424-4689549b0133.Date
+
+relationship a72ce847-c9e9-4d1e-899d-8321cb1e3dbd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_youtube_video_performance.first_snapshot_date
+	toColumn: LocalDateTable_16c2b9f7-e707-49d0-85ca-93966137fdb1.Date
+
+relationship f93cae17-cfa6-498f-a088-ccd269f1cae6
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_youtube_video_performance.latest_snapshot_date
+	toColumn: LocalDateTable_a05070ab-17de-4b9e-9925-41a7c4ec20e2.Date
+
+relationship 9125aa9f-25db-4d92-a36b-9b550a019388
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_place_snapshot_trajectory.snapshot_date
+	toColumn: LocalDateTable_bacf2bfd-6180-4256-b19d-76331c9ee22e.Date
+
+relationship 478551e2-b75c-42d2-ac94-fb18ca3339c9
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_place_snapshot_trajectory.prev_snapshot_date
+	toColumn: LocalDateTable_2fa86537-c3c3-4ea4-903d-10c395278c87.Date
+
+relationship 2d7cf274-85fc-43bc-bd5c-20c26edbafbc
+	joinOnDateBehavior: datePartOnly
+	fromColumn: gold_fct_place_monthly_growth.activity_month
+	toColumn: LocalDateTable_c27911e2-ee63-4a65-8a21-5b9314278f08.Date
+
+relationship d680a2ab-4e7d-2ce1-2116-6ceb749b3f95
+	fromColumn: gold_fct_place_snapshot_trajectory.place_id
+	toColumn: gold_obt_place_360_profile.place_id
+
+relationship 9765ca6b-f239-fe39-de81-5e6e2d6ccbc5
+	fromColumn: gold_fct_youtube_video_performance.place_id
+	toColumn: gold_obt_place_360_profile.place_id
+
+relationship f1623c68-5df6-cdae-ce58-a74c5061ec4f
+	fromColumn: gold_fct_place_monthly_growth.place_id
+	toColumn: gold_obt_place_360_profile.place_id
+
+relationship 14b5d270-ce84-bf47-cebf-89ffb56719e8
+	fromColumn: gold_obt_place_360_profile.province_id
+	toColumn: gold_fct_province_tourism_summary.province_id
+

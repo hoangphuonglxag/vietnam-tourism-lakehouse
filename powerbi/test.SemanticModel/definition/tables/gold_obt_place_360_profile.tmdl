@@ -1,0 +1,551 @@
+table gold_obt_place_360_profile
+	lineageTag: 3eb5179c-545c-4c86-9a52-3d93ed960159
+
+	measure 'Total Places' = COUNTROWS('gold_obt_place_360_profile')
+		formatString: #,0
+		lineageTag: f4aa7965-94d3-4a57-85db-2e416846267b
+
+	measure 'Total Google Reviews' = SUM('gold_obt_place_360_profile'[latest_google_review_count])
+		formatString: #,0
+		lineageTag: 9d85d077-9fa9-468a-a1ea-0ae590c5ad34
+
+	measure 'Total YouTube Views' = SUM('gold_obt_place_360_profile'[total_youtube_views])
+		formatString: #,0
+		lineageTag: 4eeca770-5efd-4cb2-95eb-a787898333d2
+
+	measure 'Weighted Rating' = DIVIDE(SUMX('gold_obt_place_360_profile', 'gold_obt_place_360_profile'[latest_google_rating] * 'gold_obt_place_360_profile'[latest_google_review_count]), SUMX(FILTER('gold_obt_place_360_profile', NOT ISBLANK('gold_obt_place_360_profile'[latest_google_rating])), 'gold_obt_place_360_profile'[latest_google_review_count]))
+		formatString: 0.00
+		lineageTag: 528f6755-490f-456e-b75a-a5d6d7b41fef
+
+	measure 'Avg Rating' = AVERAGE('gold_obt_place_360_profile'[latest_google_rating])
+		formatString: 0.00
+		lineageTag: d0b8509a-aae3-4bd3-9c68-716a5f2130e6
+
+	measure 'Media Score' = LOG10(1 + SUM('gold_obt_place_360_profile'[total_youtube_views]))
+		formatString: 0.00
+		lineageTag: a5c8fd6f-b475-49a9-8d62-c1a30babeaa7
+
+	measure 'Leading Hotspots' = COUNTROWS(FILTER('gold_obt_place_360_profile', NOT ISBLANK('gold_obt_place_360_profile'[latest_google_rating]) && 'gold_obt_place_360_profile'[latest_google_rating] >= 4.35 && 'gold_obt_place_360_profile'[total_youtube_views] >= 50000)) + 0
+		formatString: #,0
+		lineageTag: 416cf61e-a68f-4db8-99fd-d27adff9daf5
+
+	measure 'Hidden Gems' = COUNTROWS(FILTER('gold_obt_place_360_profile', NOT ISBLANK('gold_obt_place_360_profile'[latest_google_rating]) && 'gold_obt_place_360_profile'[latest_google_rating] >= 4.35 && 'gold_obt_place_360_profile'[total_youtube_views] < 50000)) + 0
+		formatString: #,0
+		lineageTag: 7d88a802-0d94-4883-959a-ec8db81a14f4
+
+	measure 'Tourist Traps' = COUNTROWS(FILTER('gold_obt_place_360_profile', NOT ISBLANK('gold_obt_place_360_profile'[latest_google_rating]) && 'gold_obt_place_360_profile'[latest_google_rating] < 4.35 && 'gold_obt_place_360_profile'[total_youtube_views] >= 50000)) + 0
+		formatString: #,0
+		lineageTag: f0144371-d67d-4a6a-9068-d724c1b8d656
+
+	column place_id
+		dataType: string
+		lineageTag: 0fb99dfa-54d8-4a29-9942-587c859d210a
+		summarizeBy: none
+		sourceColumn: place_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_name
+		dataType: string
+		lineageTag: 1ff9073a-21ed-4cfa-88c7-69266d26ae57
+		summarizeBy: none
+		sourceColumn: place_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_vi
+		dataType: string
+		lineageTag: 96fd64da-a339-4ec7-938b-bfda863cb382
+		summarizeBy: none
+		sourceColumn: name_vi
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_en
+		dataType: string
+		lineageTag: 8a12f0fb-4413-408e-bbd1-c50ac7d20722
+		summarizeBy: none
+		sourceColumn: name_en
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_id
+		dataType: string
+		lineageTag: db88239e-cb31-4251-bcf5-21ec046ea812
+		summarizeBy: none
+		sourceColumn: province_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_name
+		dataType: string
+		lineageTag: 4b9065c5-f064-491b-a787-2d8b894c22d0
+		summarizeBy: none
+		sourceColumn: province_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column admin_scope
+		dataType: string
+		lineageTag: a076401c-e834-4a2d-a63e-f66740d35329
+		summarizeBy: none
+		sourceColumn: admin_scope
+
+		annotation SummarizationSetBy = Automatic
+
+	column latitude
+		dataType: double
+		lineageTag: 39d0141f-a5b4-466a-ac55-099aa0ebabc9
+		summarizeBy: sum
+		sourceColumn: latitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column longitude
+		dataType: double
+		lineageTag: 25d4af04-1b2e-4c14-853f-13c518f12f94
+		summarizeBy: sum
+		sourceColumn: longitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column tourism_status
+		dataType: string
+		lineageTag: 1f514dbc-28bc-40f5-9dbe-59610426cd16
+		summarizeBy: none
+		sourceColumn: tourism_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_id
+		dataType: string
+		lineageTag: ec842457-5477-4557-bdd2-bf3781f2ce94
+		summarizeBy: none
+		sourceColumn: primary_category_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_group
+		dataType: string
+		lineageTag: 98b4cce2-4dc0-4db0-acb0-9d1ab078d377
+		summarizeBy: none
+		sourceColumn: primary_category_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_name
+		dataType: string
+		lineageTag: ce445b18-42e1-4579-94a8-d7951e674f4e
+		summarizeBy: none
+		sourceColumn: primary_category_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column category_count
+		dataType: double
+		lineageTag: bee8af27-ae40-4e00-8ada-3100eb054131
+		summarizeBy: sum
+		sourceColumn: category_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column latest_google_rating
+		dataType: double
+		formatString: 0.00
+		lineageTag: 65dc2979-2319-4978-8d30-7323992ddcdb
+		summarizeBy: sum
+		sourceColumn: latest_google_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column latest_google_review_count
+		dataType: double
+		formatString: #,0
+		lineageTag: ce5dedf7-d38a-4b0f-a2ec-b7812419714e
+		summarizeBy: sum
+		sourceColumn: latest_google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column latest_rating_snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: f5cd1295-d2f0-47b6-aa08-cba11f675d63
+		summarizeBy: none
+		sourceColumn: latest_rating_snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: 3550bdc3-db5a-42df-b6e8-90eae546ec81
+			defaultHierarchy: LocalDateTable_aeb04238-7675-4b4d-af7c-4e1219a1620d.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column first_google_rating
+		dataType: double
+		lineageTag: cc520b56-0839-4e44-aa99-af0d84a12558
+		summarizeBy: sum
+		sourceColumn: first_google_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column first_google_review_count
+		dataType: double
+		lineageTag: 5b7ea08b-4a51-44b5-8c94-4275a0b9edbe
+		summarizeBy: sum
+		sourceColumn: first_google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column first_rating_snapshot_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e596c55d-9ce7-421c-8c37-ce00067f6f86
+		summarizeBy: none
+		sourceColumn: first_rating_snapshot_date
+
+		variation Variation
+			isDefault
+			relationship: 2b4e9d7c-08d9-4f05-a49a-a0d2dbaad269
+			defaultHierarchy: LocalDateTable_494e3ad8-3383-4ccb-9c5a-1e3607c89fb9.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column total_rating_delta
+		dataType: double
+		lineageTag: b8289ca0-ad8a-417d-a45d-7f20258f9138
+		summarizeBy: sum
+		sourceColumn: total_rating_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_review_count_delta
+		dataType: double
+		lineageTag: 244437a6-391a-4c9a-9606-68b865e82393
+		summarizeBy: sum
+		sourceColumn: total_review_count_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_5_pct
+		dataType: double
+		lineageTag: 0330a6de-68e0-4eb6-aa95-33ed430d8c3c
+		summarizeBy: sum
+		sourceColumn: rating_5_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_4_pct
+		dataType: double
+		lineageTag: d39d7b93-109b-47c8-9c2d-94120bc25aa7
+		summarizeBy: sum
+		sourceColumn: rating_4_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_3_pct
+		dataType: double
+		lineageTag: 1b1ec674-4714-45c9-b6d1-4ff0455f6a06
+		summarizeBy: sum
+		sourceColumn: rating_3_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_2_pct
+		dataType: double
+		lineageTag: cac6e6a2-d8d2-4e85-9976-7452fd03906e
+		summarizeBy: sum
+		sourceColumn: rating_2_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_1_pct
+		dataType: double
+		lineageTag: 4d327b07-7f90-4c07-8e00-f2a25438690e
+		summarizeBy: sum
+		sourceColumn: rating_1_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column net_sentiment_score
+		dataType: double
+		lineageTag: ec1a644e-c443-4d46-a806-6aa79493d1a2
+		summarizeBy: sum
+		sourceColumn: net_sentiment_score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rating_trend_direction
+		dataType: string
+		lineageTag: 5f415771-3619-4aad-9e3b-e09dd8fe8f6d
+		summarizeBy: none
+		sourceColumn: rating_trend_direction
+
+		annotation SummarizationSetBy = Automatic
+
+	column crawled_review_count
+		dataType: double
+		lineageTag: 0d389c34-ce96-481e-b38e-90e8b2e67daa
+		summarizeBy: sum
+		sourceColumn: crawled_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column crawled_avg_rating
+		dataType: double
+		lineageTag: 60562891-6921-4549-a8c7-cb1715455563
+		summarizeBy: sum
+		sourceColumn: crawled_avg_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column text_review_ratio
+		dataType: double
+		lineageTag: 5c595ccb-dc24-4936-950d-ac2f75b9b4e9
+		summarizeBy: sum
+		sourceColumn: text_review_ratio
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column reviews_last_90d_count
+		dataType: double
+		lineageTag: a27afc69-49dd-427b-a4a6-bd087c6313db
+		summarizeBy: sum
+		sourceColumn: reviews_last_90d_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column reviews_prev_90d_count
+		dataType: double
+		lineageTag: d74949ab-dda5-4a80-b0d4-ba1639893fcd
+		summarizeBy: sum
+		sourceColumn: reviews_prev_90d_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column recent_review_momentum_pct
+		dataType: double
+		lineageTag: 3f62f5d8-1a4d-4299-87b1-1f6a21a233a7
+		summarizeBy: sum
+		sourceColumn: recent_review_momentum_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column youtube_video_count
+		dataType: double
+		lineageTag: 5fa29312-84a1-43f1-ae2a-b5e20c951a43
+		summarizeBy: sum
+		sourceColumn: youtube_video_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column distinct_channel_count
+		dataType: double
+		lineageTag: 6644bc93-9e46-477f-a360-37040b0ce78a
+		summarizeBy: sum
+		sourceColumn: distinct_channel_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views
+		dataType: double
+		formatString: #,0
+		lineageTag: cde80aeb-f596-41d5-98d7-3a5ba319b020
+		summarizeBy: sum
+		sourceColumn: total_youtube_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_views_per_video
+		dataType: double
+		lineageTag: b80985f8-e49c-4ea5-8db4-31e09ec7c997
+		summarizeBy: sum
+		sourceColumn: avg_views_per_video
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column max_video_views
+		dataType: double
+		lineageTag: e5eaf80d-f14a-4279-b1f0-2c24a5a840bb
+		summarizeBy: sum
+		sourceColumn: max_video_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column top_video_id
+		dataType: string
+		lineageTag: 2abd3e37-c48c-4662-879f-bd18b27da387
+		summarizeBy: none
+		sourceColumn: top_video_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column top_video_title
+		dataType: string
+		lineageTag: 7806bd52-b5eb-48a9-ac12-7aee4f5807ff
+		summarizeBy: none
+		sourceColumn: top_video_title
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_youtube_views_delta
+		dataType: double
+		lineageTag: b8c6f927-4a0c-41b6-ade9-636ba34e783b
+		summarizeBy: sum
+		sourceColumn: total_youtube_views_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_daily_youtube_view_growth
+		dataType: double
+		lineageTag: e6c1895d-e23f-4915-b6f1-7076c2660561
+		summarizeBy: sum
+		sourceColumn: avg_daily_youtube_view_growth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column views_growth_direction
+		dataType: string
+		lineageTag: d58d1b03-3c2c-4c41-bfcf-81a9f703649a
+		summarizeBy: none
+		sourceColumn: views_growth_direction
+
+		annotation SummarizationSetBy = Automatic
+
+	column coverage_status
+		dataType: string
+		lineageTag: 0a19cca2-0e89-4879-bc76-49f3dbfa827c
+		summarizeBy: none
+		sourceColumn: coverage_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_active_month_count
+		dataType: double
+		lineageTag: d3b55868-85dc-4a2f-aa7b-8f920abd5955
+		summarizeBy: sum
+		sourceColumn: total_active_month_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column history_span_months
+		dataType: double
+		lineageTag: fd8efedc-cdb6-42c8-946b-f42670ae1e07
+		summarizeBy: sum
+		sourceColumn: history_span_months
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column province_popularity_rank
+		dataType: double
+		lineageTag: fc392016-3d25-44b8-8790-4be6708e5eab
+		summarizeBy: sum
+		sourceColumn: province_popularity_rank
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column national_popularity_rank
+		dataType: double
+		lineageTag: 2aaef72f-d55f-4f33-a865-de274b123a41
+		summarizeBy: sum
+		sourceColumn: national_popularity_rank
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column place_development_stage
+		dataType: string
+		lineageTag: c000f099-0023-45d2-91eb-89f9e8a02ea1
+		summarizeBy: none
+		sourceColumn: place_development_stage
+
+		annotation SummarizationSetBy = Automatic
+
+	partition gold_obt_place_360_profile = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_obt_place_360_profile",Kind="Table"]}[Data],
+				    TextCols = Table.ColumnsOfType(raw_Table, {type text, type nullable text}),
+				    FixedUtf8 = Table.TransformColumns(
+				        raw_Table,
+				        List.Transform(
+				            TextCols,
+				            (c) => {c, (v) => if v = null then null else let b = Text.ToBinary(v, 1252), u = try Text.FromBinary(b, TextEncoding.Utf8) otherwise v in if Text.Contains(u, Character.FromNumber(65533)) then v else u, type nullable text}
+				        )
+				    )
+				in
+				    FixedUtf8
+
+	annotation PBI_ResultType = Table
+

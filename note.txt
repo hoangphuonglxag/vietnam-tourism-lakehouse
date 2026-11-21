@@ -29,9 +29,7 @@ hoàn toàn giữa tầng Lưu trữ (Storage) và tầng Tính toán (Compute),
        + Nguyên tắc bảo toàn dữ liệu: Toàn bộ nhãn validation_status, tourism_status và cờ crawl_eligible 
          đều được GIỮ NGUYÊN 100% trên Silver (silver_places) và Gold (gold_obt_place_360_profile). 
          Trên Power BI có thể tạo Slicer lọc riêng từng nhóm này để đánh giá chất lượng dữ liệu.
-       + Phạm vi thực nghiệm hiện tại trong Lakehouse (Pilot Region): 1,741 địa điểm thuộc cụm 4 tỉnh 
-         Miền Trung trọng điểm (Đà Nẵng: 1,283; Huế: 384; Quảng Ngãi: 70; Quảng Trị: 4). Toàn bộ 
-         dữ liệu 34 tỉnh đã sẵn sàng ở master catalog để scale-out toàn quốc.
+       + Phạm vi toàn diện hiện tại trong Lakehouse: Đã mở rộng thành công toàn bộ 34 tỉnh/thành với 7,155 địa điểm trên Bronze, Silver (silver_places) và Gold (gold_obt_place_360_profile), bao gồm đầy đủ 1,763 điểm du lịch cốt lõi (crawl_eligible=True) phủ khắp 3 miền Bắc - Trung - Nam.
      * Google Maps: Ratings & Reviews trải nghiệm thực tế của du khách.
      * YouTube: Travel Videos & Comments truyền thông số.
    - Công nghệ: Python, Playwright (Headless Browser), ytscrape, Airflow Ingestion DAGs.

@@ -50,3 +50,5 @@ desktop.ini
 *.Identifier
 
 /tourism_lakehouse/
+*.msi
+*.bak

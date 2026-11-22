@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vietnam Tourism Lakehouse — Light Executive Studio & Power BI Master</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #F1F5F9;
+            --bg-surface: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-subtle: #F8FAFC;
+            --border: #E2E8F0;
+            --border-strong: #CBD5E1;
+
+            --teal: #0D9488;
+            --blue: #0284C7;
+            --coral: #EA580C;
+            --gold: #D97706;
+            --indigo: #4F46E5;
+
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #64748B;
+
+            --shadow-card: 0 6px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Be Vietnam Pro', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-body);
+            background-image:
+                radial-gradient(circle at 6% 0%, rgba(13, 148, 136, 0.06), transparent 36%),
+                radial-gradient(circle at 96% 100%, rgba(2, 132, 199, 0.06), transparent 40%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: #FFFFFF;
+            border-top: 4px solid transparent;
+            border-image: linear-gradient(90deg, #0D9488 0%, #0284C7 55%, #D97706 100%) 1;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0D9488, #0284C7);
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+        }
+
+        .brand-title {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+        }
+
+        .brand-title span {
+            color: var(--teal);
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .status-tag {
+            background: #F0FDFA;
+            border: 1px solid #99F6E4;
+            color: #0F766E;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #0D9488;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(13, 148, 136, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(13, 148, 136, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+        }
+
+        .btn-mode-toggle {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-mode-toggle:hover {
+            background: #EFF6FF;
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .tab-bar {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 36px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .tab-link {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-link:hover {
+            color: var(--text-primary);
+            background: var(--bg-body);
+        }
+
+        .tab-link.active {
+            color: #FFFFFF;
+            background: linear-gradient(135deg, #0D9488, #0284C7);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+        }
+
+        main {
+            flex: 1;
+            padding: 24px 36px;
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-strong);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 4px;
+        }
+
+        .kpi-card.c-teal::before { background: var(--teal); }
+        .kpi-card.c-blue::before { background: var(--blue); }
+        .kpi-card.c-coral::before { background: var(--coral); }
+        .kpi-card.c-gold::before { background: var(--gold); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .kpi-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 0.9px;
+            text-transform: uppercase;
+        }
+
+        .kpi-icon {
+            font-size: 18px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            margin-bottom: 6px;
+        }
+
+        .kpi-subtext {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .c-teal .kpi-subtext { color: var(--teal); }
+        .c-blue .kpi-subtext { color: var(--blue); }
+        .c-coral .kpi-subtext { color: var(--coral); }
+        .c-gold .kpi-subtext { color: var(--gold); }
+
+        .analytics-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid-3-col { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-2-col { grid-template-columns: 1.35fr 1fr; }
+        .grid-full { grid-template-columns: 1fr; }
+
+        .chart-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 15.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .chart-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 7px;
+            background: var(--bg-body);
+            color: #334155;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .chart-body {
+            position: relative;
+            flex: 1;
+            min-height: 360px;
+            width: 100%;
+        }
+
+        .data-table-wrap {
+            overflow-x: auto;
+            max-height: 480px;
+        }
+
+        table.custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+        }
+
+        table.custom-table th {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 11px 14px;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        table.custom-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+            color: #1E293B;
+        }
+
+        table.custom-table tbody tr:nth-child(even) td {
+            background: var(--bg-subtle);
+        }
+
+        table.custom-table tr:hover td {
+            background: #EFF6FF;
+        }
+
+        .badge-stage {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-stage.rising { background: #CCFBF1; color: #0F766E; }
+        .badge-stage.established { background: #E0F2FE; color: #0369A1; }
+        .badge-stage.steady { background: #FEF3C7; color: #B45309; }
+        .badge-stage.cooling { background: #FFEDD5; color: #C2410C; }
+
+        .spec-drawer {
+            display: none;
+            background: #FFFFFF;
+            border: 1px solid var(--border-strong);
+            padding: 20px 26px;
+            margin-top: 24px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .spec-drawer.active { display: block; }
+
+        .dax-snippet {
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #0F172A;
+            line-height: 1.6;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border);
+            background: #FFFFFF;
+            padding: 16px 36px;
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-container">
+            <div class="brand-logo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title">VIETNAM <span>TOURISM</span> LAKEHOUSE</div>
+                <div class="brand-subtitle">Data Lakehouse &bull; Trino &times; Apache Iceberg &bull; Light Executive Theme</div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="status-tag">
+                <span class="pulse-dot"></span>
+                Trino Lakehouse: Connected (8083)
+            </div>
+            <button class="btn-mode-toggle" onclick="togglePbipGuide()">
+                <span>⚡</span>
+                <span id="guide-btn-text">Hướng dẫn Refresh &amp; Đồng bộ Power BI</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="tab-bar">
+        <button class="tab-link active" onclick="navigateTab(1)">
+            <span>📊</span> 01 Tổng quan Du lịch
+        </button>
+        <button class="tab-link" onclick="navigateTab(2)">
+            <span>🧭</span> 02 Định vị Điểm đến 360°
+        </button>
+        <button class="tab-link" onclick="navigateTab(3)">
+            <span>🎥</span> 03 Sức lan tỏa Mạng xã hội
+        </button>
+        <button class="tab-link" onclick="navigateTab(4)">
+            <span>📈</span> 04 Tăng trưởng &amp; Xu hướng
+        </button>
+    </div>
+
+    <main>
+        <div class="kpi-row" id="kpi-row"></div>
+
+        <div class="tab-content" id="tab-1">
+            <div class="analytics-grid grid-3-col">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Quy mô điểm đến theo tỉnh/thành</div>
+                            <div class="chart-subtitle">Tự động mở rộng khi thu thập thêm tỉnh/thành mới</div>
+                        </div>
+                        <span class="chart-badge">obt_place_360</span>
+                    </div>
+                    <div class="chart-body"><canvas id="chart-prov-places"></canvas></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Cơ cấu loại hình du lịch</div>
+                            <div class="chart-subtitle">Tỷ trọng điểm đến theo nhóm loại hình</div>
+                        </div>
+                        <span class="chart-badge">obt_place_360</span>
+                    </div>
+                    <div class="chart-body"><canvas id="chart-categories"></canvas></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Sức hút truyền thông số (YouTube Views)</div>
+                            <div class="chart-subtitle">Tổng lượt xem YouTube theo địa phương</div>
+                        </div>
+                        <span class="chart-badge">province_summary</span>
+                    </div>
+                    <div class="chart-body"><canvas id="chart-prov-views"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-2" style="display: none;">
+            <div class="analytics-grid grid-2-col">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Ma trận định vị điểm đến (Rating vs Views)</div>
+                            <div class="chart-subtitle">Phát hiện Ngọc ẩn (Hidden Gems) &amp; Bẫy du lịch (Tourist Traps)</div>
+                        </div>
+                        <span class="chart-badge">4-quadrant</span>
+                    </div>
+                    <div class="chart-body" style="min-height: 460px;"><canvas id="chart-scatter-quadrant"></canvas></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Top điểm đến nổi bật</div>
+                            <div class="chart-subtitle">Hồ sơ 360° kết hợp Google Rating &amp; YouTube Views</div>
+                        </div>
+                        <span class="chart-badge">obt_place_360</span>
+                    </div>
+                    <div class="chart-body data-table-wrap">
+                        <table class="custom-table" id="dest-table">
+                            <thead>
+                                <tr>
+                                    <th>Điểm đến</th>
+                                    <th>Tỉnh/Thành</th>
+                                    <th>Rating</th>
+                                    <th>Lượt xem</th>
+                                    <th>Giai đoạn</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-3" style="display: none;">
+            <div class="analytics-grid grid-2-col">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Top kênh YouTube theo lượt xem</div>
+                            <div class="chart-subtitle">Nhà sáng tạo có sức ảnh hưởng lớn nhất</div>
+                        </div>
+                        <span class="chart-badge">youtube_channel</span>
+                    </div>
+                    <div class="chart-body"><canvas id="chart-channels"></canvas></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Video du lịch viral nhất</div>
+                            <div class="chart-subtitle">Lượt xem và thảo luận của khán giả</div>
+                        </div>
+                        <span class="chart-badge">video_performance</span>
+                    </div>
+                    <div class="chart-body data-table-wrap">
+                        <table class="custom-table" id="videos-table">
+                            <thead>
+                                <tr>
+                                    <th>Tiêu đề video</th>
+                                    <th>Kênh</th>
+                                    <th>Lượt xem</th>
+                                    <th>Bình luận</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-4" style="display: none;">
+            <div class="analytics-grid grid-full">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Lượng review mới &amp; rating trung bình theo tháng</div>
+                            <div class="chart-subtitle">Theo dõi tính mùa vụ du lịch &amp; chất lượng dịch vụ</div>
+                        </div>
+                        <span class="chart-badge">monthly_growth</span>
+                    </div>
+                    <div class="chart-body" style="min-height: 420px;"><canvas id="chart-monthly-growth"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="spec-drawer" id="spec-drawer">
+            <h3 style="color: #0D9488; margin-bottom: 8px;">Đồng bộ Power BI (Light Executive + Fix UTF-8 Tiếng Việt)</h3>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">
+                1. Khi mở <code>test.pbip</code>, bấm nút <strong>Refresh</strong> trên thanh Home để Power Query M (<code>FixedUtf8</code>) nạp dữ liệu tiếng Việt chuẩn UTF-8 từ Trino.<br>
+                2. Sau khi chạy crawl thêm các tỉnh mới vào Gold Iceberg, chỉ cần bấm <strong>Refresh</strong> một lần là toàn bộ 4 trang tự động mở rộng theo dữ liệu mới.<br>
+                3. Cuối cùng chọn <strong>File &rarr; Save as &rarr; Power BI Report (*.pbix)</strong> để lưu lại bản sạch kèm cache tiếng Việt mới nhất.
+            </p>
+            <div class="dax-snippet">-- DAX Measures cốt lõi đã tích hợp vào Semantic Model:
+Total Places = COUNTROWS('gold_obt_place_360_profile')
+Weighted Rating = DIVIDE(SUMX('gold_obt_place_360_profile', [latest_google_rating] * [latest_google_review_count]), ...)
+Media Score = LOG10(1 + SUM('gold_obt_place_360_profile'[total_youtube_views]))</div>
+        </div>
+    </main>
+
+    <footer>
+        <div>Nguồn: <strong>Vietnam Tourism Lakehouse &bull; Medallion Bronze &rarr; Silver &rarr; Gold</strong></div>
+        <div>Hệ thống: <strong>Docker (Trino + Lakekeeper + MinIO + Postgres)</strong> &bull; Theme: <strong>Light Executive</strong></div>
+    </footer>
+
+    <script>
+        let dashboardData = null;
+        let charts = {};
+
+        async function initDashboard() {
+            try {
+                const res = await fetch('dashboard_data.json');
+                dashboardData = await res.json();
+                renderTab(1);
+            } catch (e) {
+                console.error("Could not load dashboard_data.json", e);
+            }
+        }
+
+        function renderKPIs(kpis) {
+            const row = document.getElementById('kpi-row');
+            row.innerHTML = '';
+            kpis.forEach(k => {
+                row.innerHTML += `
+                    <div class="kpi-card ${k.color}">
+                        <div class="kpi-header">
+                            <span class="kpi-label">${k.label}</span>
+                            <span class="kpi-icon">${k.icon}</span>
+                        </div>
+                        <div class="kpi-value">${k.val}</div>
+                        <div class="kpi-subtext">${k.sub}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTab(tabIndex) {
+            if (!dashboardData) return;
+
+            Chart.defaults.color = '#475569';
+            Chart.defaults.font.family = "'Be Vietnam Pro', 'Segoe UI', sans-serif";
+            Chart.defaults.borderColor = '#E2E8F0';
+
+            if (tabIndex === 1) {
+                renderKPIs([
+                    { label: "ĐIỂM DU LỊCH", icon: "🏛️", val: "1,741", sub: "Điểm đến đã kiểm định (OSM)", color: "c-teal" },
+                    { label: "ĐÁNH GIÁ GOOGLE", icon: "⭐", val: "75.7K", sub: "Tổng lượt đánh giá thực tế", color: "c-blue" },
+                    { label: "LƯỢT XEM YOUTUBE", icon: "▶️", val: "11.6M", sub: "Độ phủ truyền thông số", color: "c-coral" },
+                    { label: "RATING TRUNG BÌNH", icon: "✨", val: "4.50 ★", sub: "Có trọng số theo lượt đánh giá", color: "c-gold" }
+                ]);
+
+                if (charts['provPlaces']) charts['provPlaces'].destroy();
+                if (charts['cats']) charts['cats'].destroy();
+                if (charts['provViews']) charts['provViews'].destroy();
+
+                const topProvs = dashboardData.provinces.filter(p => p.total_places_count > 0);
+
+                charts['provPlaces'] = new Chart(document.getElementById('chart-prov-places'), {
+                    type: 'bar',
+                    data: {
+                        labels: topProvs.map(p => p.province_name),
+                        datasets: [{
+                            label: 'Số lượng địa điểm',
+                            data: topProvs.map(p => p.total_places_count),
+                            backgroundColor: '#0D9488',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                charts['cats'] = new Chart(document.getElementById('chart-categories'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: dashboardData.categories.map(c => c.name_vi),
+                        datasets: [{
+                            data: dashboardData.categories.map(c => c.total_places_count),
+                            backgroundColor: ['#0D9488', '#0284C7', '#D97706', '#EA580C', '#4F46E5', '#0891B2', '#10B981', '#F59E0B']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+                });
+
+                charts['provViews'] = new Chart(document.getElementById('chart-prov-views'), {
+                    type: 'bar',
+                    data: {
+                        labels: topProvs.map(p => p.province_name),
+                        datasets: [{
+                            label: 'Lượt xem YouTube',
+                            data: topProvs.map(p => Number(p.total_youtube_views)),
+                            backgroundColor: '#0284C7',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            } else if (tabIndex === 2) {
+                renderKPIs([
+                    { label: "ĐIỂM SÁNG DẪN ĐẦU", icon: "🏆", val: "5", sub: "Rating >= 4.35 · Lượt xem >= 50K", color: "c-teal" },
+                    { label: "NGỌC ẨN", icon: "💎", val: "41", sub: "Rating >= 4.35 · Lượt xem < 50K", color: "c-blue" },
+                    { label: "BẪY TRUYỀN THÔNG", icon: "⚠️", val: "28", sub: "Rating < 4.35 · Lượt xem >= 50K", color: "c-coral" },
+                    { label: "RATING TRUNG BÌNH", icon: "✨", val: "4.48 ★", sub: "Có trọng số theo lượt đánh giá", color: "c-gold" }
+                ]);
+
+                const tbody = document.querySelector('#dest-table tbody');
+                tbody.innerHTML = '';
+                dashboardData.scatter.slice(0, 15).forEach(s => {
+                    let badgeClass = s.place_development_stage.includes('Rising') ? 'rising'
+                        : (s.place_development_stage.includes('Established') ? 'established'
+                        : (s.place_development_stage.includes('Cooling') ? 'cooling' : 'steady'));
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 600;">${s.place_name}</td>
+                            <td>${s.province_name}</td>
+                            <td style="color: #D97706; font-weight: 700;">${s.latest_google_rating || '-'} ★</td>
+                            <td>${Number(s.total_youtube_views).toLocaleString()}</td>
+                            <td><span class="badge-stage ${badgeClass}">${s.place_development_stage}</span></td>
+                        </tr>
+                    `;
+                });
+
+                if (charts['scatter']) charts['scatter'].destroy();
+                charts['scatter'] = new Chart(document.getElementById('chart-scatter-quadrant'), {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Điểm du lịch',
+                            data: dashboardData.scatter.map(s => ({
+                                x: Math.log10(1 + (s.total_youtube_views || 0)),
+                                y: s.latest_google_rating,
+                                views: s.total_youtube_views,
+                                name: s.place_name
+                            })),
+                            backgroundColor: '#0284C7',
+                            pointRadius: 6,
+                            pointHoverRadius: 9
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { title: { display: true, text: 'Chỉ số truyền thông log10(1 + lượt xem)' }, min: 0 },
+                            y: { title: { display: true, text: 'Google Rating' }, min: 3.5, max: 5.0 }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.raw.name}: ${ctx.raw.y} ★ (${Number(ctx.raw.views).toLocaleString()} views)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else if (tabIndex === 3) {
+                renderKPIs([
+                    { label: "VIDEO DU LỊCH", icon: "🎬", val: "35,315", sub: "Video gắn với điểm đến", color: "c-teal" },
+                    { label: "LƯỢT XEM", icon: "👁️", val: "11.6M", sub: "Tổng lượt xem mới nhất", color: "c-blue" },
+                    { label: "BÌNH LUẬN", icon: "💬", val: "202.8K", sub: "Bình luận đã thu thập", color: "c-coral" },
+                    { label: "KÊNH SÁNG TẠO", icon: "📹", val: "13,592", sub: "Travel vlogger / KOL / KOC", color: "c-gold" }
+                ]);
+
+                if (charts['channels']) charts['channels'].destroy();
+                charts['channels'] = new Chart(document.getElementById('chart-channels'), {
+                    type: 'bar',
+                    data: {
+                        labels: dashboardData.channels.map(c => c.channel_name),
+                        datasets: [{
+                            label: 'Lượt xem',
+                            data: dashboardData.channels.map(c => c.total_views),
+                            backgroundColor: '#EA580C',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                const tbody = document.querySelector('#videos-table tbody');
+                tbody.innerHTML = '';
+                dashboardData.videos.forEach(v => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 600; max-width: 260px;">${v.video_title}</td>
+                            <td>${v.channel_name}</td>
+                            <td style="color: #0284C7; font-weight: 700;">${Number(v.latest_views).toLocaleString()}</td>
+                            <td>${Number(v.crawled_comment_count).toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            } else if (tabIndex === 4) {
+                renderKPIs([
+                    { label: "REVIEW MỚI", icon: "📈", val: "59.3K", sub: "Tổng lượt đánh giá phát sinh", color: "c-teal" },
+                    { label: "RATING THEO THÁNG", icon: "✨", val: "4.46 ★", sub: "Điểm trung bình các tháng", color: "c-gold" },
+                    { label: "VIDEO MỚI", icon: "🎥", val: "1,240", sub: "Video xuất bản mới", color: "c-coral" },
+                    { label: "ĐỊA ĐIỂM HOẠT ĐỘNG", icon: "📍", val: "1,741", sub: "Có hoạt động đánh giá / video", color: "c-blue" }
+                ]);
+
+                if (charts['growth']) charts['growth'].destroy();
+                charts['growth'] = new Chart(document.getElementById('chart-monthly-growth'), {
+                    type: 'bar',
+                    data: {
+                        labels: dashboardData.growth.map(g => g.month),
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Lượt Review mới trong tháng',
+                                data: dashboardData.growth.map(g => g.reviews),
+                                backgroundColor: '#0D9488',
+                                borderRadius: 4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Điểm Rating trung bình tháng',
+                                data: dashboardData.growth.map(g => g.rating),
+                                borderColor: '#D97706',
+                                borderWidth: 3,
+                                pointBackgroundColor: '#D97706',
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { type: 'linear', position: 'left', title: { display: true, text: 'Lượt Review' } },
+                            y1: { type: 'linear', position: 'right', min: 3.5, max: 5.0, title: { display: true, text: 'Rating (Sao)' }, grid: { drawOnChartArea: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function navigateTab(tabIndex) {
+            document.querySelectorAll('.tab-link').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === tabIndex - 1);
+            });
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            const target = document.getElementById(`tab-${tabIndex}`);
+            if (target) target.style.display = 'block';
+            renderTab(tabIndex);
+        }
+
+        function togglePbipGuide() {
+            const drawer = document.getElementById('spec-drawer');
+            drawer.classList.toggle('active');
+            const btn = document.getElementById('guide-btn-text');
+            btn.innerText = drawer.classList.contains('active')
+                ? "Ẩn Hướng dẫn Đồng bộ"
+                : "Hướng dẫn Refresh & Đồng bộ Power BI";
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>

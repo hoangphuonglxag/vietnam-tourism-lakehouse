@@ -5,19 +5,19 @@
 -#}
 
 {% macro to_int(column_name) %}
-TRY_CAST(TRY_CAST({{ clean_null(column_name) }} AS DOUBLE) AS BIGINT)
+TRY_CAST(TRY_CAST(REPLACE({{ clean_null(column_name) }}, '"', '') AS DOUBLE) AS BIGINT)
 {% endmacro %}
 
 
 {% macro to_double(column_name) %}
-TRY_CAST({{ clean_null(column_name) }} AS DOUBLE)
+TRY_CAST(REPLACE({{ clean_null(column_name) }}, '"', '') AS DOUBLE)
 {% endmacro %}
 
 
 {% macro to_bool(column_name) %}
 CASE
-    WHEN LOWER({{ clean_null(column_name) }}) IN ('true', 't', '1', 'yes', 'y') THEN TRUE
-    WHEN LOWER({{ clean_null(column_name) }}) IN ('false', 'f', '0', 'no', 'n') THEN FALSE
+    WHEN LOWER(REPLACE({{ clean_null(column_name) }}, '"', '')) IN ('true', 't', '1', 'yes', 'y') THEN TRUE
+    WHEN LOWER(REPLACE({{ clean_null(column_name) }}, '"', '')) IN ('false', 'f', '0', 'no', 'n') THEN FALSE
     ELSE NULL
 END
 {% endmacro %}
@@ -30,7 +30,7 @@ END
     - Không có offset (một số dữ liệu historical) => coi như đã là UTC.
     - Không parse được => NULL.
 -#}
-{%- set v = clean_null(column_name) -%}
+{%- set v = "REPLACE(" ~ clean_null(column_name) ~ ", '\"', '')" -%}
 CASE
     WHEN {{ v }} IS NULL THEN NULL
     WHEN REGEXP_MATCHES({{ v }}, '[0-9]{2}:[0-9]{2}.*([Zz]|[+-][0-9]{2}(:?[0-9]{2})?)$')
@@ -46,7 +46,7 @@ END
     Data contract: province_id xuất hiện là '01' ở file OSM/province nhưng là '1'
     (hoặc '1.0' do pandas) ở các CSV downstream => chuẩn hóa thành '01'.
 -#}
-{%- set v = clean_null(column_name) -%}
+{%- set v = "REPLACE(" ~ clean_null(column_name) ~ ", '\"', '')" -%}
 CASE
     WHEN {{ v }} IS NULL THEN NULL
     WHEN REGEXP_FULL_MATCH({{ v }}, '[0-9]+(\.0+)?')

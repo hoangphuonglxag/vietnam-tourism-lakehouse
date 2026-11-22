@@ -1,0 +1,315 @@
+table gold_fct_place_monthly_growth
+	lineageTag: 441a17c9-5bc3-4eb9-9b07-fd7bdda1b38c
+
+	measure 'New Reviews' = SUM('gold_fct_place_monthly_growth'[new_reviews_count])
+		formatString: #,0
+		lineageTag: 6ce6e729-94e8-48ed-8955-032bf0c32832
+
+	measure 'Avg Monthly Rating' = AVERAGE('gold_fct_place_monthly_growth'[monthly_avg_review_rating])
+		formatString: 0.00
+		lineageTag: 19758720-f2d6-4047-9fb3-d0a030bb4711
+
+	measure 'New Videos' = SUM('gold_fct_place_monthly_growth'[new_videos_published_count])
+		formatString: #,0
+		lineageTag: 2ddbb183-a39f-4c4e-9ae8-38e39bbba600
+
+	measure 'Active Places' = DISTINCTCOUNT('gold_fct_place_monthly_growth'[place_id])
+		formatString: #,0
+		lineageTag: 1af228f2-c8dc-4dd4-a5ae-8e49b3c97751
+
+	measure 'Positive Reviews' = SUM('gold_fct_place_monthly_growth'[positive_reviews_count])
+		formatString: #,0
+		lineageTag: 92113c2e-5664-4d8a-92fa-08234c7e8bb1
+
+	measure 'Neutral Reviews' = SUM('gold_fct_place_monthly_growth'[neutral_reviews_count])
+		formatString: #,0
+		lineageTag: 45831ff9-6b89-453a-a1c6-e05eac5526a3
+
+	measure 'Negative Reviews' = SUM('gold_fct_place_monthly_growth'[negative_reviews_count])
+		formatString: #,0
+		lineageTag: 44881e0e-d1ff-45c3-b7b9-3b094d1002ee
+
+	column place_month_id
+		dataType: string
+		lineageTag: 30b1cb8a-3f05-4d98-b851-ddb1c83f7ca1
+		summarizeBy: none
+		sourceColumn: place_month_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_id
+		dataType: string
+		lineageTag: e11a9d6f-a2f4-4fb0-9e9b-bda134cbac1f
+		summarizeBy: none
+		sourceColumn: place_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column place_name
+		dataType: string
+		lineageTag: 3b6e037a-73de-455a-b689-3bbb0b5a4ec3
+		summarizeBy: none
+		sourceColumn: place_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_id
+		dataType: string
+		lineageTag: 2200daa9-7e19-4056-b85a-434b3d8827b0
+		summarizeBy: none
+		sourceColumn: province_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_name
+		dataType: string
+		lineageTag: ba224fce-c76f-4a3c-a0cf-4ba838f070e5
+		summarizeBy: none
+		sourceColumn: province_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_id
+		dataType: string
+		lineageTag: 80d361b5-4e8a-45d5-9396-f808cdd5d20a
+		summarizeBy: none
+		sourceColumn: primary_category_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_group
+		dataType: string
+		lineageTag: 94d7d9b9-5824-448f-85f3-df178f170eb3
+		summarizeBy: none
+		sourceColumn: primary_category_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_category_name
+		dataType: string
+		lineageTag: be2a6521-4d23-4ff6-9914-424e3881ea3b
+		summarizeBy: none
+		sourceColumn: primary_category_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9b73170d-bc4c-4e84-9f43-7560594f0427
+		summarizeBy: none
+		sourceColumn: activity_month
+
+		variation Variation
+			isDefault
+			relationship: 2d7cf274-85fc-43bc-bd5c-20c26edbafbc
+			defaultHierarchy: LocalDateTable_c27911e2-ee63-4a65-8a21-5b9314278f08.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column activity_year
+		dataType: double
+		formatString: 0
+		lineageTag: a9391085-c400-4086-8f2a-3724420fbb05
+		summarizeBy: sum
+		sourceColumn: activity_year
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column activity_quarter
+		dataType: double
+		lineageTag: 79f518ab-de2a-4eb2-aa69-8405b8f66b74
+		summarizeBy: sum
+		sourceColumn: activity_quarter
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column new_reviews_count
+		dataType: double
+		lineageTag: 4a030f40-f668-42c9-a1d6-4dad6900a616
+		summarizeBy: sum
+		sourceColumn: new_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column new_reviews_with_text_count
+		dataType: double
+		lineageTag: 97fe9118-9eb8-4b98-8f3c-00e38c89ebbe
+		summarizeBy: sum
+		sourceColumn: new_reviews_with_text_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column monthly_avg_review_rating
+		dataType: double
+		lineageTag: 6b75237b-8723-4914-98bd-6c7f9704e860
+		summarizeBy: sum
+		sourceColumn: monthly_avg_review_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column positive_reviews_count
+		dataType: double
+		lineageTag: d316d807-8a31-4867-82a3-9f185c408052
+		summarizeBy: sum
+		sourceColumn: positive_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column neutral_reviews_count
+		dataType: double
+		lineageTag: aeca70a4-a416-4617-8109-43e2b036b3cf
+		summarizeBy: sum
+		sourceColumn: neutral_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column negative_reviews_count
+		dataType: double
+		lineageTag: b184ed2e-cfa1-40e9-94a1-7a924badbfa6
+		summarizeBy: sum
+		sourceColumn: negative_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column monthly_net_sentiment_pct
+		dataType: double
+		lineageTag: 525ac4db-70dc-4611-a611-c296e9db470e
+		summarizeBy: sum
+		sourceColumn: monthly_net_sentiment_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column review_likes_sum
+		dataType: double
+		lineageTag: c8fe13d1-9860-4504-bc86-d6f912c2f301
+		summarizeBy: sum
+		sourceColumn: review_likes_sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column new_videos_published_count
+		dataType: double
+		lineageTag: dc8d3c1d-1822-4ea3-9b39-0eba5965af8d
+		summarizeBy: sum
+		sourceColumn: new_videos_published_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column new_videos_current_views_sum
+		dataType: double
+		lineageTag: 1844bf6c-3e2b-4a29-bb26-bd7150a5dbc9
+		summarizeBy: sum
+		sourceColumn: new_videos_current_views_sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column new_comments_count
+		dataType: double
+		lineageTag: 1f2e5df7-bd5f-42e2-bc1b-2b1b940e2a59
+		summarizeBy: sum
+		sourceColumn: new_comments_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cumulative_reviews_count
+		dataType: double
+		lineageTag: 6e779d97-cde2-441d-82b1-a06cc8e66836
+		summarizeBy: sum
+		sourceColumn: cumulative_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cumulative_videos_count
+		dataType: double
+		lineageTag: 6a3cb8cd-b1a5-4246-b378-29cadb6bd73a
+		summarizeBy: sum
+		sourceColumn: cumulative_videos_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column prev_month_reviews_count
+		dataType: double
+		lineageTag: ddd56a81-7575-485d-b17a-f1e72993cd74
+		summarizeBy: sum
+		sourceColumn: prev_month_reviews_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column mom_reviews_delta
+		dataType: double
+		lineageTag: dbf2f67f-86c6-4085-9154-6c03eb11759d
+		summarizeBy: sum
+		sourceColumn: mom_reviews_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column mom_reviews_growth_pct
+		dataType: double
+		lineageTag: bfb5a4eb-a9ad-4b18-9483-a22b1cc2f1f4
+		summarizeBy: sum
+		sourceColumn: mom_reviews_growth_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rolling_3m_reviews_avg
+		dataType: double
+		lineageTag: c23c17f0-f65c-4931-871d-d58c5ce89026
+		summarizeBy: sum
+		sourceColumn: rolling_3m_reviews_avg
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition gold_fct_place_monthly_growth = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_fct_place_monthly_growth",Kind="Table"]}[Data]
+				in
+				    raw_Table
+
+	annotation PBI_ResultType = Table
+

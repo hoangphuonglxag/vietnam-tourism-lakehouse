@@ -16,7 +16,7 @@
 
 WITH valid_records AS (
 
-    -- BƯỚC 1: lọc bản ghi hợp lệ + xác định ngày snapshot
+    -- BƯỚC 1: lọc bản ghi hợp lệ + xác định ngày snapshot + lọc bỏ video rác/MV không thuộc du lịch
     SELECT
         *,
         CAST(crawled_at_utc AS DATE) AS snapshot_date
@@ -25,6 +25,7 @@ WITH valid_records AS (
       AND video_id IS NOT NULL
       AND crawled_at_utc IS NOT NULL
       AND COALESCE(bronze_record_status, 'success') = 'success'
+      AND {{ is_valid_tourism_youtube_video('category', 'video_title', 'channel_name') }}
 
 ),
 

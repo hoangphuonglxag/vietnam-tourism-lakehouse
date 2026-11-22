@@ -69,9 +69,10 @@ def generate_queries(place: dict[str, str]) -> list[str]:
         if query not in queries:
             queries.append(query)
 
+    # Chỉ bổ sung identity + context khi có kèm từ khóa ý định du lịch (Tourism Intent)
     for identity in identities:
         for context in contexts:
-            query = f'"{identity}" "{context}"'.strip()
+            query = f'{identity} {context} du lịch'.strip()
             if query and query not in queries:
                 queries.append(query)
 
@@ -153,17 +154,18 @@ def resolve_video(
         for value in _values(place, "negative_keywords")
     ]
     global_negative_phrases = (
-        "official mv", "music video", "phim ca nhạc", "bài hát", "ca sĩ",
+        "official mv", "music video", "official video", "phim ca nhạc", "bài hát", "ca sĩ",
         "liên khúc", "tân cổ", "bolero", "nhạc sống", "nhạc trẻ", "nhạc trữ tình",
         "hài kịch", "gameshow", "game show", "phim ngắn", "tập full", "official trailer",
         "teaser trailer", "parody", "dance practice", "remix tik tok", "nhac che",
-        "nhạc chế", "nhạc chế", "rap việt", "châu khải phong", "karaoke",
+        "nhạc chế", "rap việt", "châu khải phong", "karaoke", "soundtrack", "vevo",
+        "cocomelon", "nursery rhyme", "nuclear bunker", "mrbeast", "stokes twins",
     )
     global_negative_words = {
         "karaoke", "remix", "nhạc", "nhac", "lyric", "lyrics", "audio", "mp3",
         "beat", "cover", "mv", "mashup", "acoustic", "liveshow", "ost", "soundtrack",
         "album", "single", "casi", "edm", "dj", "parody", "dance", "vpop", "kpop",
-        "hài", "hai", "game", "gaming", "shorts", "tiktok", "reaction",
+        "hài", "hai", "game", "gaming", "shorts", "tiktok", "reaction", "vevo",
     }
 
     words = set(searchable.split())
@@ -174,9 +176,10 @@ def resolve_video(
     )
 
     video_category = normalize_text(video.get("category", ""))
-    if video_category in ("music", "âm nhạc", "nhạc", "nhac", "gaming", "entertainment"):
-        # Nếu danh mục là music/gaming hoặc tiêu đề có dấu hiệu giải trí âm nhạc
-        if negative_match or any(w in words for w in {"mv", "song", "ca", "hát"}):
+    if video_category in ("music", "gaming", "autos & vehicles", "comedy", "sports", "pets & animals", "film & animation"):
+        negative_match = True
+    elif video_category in ("entertainment",):
+        if negative_match or any(w in words for w in {"mv", "song", "ca", "hát", "bunker", "challenge"}):
             negative_match = True
 
     score = (
@@ -231,6 +234,28 @@ def resolve_candidates(
     ]
 
 
+FORBIDDEN_CRAWL_CATEGORIES = {
+    "music", "gaming", "autos & vehicles", "comedy",
+    "sports", "pets & animals", "film & animation"
+}
+
+FORBIDDEN_CRAWL_TITLE_PATTERNS = re.compile(
+    r'(official mv|music video|\[official video\]|official video|vevo|soundtrack|karaoke|remix|parody|'
+    r'nhạc chế|\blyric\b|\blyrics\b|vietsub|búp bê|thiếu nhi|chữ cái|đồ chơi|cocomelon|'
+    r'nursery rhyme|bunker|nuclear|doomsday|mrbeast|stokes twins|vanh leg|vlad|diana|'
+    r'shaun the sheep|see you again|selena gomez|ed sheeran|sơn tùng|hoà minzy|hòa minzy|'
+    r'bắc bling|bống bống bang bang|lạc trôi|\bjack\b|hà anh tuấn|charlie puth|'
+    r'water balloons|experiment car|mini house)',
+    re.IGNORECASE
+)
+
+FORBIDDEN_CRAWL_CHANNELS = re.compile(
+    r'(mrbeast|stokes twins|cocomelon|surprisefuntv|vlad|diana|ben azelart|vevo|'
+    r'vanh leg|kênh bé yêu|shaun the sheep|dreamy|music|records|audio|record|noodle & pals)',
+    re.IGNORECASE
+)
+
+
 def crawl_place(
     client: Any,
     place: dict[str, str],
@@ -240,6 +265,7 @@ def crawl_place(
     place_name = str(place["place_name"])
     province_id = str(place.get("province_id", ""))
     province_name = str(place.get("province_name", ""))
+    province_name_clean = province_name.lower().strip()
 
     records: list[dict[str, object]] = []
     seen: set[str] = set()
@@ -257,6 +283,28 @@ def crawl_place(
 
             if video_id in seen:
                 continue
+
+            # Hard Gate 1: Loại bỏ tuyệt đối các Category âm nhạc, game, xe cộ
+            cat = str(getattr(video, "category", "") or "").lower()
+            if cat in FORBIDDEN_CRAWL_CATEGORIES:
+                continue
+
+            title = str(getattr(video, "title", "") or "")
+            # Hard Gate 2: Loại bỏ pattern MV âm nhạc / viral stunt quốc tế
+            if FORBIDDEN_CRAWL_TITLE_PATTERNS.search(title):
+                continue
+
+            channel = str(getattr(video, "channel", "") or "")
+            # Hard Gate 3: Loại bỏ các kênh spam view / nhạc / trẻ em
+            if FORBIDDEN_CRAWL_CHANNELS.search(channel):
+                continue
+
+            # Hard Gate 4: Kiểm tra ngữ cảnh địa lý cho các địa danh tên tiếng Anh / ngắn
+            desc = str(getattr(video, "description", "") or "").lower()
+            text_corpus = f"{title.lower()} {desc}"
+            if province_name_clean and len(place_name.split()) <= 2 and not any(ch.isalpha() for ch in place_name if ord(ch) > 127):
+                if province_name_clean not in text_corpus:
+                    continue
 
             seen.add(video_id)
 
@@ -279,5 +327,12 @@ def crawl_place(
                 "url": video.url,
                 "crawled_at": datetime.now(timezone.utc).isoformat(),
             })
+
+            if len(records) >= max_videos:
+                break
+
+        # Early Stopping: Nếu query ý định đã tìm đủ >= 3 video chất lượng thì dừng luôn, không vét query lỏng
+        if len(records) >= 3:
+            break
 
     return records

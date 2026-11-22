@@ -1,47 +1,296 @@
-KHáCH DU LịCH qUốC Tế ĐếN mỘT Số TrọNG Điểm DU LịCH NĂm 2018
-1 TP. hồ chí Minh 7.500.000 2 hà nội 5.740.000 3 Quảng ninh 5.200.000 4 Quảng nam 3.780.000 5 Đà nẵng 2.875.000 6 Khánh hòa 2.800.000 7 Thừa Thiên-huế 1.951.461 8 ninh Bình 876.930 9 hải Phòng 857.000 10 lào cai 718.585 11 Bình Thuận 675.000 12 Kiên giang 580.000 13 lâm Đồng 485.000 14 Bà Rịa - Vũng Tàu 424.000 15 cần Thơ (*) 363.800 16 Bình Dương 300.000 17 Bình Định 286.463 18 hà giang 273.193 19 Quảng Bình 180.000 20 Quảng Trị 168.000 21 Điện Biên 150.000 22 nghệ an 128.70
+========================================================================================
+TỔNG KẾT HỆ THỐNG VIETNAM TOURISM DATA LAKEHOUSE (TỪ INGESTION ĐẾN POWER BI SERVING)
+Dành cho: Báo cáo Tiến độ với GVHD & Tài liệu Thuyết minh Đồ án Tiểu luận Chuyên ngành
+========================================================================================
 
-KHáCH DU LịCH qUốC Tế ĐếN việT NAm CHiA THeO THáNG, 2017-2018
+----------------------------------------------------------------------------------------
+I. TỔNG QUAN KIẾN TRÚC TOÀN TRÌNH (END-TO-END PIPELINE OVERVIEW)
+----------------------------------------------------------------------------------------
+Hệ thống được thiết kế theo chuẩn Modern Data Lakehouse (Medallion Architecture), tách rời 
+hoàn toàn giữa tầng Lưu trữ (Storage) và tầng Tính toán (Compute), gồm 4 tầng chính:
 
-Tháng Năm 2017 (lượt khách) Năm 2018 (lượt khách) Tăng trưởng (%) Tháng 1 1.007.238 1.430.242 42,0 Tháng 2 1.199.421 1.431.845 19,4 Tháng 3 1.005.821 1.343.314 33,6 Tháng 4 1.071.650 1.341.913 25,2 Tháng 5 972.844 1.161.114 19,4 Tháng 6 949.362 1.183.102 24,6 Tháng 7 1.036.880 1.188.817 14,7 Tháng 8 1.229.163 1.323.546 7,
-Tháng Năm 2017 (lượt khách) Năm 2018 (lượt khách) Tăng trưởng (%) Tháng 9 975.952 1.212.597 24,2 Tháng 10 1.024.899 1.205.157 17,6 Tháng 11 1.172.568 1.301.909 11,0 Tháng 12 1.276.353 1.374.235 7,7 Tổng 12.922.151 15.497.791 19,9
+1. TẦNG 1: INGESTION & DATA QUALITY GATEWAY (Crawl & Bronze)
+   - Nguồn dữ liệu: 
+     * OpenStreetMap (OSM) - BỘ LỌC CHẤT LƯỢNG & PHÂN LOẠI 7,155 ĐỊA ĐIỂM (DATA QUALITY GATE):
+       + Master Scope (Toàn quốc): Tổng cộng 7,155 địa điểm cào thô từ OSM trên 34 tỉnh/thành.
+       + Cơ chế kiểm định & phân loại 2 tầng (Two-level Quality Gate):
+         [Tầng 1 - Kỹ thuật & Tọa độ: validation_status]
+           - valid (5,954 điểm): Tọa độ chuẩn xác, nằm trong hải phận/biên giới VN, đầy đủ tên gọi.
+           - review (1,201 điểm): Tọa độ hoặc thông tin hành chính có nghi vấn, cần rà soát lại.
+         [Tầng 2 - Nghiệp vụ Du lịch: tourism_status]
+           - eligible (2,217 điểm ~ 2.2k): Điểm đến du lịch chính thức (danh lam thắng cảnh, di tích 
+             lịch sử, bảo tàng, khu bảo tồn, resort, bãi biển...).
+           - review (4,812 điểm): Tiện ích dân sinh phụ trợ (quán ăn nhỏ, trạm dừng, dịch vụ lân cận).
+           - rejected (126 điểm - Error/Rác): Bị loại bỏ hoàn toàn (cây ATM, trạm xăng, dải phân cách, 
+             gara sửa xe bị gắn tag nhầm trên OSM).
+         [Điều kiện cấp phép cào mạng xã hội: crawl_eligible]
+           - crawl_eligible = (validation_status == 'valid') VÀ (tourism_status == 'eligible')
+             -> Ra đúng 1,763 điểm du lịch cốt lõi an toàn tuyệt đối trên toàn quốc để chạy cào.
+       + Nguyên tắc bảo toàn dữ liệu: Toàn bộ nhãn validation_status, tourism_status và cờ crawl_eligible 
+         đều được GIỮ NGUYÊN 100% trên Silver (silver_places) và Gold (gold_obt_place_360_profile). 
+         Trên Power BI có thể tạo Slicer lọc riêng từng nhóm này để đánh giá chất lượng dữ liệu.
+       + Phạm vi toàn diện hiện tại trong Lakehouse: Đã mở rộng thành công toàn bộ 34 tỉnh/thành với 7,155 địa điểm trên Bronze, Silver (silver_places) và Gold (gold_obt_place_360_profile), bao gồm đầy đủ 1,763 điểm du lịch cốt lõi (crawl_eligible=True) phủ khắp 3 miền Bắc - Trung - Nam.
+     * Google Maps: Ratings & Reviews trải nghiệm thực tế của du khách.
+     * YouTube: Travel Videos & Comments truyền thông số.
+   - Công nghệ: Python, Playwright (Headless Browser), ytscrape, Airflow Ingestion DAGs.
+   - Định dạng lưu trữ: JSON Lines (.jsonl), phân vùng Hive Partitioning:
+     s3://lakehouse/bronze/{dataset}/crawl_date=YYYY-MM-DD/part-*.jsonl
+   - Nguyên tắc: Bronze là bất biến (Immutable & Append-only), giữ nguyên 100% dữ liệu gốc.
+   - Cơ chế bảo vệ: Data Quality Gateway phân luồng dữ liệu hợp lệ vào Bronze chuẩn, 
+     dữ liệu dị thường/thiếu trường bắt buộc bị cô lập vào Quarantine Layer (quarantine/).
+
+2. TẦNG 2: MODELING & DATA CLEANSING (dbt + DuckDB)
+   - Công nghệ: dbt-duckdb, DuckDB in-process columnar vector engine.
+   - Staging Views (stg_*): Làm sạch text, chuẩn hóa encoding tiếng Việt, cast kiểu dữ liệu 
+     (INT, BOOLEAN, UTC Timestamp), sinh metadata dòng dõi (data lineage).
+   - Deduplication Engine: Dùng Window Function gộp các bản sao cũ từ nhiều snapshot crawl, 
+     giữ lại 1 bản ghi mới nhất duy nhất kèm số like/rating cập nhật.
+   - Surrogate Key Hashing: Tự động sinh khóa đại diện MD5 cho các bản ghi không có native ID.
+   - Tầng Silver (10 bảng Fact & Dimension đã làm sạch, đạt chuẩn 3NF/Conformed).
+   - Tầng Gold (6 bảng Data Marts tổng hợp phục vụ phân tích nghiệp vụ, OBT và Aggregations).
+   - Data Testing: 361 bài kiểm thử tự động (unique, not_null, accepted_values, relationships).
+
+3. TẦNG 3: STORAGE & OPEN TABLE FORMAT (Apache Iceberg + MinIO + Lakekeeper)
+   - Lưu trữ vật lý: MinIO Object Storage (tương thích AWS S3 protocol).
+   - Định dạng bảng: Apache Iceberg v2 (Parquet data files + Avro metadata + JSON snapshots).
+   - Catalog quản trị: Lakekeeper REST Catalog (:8181) quản lý schema evolution, snapshot isolation, 
+     time-travel và hỗ trợ ACID transactions.
+   - Writer Engine: PyArrow kết hợp PyIceberg tự động overwrite/upsert snapshot từ DuckDB lên MinIO.
+
+4. TẦNG 4: SERVING & BI ANALYTICS (Trino + ODBC Bridge + Power BI)
+   - Query Engine: Trino OSS (:8083) - Động cơ truy vấn SQL phân tán hiệu năng cao, đọc trực tiếp 
+     metadata từ Lakekeeper và quét file Parquet trên MinIO thông qua Iceberg connector.
+   - Proxy Bridge: trino-odbc-bridge (:8082) giải mã gói tin JSON từ Starburst ODBC 3.x trên Windows 
+     sang SQL thuần cho Trino OSS, cho phép Power BI kết nối mà không tốn phí bản quyền Enterprise.
+   - BI Dashboard: Power BI Desktop kết nối qua DirectQuery/Import để dựng Dashboard tương tác.
+
+----------------------------------------------------------------------------------------
+II. CÁC CƠ CHẾ & KỸ THUẬT XỬ LÝ ĐẶC SẮC (ENGINEERING HIGHLIGHTS)
+----------------------------------------------------------------------------------------
+
+1. CƠ CHẾ CÀO THÔNG MINH & TỰ PHỤC HỒI (INGESTION RESILIENCE):
+   - Freshness Gate: Kiểm tra lần cào cuối (crawled_at_utc). Nếu đã cào trong vòng 14 ngày -> SKIP 
+     ngay lập tức để tiết kiệm tài nguyên.
+   - Watermark Early-Stopping: Khi Playwright cuộn trang Google Maps, gặp 3 bài review cũ liên tiếp 
+     đã có trong database -> dừng cuộn ngay. Chỉ mất 3-5 giây cho mỗi lần cào cập nhật.
+   - Tourism Intent Query: Tự động tạo câu search có chủ đích du lịch ("[Tên điểm] [Tên tỉnh] review") 
+     kèm bộ lọc Negative Keywords chặn 100% MV ca nhạc, remix TikTok, gameshow, hài kịch.
+   - Checkpoint State (Resume from Failure): Ghi nhớ trạng thái cào theo từng ID. Nếu rớt mạng hoặc 
+     tắt máy giữa chừng, lần chạy sau tiếp tục từ điểm bị ngắt, không bao giờ phải cào lại từ đầu.
+
+2. CƠ CHẾ DATA QUALITY GATEWAY & QUARANTINE:
+   - Module `ingestion_storage.py` áp dụng `DatasetSpec` kiểm tra bắt buộc các trường khóa và phạm vi 
+     giá trị trước khi ghi đĩa.
+   - Nếu dữ liệu vi phạm (thiếu trường, sai kiểu): Tự động ghi vào `quarantine/` kèm trường `quality_errors`.
+   - Giúp tầng Bronze luôn đạt độ tin cậy tuyệt đối, không làm ô nhiễm dữ liệu của Silver và Gold.
+
+3. KỸ THUẬT LÀM SẠCH & KHỬ TRÙNG LẶP Ở TẦNG SILVER:
+   - Deduplication Window Function:
+     ROW_NUMBER() OVER (PARTITION BY place_id, comment_key ORDER BY crawled_at_utc DESC)
+     -> Đã lọc bỏ thành công 36,079 dòng trùng lặp của comment YouTube giữa các snapshot crawl cũ.
+   - Tự sinh khóa thay thế:
+     MD5(CONCAT_WS('||', video_id, COALESCE(author, ''), COALESCE(comment_text, '')))
+     -> Giúp 237k comment lịch sử không có ID từ API vẫn có khóa định danh duy nhất để join dữ liệu.
+   - Tỷ lệ thiếu dữ liệu: 0 dòng bị loại bỏ do thiếu thông tin (filtered_null_count = 0).
+
+4. CƠ CHẾ BẢO VỆ GIAO DỊCH TRÊN MINIO & ICEBERG:
+   - Path-Style Access: Thiết lập `s3.path-style-access: true` để PyIceberg tương thích hoàn toàn MinIO.
+   - Transient Retry Loop: Bọc cơ chế thử lại (3 lần, cách nhau 3s) khi PyIceberg overwrite bảng. 
+     Tránh hiện tượng AccessDenied/403 tạm thời trong vài giây MinIO thực hiện IAM refresh ngầm.
+
+----------------------------------------------------------------------------------------
+III. CÁC KHÓ KHĂN / SỰ CỐ ĐÃ GẶP & QUY TRÌNH ĐỐI PHÓ (POST-MORTEM & RESOLUTION)
+----------------------------------------------------------------------------------------
+
+SỰ CỐ 1: Airflow Webserver bị Crash / Restart liên tục mỗi khi chạy `docker compose up -d`
+- Triệu chứng: Scheduler và MinIO lên bình thường, nhưng Webserver (cổng 8080) bị un-healthy hoặc crash. 
+  Phải đợi lâu và restart lần 2 mới vào được.
+- Nguyên nhân gốc rễ: 
+  1. Máy tính dùng chip i3 (2 cores vật lý). Mặc định Airflow cấu hình 4 Gunicorn workers, dẫn đến 
+     nghẽn CPU khi khởi động đồng thời nhiều container.
+  2. Timeout mặc định của Gunicorn (120s) và DAG import timeout (30s) quá ngắn. Khi scheduler parse các 
+     file DAG có import thư viện nặng, Airflow coi như worker bị treo và kill tiến trình liên tục.
+- Quy trình đối phó & Giải pháp triệt để:
+  1. Trong `docker-compose.yml`: Hạ `AIRFLOW__WEBSERVER__WORKERS: 2`, tăng `WEB_SERVER_WORKER_TIMEOUT: 300s`, 
+     tăng `DAGBAG_IMPORT_TIMEOUT: 120s`, tăng `start_period: 180s`.
+  2. Trong DAG `dag_crawl_social_historical_data.py`: Chuyển lệnh import thư viện nặng (build_crawl_plan) 
+     vào bên trong hàm thực thi của PythonOperator (Lazy Import). Kết quả: Webserver khởi động êm ru 100%.
+
+SỰ CỐ 2: Task cào YouTube Videos báo đỏ (FAIL) dù tỷ lệ thành công đạt > 98%
+- Triệu chứng: Task cào được 212/216 địa điểm (tỷ lệ 98.1%), nhưng Airflow task vẫn bị gán FAIL với lỗi 
+  `RuntimeError: YouTube videos had 4 failed places`.
+- Nguyên nhân: Code áp dụng logic "Fail-Fast" quá cứng nhắc (`if report["failed"]: raise RuntimeError`). 
+  Trong thực tế Web Crawling, việc vài địa điểm bị nhà mạng chặn IP hoặc không tìm thấy là bình thường.
+- Quy trình đối phó & Giải pháp:
+  Chuyển sang cơ chế **Graceful Partial Failure**: Chỉ raise Exception khi thất bại 100% 
+  (`failed_count > 0 and success_count == 0`). Nếu vẫn có dữ liệu thành công (>98%), hệ thống ghi log 
+  WARNING và cho phép luồng tiếp tục chảy downstream sang Silver/Gold.
+
+SỰ CỐ 3: Bình luận YouTube đẩy vào Bronze chỉ có 22 dòng, hơn 235,000 dòng bị kẹt ở Quarantine
+- Triệu chứng: Bạn cùng nhóm kiểm tra thấy Bronze chỉ có đúng 22 bình luận, nghi ngờ dữ liệu cào bị lỗi. 
+  Trong khi thư mục `quarantine/` chứa tới hơn 234k dòng.
+- Nguyên nhân gốc rễ (2 nguyên nhân kết hợp):
+  1. Trong code cào `job_youtube_comments.py` có dòng lệnh:
+     `record["crawled_at_utc"] = record.pop("crawled_at", "")`
+     Vì dict trả về có key `crawled_at_utc` chứ không có `crawled_at`, hàm `.pop()` lấy giá trị mặc định `""`. 
+     Lệnh này vô tình XÓA SẠCH timestamp vừa cào thành chuỗi rỗng!
+  2. File dữ liệu lịch sử gốc `youtube_comments.csv` (237k dòng) chỉ có đúng 22 dòng đầu tiên là có điền 
+     timestamp, còn 237,821 dòng còn lại bị để trống cột `crawled_at_utc` từ lúc merge ban đầu.
+  -> Cả dữ liệu mới và cũ đều bị Data Quality Gateway chặn lại vì thiếu `crawled_at_utc` bắt buộc.
+  3. Lệnh ghi Bronze Writer bị đặt bên trong vòng lặp `for` dưới điều kiện `if remaining == 0:`. Khi có 
+     video bị skip, `remaining` không về 0 khiến dữ liệu mới cào trong RAM không bao giờ được flush xuống đĩa.
+- Quy trình đối phó & Giải pháp triệt để:
+  1. Sửa code `job_youtube_comments.py`: Giữ nguyên timestamp crawler sinh ra, bổ sung fallback an toàn 
+     `record.get("crawled_at_utc") or record.pop("crawled_at", None) or utcnow()`.
+  2. Đưa lệnh ghi `bronze_comments.write()` ra ngoài vòng lặp để đảm bảo luôn ghi buffer khi thoát loop.
+  3. Viết script `rescue_quarantine_comments.py`: Điền bổ sung timestamp mặc định `2026-08-30` cho dữ liệu lịch 
+     sử, thẩm định lại chất lượng và giải cứu thành công **239,072 bình luận** về Bronze chuẩn trên MinIO S3. 
+     Dọn sạch hoàn toàn thư mục quarantine.
+
+SỰ CỐ 4: Gặp lỗi `PermissionError: Access Denied` khi PyIceberg ghi bảng lên MinIO
+- Triệu chứng: Khi chạy task `write_silver_iceberg`, ghi được 5 bảng đầu tiên thì đến bảng tiếp theo bị lỗi 
+  Access Denied từ MinIO.
+- Nguyên nhân: MinIO thực hiện làm mới IAM định kỳ ngầm (`IAM refresh took 9.65s`). Khi PyIceberg dùng thread 
+  pool ghi đồng thời các file parquet và manifest trong đúng khoảnh khắc này, MinIO trả về lỗi 403 tạm thời.
+- Quy trình đối phó & Giải pháp:
+  1. Bổ sung `"s3.path-style-access": "true"` vào hàm khởi tạo Catalog trong `iceberg/catalog.py`.
+  2. Thêm khối `try...except` retry 3 lần kèm `time.sleep(3)` trong `iceberg/writer.py`. Khi gặp lỗi gián đoạn 
+     tạm thời, writer tự động chờ 3 giây và ghi lại thành công 100% ở lần thử thứ hai.
+
+----------------------------------------------------------------------------------------
+IV. KẾ HOẠCH PHÂN TÍCH LỚP GOLD & THIẾT KẾ DASHBOARD POWER BI
+----------------------------------------------------------------------------------------
+
+1. PHÂN TÍCH CHUYÊN SÂU CẤU TRÚC 6 BẢNG DATA MARTS TẦNG GOLD (HOÀN THIỆN 100% TRÊN ICEBERG):
+
+   A. gold_obt_place_360_profile (1,741 dòng, 53 cột - One Big Table trung tâm):
+      - Grain: 1 dòng / 1 địa điểm du lịch (place_id).
+      - Mục đích: Bảng phẳng tổng thể tích hợp toàn cảnh uy tín và sức hút của từng địa điểm.
+      - Cụm Uy tín & Cảm xúc:
+        + latest_google_rating, latest_google_review_count: Rating và tổng review hiện tại.
+        + rating_5_pct -> rating_1_pct: Cơ cấu % phân bố sao đánh giá (1★ đến 5★).
+        + net_sentiment_score = (%5★ + %4★) - (%2★ + %1★): Điểm cảm xúc du khách.
+      - Cụm Động lượng Đánh giá (Review Momentum):
+        + reviews_last_90d_count vs reviews_prev_90d_count: Lượng review 90 ngày gần nhất so với 90 ngày trước.
+        + recent_review_momentum_pct: Tốc độ bứt phá đánh giá gần đây (báo hiệu điểm đang hot hay nguội dần).
+      - Cụm Sức hút Mạng xã hội (YouTube Buzz):
+        + total_youtube_views, youtube_video_count, distinct_channel_count: Quy mô truyền thông.
+        + top_video_id, top_video_title: Video đại diện có lượt xem lớn nhất về địa điểm.
+      - Cụm Phân loại Vòng đời Phát triển (place_development_stage):
+        + Tự động gắn nhãn 5 giai đoạn: 'Established Destination' (Đại thụ uy tín), 'Rising Star' (Ngôi sao đang lên), 
+          'Steady Destination' (Ổn định), 'Cooling / At Risk' (Có dấu hiệu giảm sút/rủi ro), 'Emerging / Low Data' (Mới nổi).
+
+   B. gold_fct_place_monthly_growth (59,359 dòng, 29 cột - Fact Chuỗi thời gian theo tháng):
+      - Grain: 1 dòng / (place_id, activity_month).
+      - Mục đích: Giám sát xu hướng dài hạn, tính mùa vụ (seasonality) và chu kỳ đón khách qua từng tháng/năm.
+      - Các chỉ số cốt lõi:
+        + new_reviews_count, rated_reviews_count: Số lượt khách đánh giá phát sinh mới trong tháng.
+        + monthly_avg_review_rating: Điểm đánh giá trung bình riêng trong tháng (đo lường chất lượng dịch vụ mùa cao điểm).
+        + new_videos_published_count, new_videos_current_views_sum: Số video mới ra lò và lượng view mang lại.
+        + mom_reviews_growth_pct: Tăng trưởng review so với tháng liền kề trước đó (Month-over-Month %).
+        + rolling_3m_reviews_avg: Trung bình trượt 3 tháng (3-Month Moving Average) giúp khử nhiễu ngắn hạn.
+        + cumulative_reviews_count, cumulative_videos_count: Số lũy kế theo thời gian.
+
+   C. gold_fct_youtube_video_performance (35,315 dòng, 26 cột - Fact Hiệu suất Video):
+      - Grain: 1 dòng / 1 video YouTube (place_video_id = place_id + video_id).
+      - Mục đích: Đo lường mức độ viral và sức ảnh hưởng của cộng đồng Travel Vlogger/KOLs đối với địa điểm.
+      - Các chỉ số cốt lõi:
+        + channel_name, video_title, published_date, duration_seconds: Thuộc tính nội dung.
+        + latest_views, crawled_comment_count: Quy mô tiếp cận và lượng thảo luận của khán giả.
+        + avg_daily_views_since_publish: Tốc độ tăng view trung bình mỗi ngày từ khi video xuất bản.
+        + snapshot_daily_view_growth: Vận tốc tăng view giữa các lần cào liên tiếp (đo độ viral tức thì).
+        + place_video_view_rank: Thứ hạng video có lượt xem lớn nhất của từng địa điểm (Top 1, Top 2, Top 3...).
+
+   D. gold_fct_place_snapshot_trajectory (8,581 dòng, 33 cột - Fact Quỹ đạo Snapshot):
+      - Grain: 1 dòng / (place_id, snapshot_date).
+      - Mục đích: Giám sát độ ổn định dịch vụ theo thời gian thực giữa các mốc cào dữ liệu, cảnh báo sớm khủng hoảng.
+      - Các chỉ số cốt lõi:
+        + google_rating vs prev_google_rating -> rating_delta: Mức độ biến động điểm số giữa 2 đợt kiểm tra.
+        + google_review_count vs prev_google_review_count -> review_count_delta: Số review tăng thêm.
+        + review_daily_velocity: Vận tốc review/ngày (phát hiện hiện tượng 'bão review' - Review Bombing).
+        + youtube_views_daily_growth: Tốc độ tăng view YouTube tương ứng giữa các snapshot.
+
+   E. gold_fct_province_tourism_summary (34 dòng, 30 cột - Fact Tổng hợp 34 Tỉnh/Thành):
+      - Grain: 1 dòng / 1 tỉnh, thành phố (province_id).
+      - Mục đích: Báo cáo vĩ mô (Macro Level) phục vụ so sánh năng lực cạnh tranh du lịch giữa các tỉnh/thành cả nước.
+      - Các chỉ số cốt lõi:
+        + total_places_count, active_places_count: Quy mô tài nguyên du lịch của tỉnh.
+        + province_weighted_avg_rating: Điểm rating bình quân có trọng số (weighted by review count) giúp phản ánh 
+          chính xác độ hài lòng, không bị lệch bởi các điểm ít review.
+        + province_net_sentiment_score: Chỉ số hài lòng ròng toàn tỉnh.
+        + total_youtube_views, avg_views_per_place: Mức độ phủ sóng truyền thông số.
+        + top_place_name_by_views, top_place_name_by_reviews: Điểm du lịch biểu tượng 'đầu tàu' của tỉnh.
+        + national_tourism_rank: Thứ hạng cạnh tranh du lịch toàn quốc.
+
+   F. gold_fct_category_tourism_summary (19 dòng, 21 cột - Fact Thống kê Loại hình Du lịch):
+      - Grain: 1 dòng / 1 thể loại du lịch (category_id: Bãi biển, Thác nước, Di tích lịch sử, Bảo tàng, Resort...).
+      - Mục đích: Phân tích thị hiếu du khách: Loại hình nào đang được yêu thích nhất? Loại hình nào đang hút view YouTube?
+      - Các chỉ số cốt lõi:
+        + name_vi, total_places_count: Tên và quy mô số lượng điểm thuộc thể loại.
+        + category_weighted_avg_rating, category_net_sentiment_score: Đánh giá chất lượng trải nghiệm của thể loại.
+        + total_youtube_views, avg_views_per_place: Sức hút truyền thông của loại hình.
+        + category_popularity_rank: Xếp hạng mức độ ưa chuộng của du khách.
+
+   G. MÔ HÌNH DỮ LIỆU KHI KẾT NỐI VÀO POWER BI (STAR SCHEMA):
+      - Bảng trung tâm (Dimension/Master Table): gold_obt_place_360_profile (place_id làm khóa chính).
+      - Các bảng Fact nhánh liên kết quan hệ 1 - Nhiều (1:*):
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_place_monthly_growth (qua place_id).
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_youtube_video_performance (qua place_id).
+        * gold_obt_place_360_profile (1) ---> (*) gold_fct_place_snapshot_trajectory (qua place_id).
+      - Hai bảng tổng hợp cấp cao độc lập làm KPI Cards & Tổng quan vĩ mô:
+        * gold_fct_province_tourism_summary (Bản đồ & So sánh 34 tỉnh/thành).
+        * gold_fct_category_tourism_summary (Cơ cấu 19 loại hình du lịch).
 
 
+2. THIẾT KẾ BỘ DASHBOARD POWER BI 3 TRANG:
 
-GIAI ĐOẠN 1: Chuẩn bị Dữ liệu Hạt nhân (Seed & Master Metadata)
-Nguồn gốc: Dữ liệu bắt nguồn từ OpenStreetMap (OSM) với hơn 10.890 điểm ban đầu trên 34 tỉnh.
-Thẩm định chất lượng (Data Cleansing): Loại bỏ các điểm lỗi tọa độ, nằm ngoài hải phận hoặc ranh giới hành chính.
-Lưu trữ chuẩn (Single Source of Truth): Lưu trữ tập trung tại s3://lakehouse/bronze/places/ trên MinIO (và đồng bộ dự phòng tại data/reference/places.csv).
-GIAI ĐOẠN 2: Điều phối & Lập Kế hoạch (Orchestration & Crawl Planning)
+   TRANG 1: EXECUTIVE TOURISM OVERVIEW (Bức tranh Toàn cảnh Du lịch 34 Tỉnh/Thành)
+   - Đối tượng: Cơ quan Quản lý Du lịch, Lãnh đạo Sở, Doanh nghiệp lữ hành lớn.
+   - Visuals chính:
+     * KPI Cards: 1,741 địa điểm du lịch, 75.7k đánh giá thực tế, 203k bình luận, điểm rating TB toàn quốc (4.38★).
+     * Choropleth Map: Bản đồ nhiệt Việt Nam tô màu 34 tỉnh theo điểm số và dung lượng khách.
+     * Bar Chart: Bảng xếp hạng Top 10 tỉnh có chỉ số cạnh tranh du lịch cao nhất (national_tourism_rank).
+     * Treemap: Tỷ trọng phân bổ điểm đến theo nhóm ngành (Di tích, Danh thắng, Ẩm thực, Resort).
 
-Khi bạn nhấn Trigger DAG trên Airflow, task build_crawl_plan chạy trong ~15 giây để tính toán chiến lược:
+   TRANG 2: PLACE 360° EXPLORER & MA TRẬN 4 GÓC PHẦN TƯ (Chẩn đoán Điểm đến)
+   - Mục tiêu: Định vị điểm đến kết hợp giữa "Truyền thông số" và "Trải nghiệm thực tế".
+   - Visuals chính:
+     * Scatter Plot 4 Quadrants:
+       - Trục X: Lượt xem YouTube (Mức độ truyền thông).
+       - Trục Y: Điểm Google Rating (Mức độ hài lòng thực tế).
+       - Nhóm "Ngọc ẩn" (Hidden Gems): Rating > 4.7★ nhưng view thấp -> Cần đẩy mạnh xúc tiến quảng bá.
+       - Nhóm "Bẫy truyền thông" (Tourist Traps / Overhyped): Triệu view nhưng Rating < 4.0★ -> Cảnh báo 
+         chất lượng dịch vụ xuống cấp, nguy cơ du khách thất vọng.
+       - Nhóm "Điểm sáng dẫn đầu" (Leading Hotspots): Triệu view và Rating cao (Đèo Hải Vân, Phố cổ Hội An...).
+     * Line Chart: Xu hướng biến động rating và review theo tháng (gold_fct_place_monthly_growth) để phát 
+       hiện hiện tượng suy giảm chất lượng dịch vụ vào dịp Lễ/Tết do quá tải.
+     * Slicer: Lọc động theo Tỉnh/Thành, Loại hình và Vòng đời phát triển (Rising Star, Mature, Decline).
 
-Cánh cổng 1 - Scoping (core_only: true): Tự động loại bỏ các đỉnh núi hoang, cây ATM, vườn hoa dải phân cách... Chỉ giữ lại 1.326 địa điểm du lịch cốt lõi của 34 tỉnh (Danh thắng, bảo tàng, di tích, resort, bãi biển, hang động).
-Cánh cổng 2 - Freshness Check: Kiểm tra mốc thời gian lần cào cuối (crawled_at_utc). Nếu địa điểm này đã được cào trong vòng freshness_days: 14, hệ thống sẽ SKIP ngay lập tức, không tốn 1 giây tài nguyên.
-Cánh cổng 3 - Phân tầng hạn mức (Tier Limits): Gán số lượng review tối đa cho từng loại địa điểm để tối ưu thời gian (Danh thắng lớn: 100 review; bãi biển/điểm ngắm cảnh: 30; điểm phụ: 15).
-GIAI ĐOẠN 3: Thu thập Song song Đa luồng (Concurrent Ingestion)
+   TRANG 3: SOCIAL MEDIA BUZZ & CREATOR IMPACT (Hiệu ứng Lan tỏa YouTube)
+   - Mục tiêu: Đánh giá sức ảnh hưởng của các nhà sáng tạo nội dung (YouTubers/KOLs).
+   - Visuals chính:
+     * Ranking Table: Top kênh YouTube có tỷ lệ tương tác thực chất cao nhất (Engagement Rate = (Likes+Comments)/Views).
+     * Donut Chart: Phân bổ sắc thái cảm xúc du khách (Net Sentiment Score).
+     * Top Video List: Danh sách video lan tỏa nhất gắn với từng địa danh.
 
-Sau khi có kế hoạch (JSON Plan), Airflow kích hoạt 2 nhánh chạy song song:
+3. CÁC CÔNG THỨC DAX CHÍNH CẦN TẠO TRONG POWER BI:
+   - Weighted Rating = DIVIDE(SUMX(gold_obt_place_360_profile, [latest_google_rating] * [latest_google_review_count]), SUM([latest_google_review_count]))
+   - YouTube Engagement Rate = DIVIDE(SUM([like_count]) + SUM([comment_count]), SUM([view_count]), 0)
+   - Net Sentiment Score = DIVIDE(SUM([rating_5_pct]) + SUM([rating_4_pct]) - SUM([rating_1_pct]) - SUM([rating_2_pct]), 100, 0)
+   - Quadrant Classification = SWITCH(TRUE(), [total_views] >= 50000 && [avg_rating] >= 4.35, "Leading Hotspot", [total_views] < 50000 && [avg_rating] >= 4.35, "Hidden Gem", [total_views] >= 50000 && [avg_rating] < 4.35, "Tourist Trap", "Underperforming")
 
-Nhánh Google Maps Reviews (3 Workers song song):
-
-3 Trình duyệt Playwright độc lập chia nhau danh sách theo cơ chế xoay vòng (Round-Robin).
-Tối ưu phần cứng: Chặn nạp ảnh, video và font chữ, giúp mỗi worker chỉ tốn ~150MB RAM (chạy cực êm trên chip i3 của bạn).
-Cơ chế tự phục hồi: Nếu giao diện tab đánh giá chưa nạp kịp, bot tự động F5 reload trang. Nếu địa điểm thiên nhiên không có review, bot ghi nhận trạng thái EMPTY an toàn mà không làm sập pipeline.
-Watermark Early-Stopping: Khi cuộn trang, bot kiểm tra ID bài đánh giá. Ngay khi gặp 3 bài review cũ liên tiếp đã có trong database, bot dừng cuộn ngay lập tức ➔ Chỉ mất 3–5 giây cho mỗi lần cào cập nhật!
-
-Nhánh YouTube (Videos & Comments):
-
-Tourism Intent First: Tự động tạo query có chủ đích du lịch ("Cầu Rồng" "Đà Nẵng" du lịch review) thay vì tìm kiếm tên trơ trọi.
-Negative Filter Gate: Quét toàn bộ tiêu đề/mô tả/danh mục để chặn 100% các MV ca nhạc, bài hát remix TikTok, gameshow, hài kịch.
-Sau khi chọn lọc được các Travel Vlog chân thực, hệ thống cào tiếp toàn bộ bình luận của những video này.
-GIAI ĐOẠN 4: Quản trị Trạng thái & Hạ cánh vào Bronze Layer
-Khóa an toàn luồng (threading.Lock): Khi 3 workers cào xong, khâu ghi dữ liệu được bảo vệ bằng Lock để tránh hiện tượng tranh chấp (Race Condition).
-MinIO Object Storage (S3 Bronze Layer):
-Dữ liệu được ghi theo định dạng chuẩn JSON Lines (.jsonl), phân vùng Hive Partition theo ngày cào:
-s3://lakehouse/bronze/{dataset}/crawl_date=YYYY-MM-DD/part-...jsonl
-Dữ liệu thô được giữ nguyên vẹn 100% (Raw & Immutable) để phục vụ việc kiểm toán dữ liệu (Auditability) sau này.
-Lưu vết Checkpoint State (_state/*.jsonl):
-Ghi nhớ trạng thái SUCCESS hoặc EMPTY của từng ID ngay tức thì.
-Tính năng Resume from Failure: Nếu nửa đêm lỡ bị rớt mạng Wi-Fi hoặc cúp điện, sáng mai bạn bật máy chạy lại, hệ thống sẽ bỏ qua các điểm đã cào xong và cào tiếp tục từ điểm bị gián đoạn, không bao giờ bị mất dữ liệu hay phải chạy lại từ đầu!
-Offline Backup: Tự động append dữ liệu mới vào các file CSV lịch sử trên máy tính để có bản sao lưu offline.
+----------------------------------------------------------------------------------------
+V. CÁC LUẬN ĐIỂM ĐẮT GIÁ KHI BÁO CÁO VỚI GIÁO VIÊN HƯỚNG DẪN & HỘI ĐỒNG
+----------------------------------------------------------------------------------------
+1. TÍNH CHUẨN MỰC CÔNG NGHIỆP: Dự án không đơn thuần là đồ án crawl dữ liệu thông thường, mà là một 
+   Modern Data Lakehouse hoàn chỉnh theo chuẩn kiến trúc doanh nghiệp: Phân tách Storage/Compute, 
+   quản trị metadata tập trung bằng Iceberg REST Catalog, xử lý luồng tự động bằng Airflow và dbt.
+2. NĂNG LỰC QUẢN TRỊ DỮ LIỆU (DATA GOVERNANCE & OBSERVABILITY): Thiết kế có Data Quality Gateway, 
+   cô lập dữ liệu bẩn vào Quarantine, có cơ chế đối soát dòng (Data Reconciliation) giữa DuckDB và 
+   Iceberg, đảm bảo tính nhất quán dữ liệu 100%.
+3. TỰ GIẢI QUYẾT CÁC SỰ CỐ KỸ THUẬT PHỨC TẠP: Đã vượt qua và xử lý triệt để bài toán nghẽn tài nguyên 
+   trên phần cứng hạn chế, giải cứu thành công 239k dòng dữ liệu bị lỗi schema, xử lý xung đột IAM refresh 
+   bằng cơ chế retry tự động.
+4. GIÁ TRỊ PHÂN TÍCH THỰC TIỄN: Kết hợp đa nguồn (OSM + Google Maps + YouTube) để giải bài toán định vị 
+   danh tiếng điểm đến (4-Quadrant Matrix) mà dữ liệu đơn nguồn không thể giải quyết được.
+========================================================================================

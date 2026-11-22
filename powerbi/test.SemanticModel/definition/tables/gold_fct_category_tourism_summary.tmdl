@@ -1,0 +1,214 @@
+table gold_fct_category_tourism_summary
+	lineageTag: c7664ee4-ff7d-40ff-bb9a-da8a49a1f332
+
+	measure 'Category Rating' = AVERAGE('gold_fct_category_tourism_summary'[category_weighted_avg_rating])
+		formatString: 0.00
+		lineageTag: 07fe9f93-cd60-4799-a4ec-7cc6784021c3
+
+	column category_id
+		dataType: string
+		lineageTag: bdb52b94-ea9d-4525-8681-a48f466d2fe2
+		summarizeBy: none
+		sourceColumn: category_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column category_group
+		dataType: string
+		lineageTag: 82b2fd65-f514-413b-b4d1-1a85d7fe46d2
+		summarizeBy: none
+		sourceColumn: category_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column category_name
+		dataType: string
+		lineageTag: f7af8876-e9f3-4fc9-a4ed-1529236419d9
+		summarizeBy: none
+		sourceColumn: category_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column subcategory_name
+		dataType: string
+		lineageTag: 1046da6f-170c-46ed-bb8d-033f91a6f4e1
+		summarizeBy: none
+		sourceColumn: subcategory_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_vi
+		dataType: string
+		lineageTag: 2ae45fe8-1b22-45dd-b1b9-6c9947b8f47f
+		summarizeBy: none
+		sourceColumn: name_vi
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_en
+		dataType: string
+		lineageTag: d9a81a84-71f9-4931-82a9-214bec1969e9
+		summarizeBy: none
+		sourceColumn: name_en
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_places_count
+		dataType: double
+		lineageTag: 6bf0d933-1a65-4aba-b49e-bbe0ecfe4ccf
+		summarizeBy: sum
+		sourceColumn: total_places_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column primary_places_count
+		dataType: double
+		lineageTag: 0b0b9bdc-1a50-490c-bf19-adbe12ebda3b
+		summarizeBy: sum
+		sourceColumn: primary_places_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column provinces_covered_count
+		dataType: double
+		lineageTag: 15f73565-6c08-4e8a-bb61-ebf0ebcbae50
+		summarizeBy: sum
+		sourceColumn: provinces_covered_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column category_weighted_avg_rating
+		dataType: double
+		lineageTag: 859b2f2c-bde9-4141-8a60-d1145664487c
+		summarizeBy: sum
+		sourceColumn: category_weighted_avg_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column category_simple_avg_rating
+		dataType: double
+		lineageTag: 22c7b48c-5269-4fe6-bd21-cb8ef1807b5c
+		summarizeBy: sum
+		sourceColumn: category_simple_avg_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_google_review_count
+		dataType: double
+		lineageTag: bf9c8ccb-aa22-4190-a3e7-30356191d0fc
+		summarizeBy: sum
+		sourceColumn: total_google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_crawled_review_count
+		dataType: double
+		lineageTag: 0aa1b16b-8033-450e-b28c-9eec4fc7685c
+		summarizeBy: sum
+		sourceColumn: total_crawled_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column category_net_sentiment_score
+		dataType: double
+		lineageTag: 84bbbd20-dd69-45d4-8bd4-0bd9e29a6669
+		summarizeBy: sum
+		sourceColumn: category_net_sentiment_score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_videos_count
+		dataType: double
+		lineageTag: 128ff3aa-a012-46af-87cf-a44dc306f8e7
+		summarizeBy: sum
+		sourceColumn: total_youtube_videos_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views
+		dataType: double
+		lineageTag: eadafc12-02bd-4449-85e0-bae3ab83adf7
+		summarizeBy: sum
+		sourceColumn: total_youtube_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_views_per_place
+		dataType: double
+		lineageTag: a67ffd18-5932-4e69-abfa-b04daa8d92b8
+		summarizeBy: sum
+		sourceColumn: avg_views_per_place
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views_delta
+		dataType: double
+		lineageTag: b84f4563-3f4a-49b1-aaba-146ed7f364a2
+		summarizeBy: sum
+		sourceColumn: total_youtube_views_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column top_place_id
+		dataType: string
+		lineageTag: abc03404-3201-45d4-bd6a-f6ba951635b8
+		summarizeBy: none
+		sourceColumn: top_place_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column top_place_name
+		dataType: string
+		lineageTag: 6ca79f72-73ad-4f1b-8906-176ac2b20a62
+		summarizeBy: none
+		sourceColumn: top_place_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column category_popularity_rank
+		dataType: double
+		lineageTag: 20291b97-51f0-4bdb-b743-ff13e0a536cb
+		summarizeBy: sum
+		sourceColumn: category_popularity_rank
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition gold_fct_category_tourism_summary = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_fct_category_tourism_summary",Kind="Table"]}[Data]
+				in
+				    raw_Table
+
+	annotation PBI_ResultType = Table
+

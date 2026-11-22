@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+    <defs>
+        <linearGradient id="top-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#102A43" />
+            <stop offset="100%" stop-color="#176B87" />
+        </linearGradient>
+        <filter id="card-shadow" x="-5%" y="-5%" width="115%" height="120%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#102A43" flood-opacity="0.06" />
+        </filter>
+    </defs>
+
+    <!-- Canvas Background -->
+    <rect width="1920" height="1080" fill="#F0F4F8" />
+
+    <!-- Top Navigation Header -->
+    <rect width="1920" height="75" fill="url(#top-gradient)" />
+    <text x="40" y="46" font-family="Segoe UI, sans-serif" font-size="22" font-weight="800" fill="#FFFFFF" letter-spacing="1">VIETNAM <tspan fill="#E9C46A">TOURISM</tspan> INTELLIGENCE</text>
+    <text x="460" y="46" font-family="Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#BCCCDC">| TOURISM GROWTH &amp; LIFECYCLE — Phân tích tăng trưởng và vòng đời phát triển điểm đến</text>
+    
+    <rect x="1650" y="22" width="230" height="32" rx="16" fill="rgba(42, 157, 143, 0.25)" stroke="#2A9D8F" />
+    <circle cx="1670" cy="38" r="4" fill="#4EBAA9" />
+    <text x="1682" y="43" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#A8DADC">DirectQuery: Lakehouse</text>
+
+    <!-- KPI Row -->
+    
+        <g filter="url(#card-shadow)">
+            <rect x="40" y="95" width="440" height="135" rx="12" fill="#FFFFFF" />
+            <rect x="40" y="95" width="8" height="135" rx="4" fill="#2A9D8F" />
+            <text x="64" y="128" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#627D98" letter-spacing="0.5">ESTABLISHED HOTSPOTS</text>
+            <text x="64" y="212" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#2A9D8F">5 Điểm đến đầu tàu vững chắc</text>
+        </g>
+        
+        <g filter="url(#card-shadow)">
+            <rect x="506" y="95" width="440" height="135" rx="12" fill="#FFFFFF" />
+            <rect x="506" y="95" width="8" height="135" rx="4" fill="#176B87" />
+            <text x="530" y="128" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#627D98" letter-spacing="0.5">RISING STARS</text>
+            <text x="530" y="212" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#176B87">41 Điểm tăng trưởng review nhanh</text>
+        </g>
+        
+        <g filter="url(#card-shadow)">
+            <rect x="972" y="95" width="440" height="135" rx="12" fill="#FFFFFF" />
+            <rect x="972" y="95" width="8" height="135" rx="4" fill="#E76F51" />
+            <text x="996" y="128" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#627D98" letter-spacing="0.5">STEADY DESTINATIONS</text>
+            <text x="996" y="212" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E76F51">47 Điểm lượng khách ổn định</text>
+        </g>
+        
+        <g filter="url(#card-shadow)">
+            <rect x="1438" y="95" width="440" height="135" rx="12" fill="#FFFFFF" />
+            <rect x="1438" y="95" width="8" height="135" rx="4" fill="#E9C46A" />
+            <text x="1462" y="128" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#627D98" letter-spacing="0.5">COOLING / AT RISK</text>
+            <text x="1462" y="212" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E9C46A">28 Điểm cần kích cầu du lịch</text>
+        </g>
+        
+
+    <!-- Chart Containers -->
+    
+        <g filter="url(#card-shadow)">
+            <rect x="40" y="255" width="910" height="785" rx="12" fill="#FFFFFF" />
+            <text x="64" y="291" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#102A43">Monthly New Reviews Growth Velocity</text>
+            <rect x="760" y="273" width="170" height="24" rx="6" fill="#E0FCFF" />
+            <text x="845.0" y="289" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#176B87" text-anchor="middle">Tốc độ tăng trưởng</text>
+            <line x1="60" y1="305" x2="930" y2="305" stroke="#F0F4F8" stroke-width="1.5" />
+        </g>
+        
+        <g filter="url(#card-shadow)">
+            <rect x="980" y="255" width="900" height="785" rx="12" fill="#FFFFFF" />
+            <text x="1004" y="291" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#102A43">Destination Development Stage Breakdown</text>
+            <rect x="1690" y="273" width="170" height="24" rx="6" fill="#E0FCFF" />
+            <text x="1775.0" y="289" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#176B87" text-anchor="middle">Vòng đời điểm đến</text>
+            <line x1="1000" y1="305" x2="1860" y2="305" stroke="#F0F4F8" stroke-width="1.5" />
+        </g>
+        
+</svg>

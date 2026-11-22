@@ -2,13 +2,14 @@
 
 WITH valid_records AS (
 
-    -- BƯỚC 1
+    -- BƯỚC 1: Lọc bản ghi hợp lệ và loại bỏ rác/MV âm nhạc/meme không liên quan du lịch
     SELECT *
     FROM {{ ref('stg_youtube_videos') }}
     WHERE place_id IS NOT NULL
       AND video_id IS NOT NULL
       AND crawled_at_utc IS NOT NULL
       AND COALESCE(bronze_record_status, 'success') = 'success'
+      AND {{ is_valid_tourism_youtube_video('category', 'video_title', 'channel_name') }}
 
 ),
 

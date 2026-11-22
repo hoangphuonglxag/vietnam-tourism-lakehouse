@@ -1,0 +1,305 @@
+table gold_fct_province_tourism_summary
+	lineageTag: 9cf8e756-2b0a-446e-8b7d-4c1f7940f8e6
+
+	column province_id
+		dataType: string
+		lineageTag: 74e46683-4daa-4ff6-aa22-ef35aaaec76e
+		summarizeBy: none
+		sourceColumn: province_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column province_name
+		dataType: string
+		lineageTag: f9dd6bfe-6094-4d0a-badd-ae2f434c5075
+		summarizeBy: none
+		sourceColumn: province_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column admin_scope
+		dataType: string
+		lineageTag: 91ae2c69-539a-4ea7-88da-1ad75ebc6eb5
+		summarizeBy: none
+		sourceColumn: admin_scope
+
+		annotation SummarizationSetBy = Automatic
+
+	column center_lat
+		dataType: double
+		lineageTag: 935b3027-c114-45c0-be2f-599180b70cbc
+		summarizeBy: none
+		sourceColumn: center_lat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column center_lon
+		dataType: double
+		lineageTag: a8f2ba9e-8eb3-4ce1-b6a7-56f441fa0abe
+		summarizeBy: none
+		sourceColumn: center_lon
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column min_lat
+		dataType: double
+		lineageTag: 7e6a3c4d-c328-4124-a2b2-df6f9d96579f
+		summarizeBy: none
+		sourceColumn: min_lat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column max_lat
+		dataType: double
+		lineageTag: ced5f5c1-a7d5-498b-af34-d3b688a44833
+		summarizeBy: none
+		sourceColumn: max_lat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column min_lon
+		dataType: double
+		lineageTag: 7677b4df-ccd8-4fd7-b947-08ec141683e1
+		summarizeBy: none
+		sourceColumn: min_lon
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column max_lon
+		dataType: double
+		lineageTag: 3d04c11d-95cd-45a4-815a-a1b6e693b8e7
+		summarizeBy: none
+		sourceColumn: max_lon
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column geojson_url
+		dataType: string
+		lineageTag: 2a35173c-fe92-4c85-a47e-5a88b9fe0a84
+		summarizeBy: none
+		sourceColumn: geojson_url
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_places_count
+		dataType: double
+		formatString: #,0
+		lineageTag: f75f7366-b0d8-49c3-b67c-8dc3e5a79878
+		summarizeBy: none
+		sourceColumn: total_places_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column active_places_count
+		dataType: double
+		lineageTag: 9d7856cb-7407-4f00-b9fa-341b397016cf
+		summarizeBy: none
+		sourceColumn: active_places_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column forecast_ready_places_count
+		dataType: double
+		lineageTag: 45b92edb-166c-423e-a931-d7b53bde1d34
+		summarizeBy: none
+		sourceColumn: forecast_ready_places_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column leading_hotspot_count
+		dataType: double
+		lineageTag: 3a18a9c4-9ac8-4b5e-941d-fd81ab56c64b
+		summarizeBy: none
+		sourceColumn: leading_hotspot_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rising_star_count
+		dataType: double
+		lineageTag: 33e01817-1185-4707-9b1d-0152eed729ad
+		summarizeBy: none
+		sourceColumn: rising_star_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column province_weighted_avg_rating
+		dataType: double
+		formatString: 0.00
+		lineageTag: 8871ea61-f328-4ab5-ae8c-add69403acda
+		summarizeBy: none
+		sourceColumn: province_weighted_avg_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column province_simple_avg_rating
+		dataType: double
+		lineageTag: edced949-61ac-49fe-83da-6d51cc03fa48
+		summarizeBy: none
+		sourceColumn: province_simple_avg_rating
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_google_review_count
+		dataType: double
+		formatString: #,0
+		lineageTag: 421c9762-6337-4625-8e61-e5e0082b70c5
+		summarizeBy: none
+		sourceColumn: total_google_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_crawled_review_count
+		dataType: double
+		lineageTag: 07583b37-31ba-431d-9d62-f4f5f1ed8df7
+		summarizeBy: none
+		sourceColumn: total_crawled_review_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column province_net_sentiment_score
+		dataType: double
+		lineageTag: 646d8dc8-4995-4b67-8442-f16b1510f1d1
+		summarizeBy: none
+		sourceColumn: province_net_sentiment_score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_videos_count
+		dataType: double
+		lineageTag: 1523c487-c6bc-4fdd-85e0-02f9db179d8d
+		summarizeBy: none
+		sourceColumn: total_youtube_videos_count
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views
+		dataType: double
+		formatString: #,0
+		lineageTag: ef598f7e-1792-47b5-b89b-850ef41950ad
+		summarizeBy: none
+		sourceColumn: total_youtube_views
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_views_per_place
+		dataType: double
+		lineageTag: ae058cf5-95d1-466e-8152-9882a138b915
+		summarizeBy: none
+		sourceColumn: avg_views_per_place
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_youtube_views_delta
+		dataType: double
+		lineageTag: e2a07353-8551-4734-9f5e-d56824d82ebf
+		summarizeBy: none
+		sourceColumn: total_youtube_views_delta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column province_avg_daily_view_growth
+		dataType: double
+		lineageTag: 971d8a52-1d6e-4b3f-a9df-85fb620d0a74
+		summarizeBy: none
+		sourceColumn: province_avg_daily_view_growth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column top_place_id_by_views
+		dataType: string
+		lineageTag: 1e83784f-a8a2-4282-92a0-c00928163afe
+		summarizeBy: none
+		sourceColumn: top_place_id_by_views
+
+		annotation SummarizationSetBy = Automatic
+
+	column top_place_name_by_views
+		dataType: string
+		lineageTag: 6773332d-bbb7-48ea-8f33-d0e3d90c297c
+		summarizeBy: none
+		sourceColumn: top_place_name_by_views
+
+		annotation SummarizationSetBy = Automatic
+
+	column top_place_id_by_reviews
+		dataType: string
+		lineageTag: 26ffd54d-46e6-4c4b-ac5d-14da08f7d908
+		summarizeBy: none
+		sourceColumn: top_place_id_by_reviews
+
+		annotation SummarizationSetBy = Automatic
+
+	column top_place_name_by_reviews
+		dataType: string
+		lineageTag: a146c19b-981c-4660-9b13-4ee83854d0ae
+		summarizeBy: none
+		sourceColumn: top_place_name_by_reviews
+
+		annotation SummarizationSetBy = Automatic
+
+	column national_tourism_rank
+		dataType: double
+		formatString: 0
+		lineageTag: beac74e9-4628-4fbb-82fa-1e3ed41326b2
+		summarizeBy: none
+		sourceColumn: national_tourism_rank
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition gold_fct_province_tourism_summary = m
+		mode: import
+		source =
+				let
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_fct_province_tourism_summary",Kind="Table"]}[Data]
+				in
+				    raw_Table
+
+	annotation PBI_ResultType = Table
+

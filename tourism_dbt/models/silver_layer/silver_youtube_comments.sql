@@ -2,7 +2,7 @@
 
 WITH valid_records AS (
 
-    -- BƯỚC 1
+    -- BƯỚC 1: Lọc bản ghi hợp lệ thuộc các video du lịch đã được làm sạch
     SELECT
         *,
         COALESCE(
@@ -16,6 +16,7 @@ WITH valid_records AS (
       AND crawled_at_utc IS NOT NULL
       AND (comment_id IS NOT NULL OR comment_text IS NOT NULL)
       AND COALESCE(bronze_record_status, 'success') = 'success'
+      AND video_id IN (SELECT video_id FROM {{ ref('silver_youtube_videos') }})
 
 ),
 

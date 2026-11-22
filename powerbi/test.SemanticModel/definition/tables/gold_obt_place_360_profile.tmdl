@@ -532,20 +532,8 @@ table gold_obt_place_360_profile
 		mode: import
 		source =
 				let
-				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
-				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
-				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
-				    raw_Table = gold_Schema{[Name="gold_obt_place_360_profile",Kind="Table"]}[Data],
-				    TextCols = Table.ColumnsOfType(raw_Table, {type text, type nullable text}),
-				    FixedUtf8 = Table.TransformColumns(
-				        raw_Table,
-				        List.Transform(
-				            TextCols,
-				            (c) => {c, (v) => if v = null then null else let b = Text.ToBinary(v, 1252), u = try Text.FromBinary(b, TextEncoding.Utf8) otherwise v in if Text.Contains(u, Character.FromNumber(65533)) then v else u, type nullable text}
-				        )
-				    )
+				    Source = Parquet.Document(File.Contents("D:\PJ\vietnam-tourism-lakehouse\data\gold_export\gold_obt_place_360_profile.parquet"))
 				in
-				    FixedUtf8
+				    Source
 
 	annotation PBI_ResultType = Table
-

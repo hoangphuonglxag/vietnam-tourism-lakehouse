@@ -19,7 +19,7 @@
 
 ---
 
-## 1. Project Overview (Tổng quan Đề tài)
+## 1. Tổng quan Đề tài
 
 ### 1.1. Bối cảnh & Thách thức (Problem Statement)
 Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ về mặt thông tin, tuy nhiên dữ liệu du lịch hiện nay đang đối mặt với các rào cản kỹ thuật lớn:
@@ -27,7 +27,7 @@ Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ v�
 - **Rác & Nhiễu ngữ nghĩa (Noisy Data)**: Quá trình thu thập từ mạng xã hội dễ bị xâm nhập bởi nội dung giải trí, video ca nhạc (MV viral), game show không liên quan đến du lịch.
 - **Hạn chế của kiến trúc kho truyền thống**: RDBMS/Data Warehouse truyền thống tốn kém, không tối ưu cho dữ liệu bán cấu trúc (JSONL) và không hỗ trợ Time-Travel hay ACID Transactions trên quy mô lớn.
 
-### 1.2. Giải pháp (Proposed Solution)
+### 1.2. Giải pháp
 Đề tài xây dựng một nền tảng **Modern Data Lakehouse** toàn diện:
 - **Kiến trúc Medallion (Bronze $\rightarrow$ Silver $\rightarrow$ Gold)** đảm bảo chất lượng dữ liệu qua từng chặng xử lý.
 - **Tách rời hoàn toàn Storage & Compute**: Lưu trữ bảng mở với **Apache Iceberg + MinIO S3**, truy vấn SQL phân tán với **Trino Engine**.
@@ -36,7 +36,7 @@ Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ v�
 
 ---
 
-## 2. System Architecture (Kiến trúc Hệ thống)
+## 2. Kiến trúc Hệ thống
 
 ```mermaid
 flowchart TD
@@ -80,7 +80,7 @@ flowchart TD
 
 ---
 
-## 3. Technology Stack (Ngăn xếp Công nghệ)
+## 3. Technology Stack
 
 | Phân tầng | Công nghệ | Phiên bản | Vai trò & Mục đích sử dụng |
 | :--- | :--- | :--- | :--- |
@@ -95,7 +95,7 @@ flowchart TD
 
 ---
 
-## 4. Data Scale & Scope (Quy mô Dữ liệu Dự án)
+## 4. Data Scale & Scope
 
 Hệ thống được vận hành và kiểm thử trên tập dữ liệu du lịch thực tế tại Việt Nam:
 
@@ -140,7 +140,7 @@ erDiagram
 
 ---
 
-## 6. Interactive Power BI Dashboard (Phục vụ Phân tích)
+## 6. Power BI Dashboard
 
 Dashboard được thiết kế theo chuẩn **Power BI Project (PBIR / TMDL)** kết nối trực tiếp vào Trino Lakehouse:
 
@@ -153,7 +153,7 @@ Dashboard được thiết kế theo chuẩn **Power BI Project (PBIR / TMDL)** 
 
 ---
 
-## 7. Repository Directory Structure (Cấu trúc Thư mục)
+## 7. Cấu trúc thư mục
 
 ```text
 vietnam-tourism-lakehouse/
@@ -195,7 +195,7 @@ vietnam-tourism-lakehouse/
 
 ---
 
-## 8. Quickstart & Deployment Guide (Hướng dẫn Triển khai)
+## 8. Hướng dẫn Triển khai
 
 ### 8.1. Yêu cầu Tiền đề (Prerequisites)
 - **Hệ điều hành**: Windows 10/11, macOS, hoặc Ubuntu Linux.
@@ -247,3 +247,22 @@ python tools/rebuild_lakehouse_after_crawl.py
 - **Sinh viên thực hiện:**
   - Đinh Hoàng Phương (MSSV: 23133059)
   - Nguyễn Vũ Minh    (MSSV: 23133044)
+
+## 10. Tài liệu tham khảo
+
+### 1. Kiến trúc Data Lakehouse & Table Format
+1. **Armbrust, M., Ghodsi, A., Xin, R., & Zaharia, M.** (2021). *Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics*. Proceedings of the VLDB Endowment (CIDR 2021).
+2. **Apache Software Foundation.** (2024). *Apache Iceberg: The Open Table Format for Huge Analytic Datasets*. [https://iceberg.apache.org/](https://iceberg.apache.org/)
+3. **Sethi, R., et al.** (2019). *Presto: SQL on Everything*. IEEE 35th International Conference on Data Engineering (ICDE). (Tiền thân của Trino Distributed SQL Engine).
+
+### 2. Mô hình hóa Dữ liệu & Kỹ thuật Chuyển đổi
+4. **Kimball, R., & Ross, M.** (2013). *The Data Warehouse Toolkit: The Definitive Guide to Dimensional Modeling (3rd Edition)*. John Wiley & Sons. *(Cơ sở lý thuyết thiết kế mô hình Star Schema và One Big Table tầng Gold)*.
+5. **dbt Labs.** (2024). *Best Practices in Analytics Engineering: Building Conformed Dimensions and Incremental Models*. [https://docs.getdbt.com/](https://docs.getdbt.com/)
+
+### 3. Phương pháp Thuật toán & Đánh giá Dữ liệu Mạng xã hội
+6. **Bayes, T., & Price, R.** (1763). *An Essay towards Solving a Problem in the Doctrine of Chances*. Philosophical Transactions of the Royal Society of London. *(Cơ sở công thức Bayesian Weighted Rating áp dụng triệt tiêu thiên lệch đánh giá Google Maps)*.
+7. **Baccianella, S., Esuli, A., & Sebastiani, F.** (2010). *SentiWordNet 3.0: An Enhanced Lexical Resource for Sentiment Analysis and Opinion Mining*. LREC. *(Cơ sở lý thuyết phân tích cảm xúc bình luận du lịch)*.
+
+### 4. Nguồn Dữ liệu Mở & API Tham chiếu
+8. **OpenStreetMap Foundation.** (2024). *OpenStreetMap Geographic Point of Interest (POI) Taxonomy and Overpass API Specification*. [https://wiki.openstreetmap.org/](https://wiki.openstreetmap.org/)
+9. **Google Cloud.** (2024). *YouTube Data API v3 Documentation: Video Performance & Comment Threads*. [https://developers.google.com/youtube/v3](https://developers.google.com/youtube/v3)

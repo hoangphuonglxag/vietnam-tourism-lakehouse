@@ -241,9 +241,9 @@ python tools/rebuild_lakehouse_after_crawl.py
 ## 9. Author & Academic Context
 
 Đồ án được thực hiện trong khuôn khổ môn học **Đồ án Tiểu luận Chuyên ngành / Khóa luận Tốt nghiệp ngành Kỹ thuật Dữ liệu (Data Engineering)**.
-- **Trường Đại học Công nghệ Kỹ thuật TP.HCM**
+- **Trường:** Đại học Công nghệ Kỹ thuật TP.HCM
+- **Khoa:** Công nghệ Thông tin
+- **Giảng viên hướng dẫn:** TS. Phan Thị Thể
 - **Sinh viên thực hiện:**
-  - **Đinh Hoàng Phương** (MSSV: 23133059)
-  - **Nguyễn Vũ Minh**    (MSSV: 23133044)
-- **Giảng viên hướng dẫn:** **TS. Phan Thị Thể**
-- **Đơn vị đào tạo:** Viện Đào tạo Công nghệ & Kỹ thuật Dữ liệu
+  - Đinh Hoàng Phương (MSSV: 23133059)
+  - Nguyễn Vũ Minh    (MSSV: 23133044)

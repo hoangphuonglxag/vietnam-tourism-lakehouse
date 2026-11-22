@@ -75,6 +75,8 @@ def _existing_video_keys(video_file: Path) -> set[tuple[str, str]]:
 
 def _load_places() -> pd.DataFrame:
     places = pd.read_csv(PLACES_FILE, dtype=str, encoding="utf-8-sig").fillna("")
+    if "tourism_status" in places.columns:
+        places = places[places["tourism_status"].astype(str).str.lower() != "rejected"]
     if not PLACES_CATEGORIES_FILE.exists() or not PLACE_TAXONOMY_FILE.exists():
         places["category_terms"] = ""
         return places

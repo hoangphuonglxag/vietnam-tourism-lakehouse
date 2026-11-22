@@ -3,6 +3,7 @@
 Pipeline Rebuild Tự Động Toàn Bộ Lakehouse sau khi Crawl:
 Bronze -> Silver dbt -> Silver Iceberg -> Gold dbt -> Gold Iceberg -> Export Parquet Power BI
 """
+from pathlib import Path
 import subprocess
 import sys
 import time
@@ -50,9 +51,10 @@ def main():
     )
 
     # 5. Export Parquet for Power BI
+    export_script = Path(__file__).resolve().parent / "export_gold_to_parquet.py"
     run_step(
         "Export Gold tables to Parquet for Power BI",
-        ["python3", "/opt/airflow/project/script/export_gold_to_parquet.py"]
+        [sys.executable, str(export_script)]
     )
 
     print("\n============================================================")

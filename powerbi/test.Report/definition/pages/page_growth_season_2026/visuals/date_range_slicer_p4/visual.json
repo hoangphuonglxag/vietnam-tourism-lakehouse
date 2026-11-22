@@ -2,8 +2,8 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "date_range_slicer_p4",
   "position": {
-    "x": 880,
-    "y": 24,
+    "x": 1115,
+    "y": 245,
     "z": 9200,
     "height": 56,
     "width": 344,
@@ -83,6 +83,13 @@
                   "Value": "9D"
                 }
               }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
             }
           }
         }
@@ -98,37 +105,6 @@
                       "Value": "'#0284C7'"
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      ],
-      "numericInput": [
-        {
-          "properties": {
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#0F172A'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontFamily": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Segoe UI'"
-                }
-              }
-            },
-            "textSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }

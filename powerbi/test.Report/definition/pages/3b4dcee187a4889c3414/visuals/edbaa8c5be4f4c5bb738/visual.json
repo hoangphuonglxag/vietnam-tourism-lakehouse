@@ -113,20 +113,6 @@
                   "Value": "false"
                 }
               }
-            },
-            "strictMultiSelect": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "selectAllCheckbox": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
             }
           }
         }

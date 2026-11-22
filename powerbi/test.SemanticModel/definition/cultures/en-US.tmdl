@@ -925,6 +925,48 @@ cultureInfo en-US
 			          }
 			        }
 			      ]
+			    },
+			    "gold_fct_youtube_video_performance.published_date": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_youtube_video_performance",
+			          "ConceptualProperty": "published_date"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Thời gian đăng": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "gold_fct_place_monthly_growth.activity_month": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "gold_fct_place_monthly_growth",
+			          "ConceptualProperty": "activity_month"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Kỳ quan sát": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
 			    }
 			  }
 			}

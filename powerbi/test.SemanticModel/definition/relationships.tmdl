@@ -56,6 +56,7 @@ relationship f1623c68-5df6-cdae-ce58-a74c5061ec4f
 	toColumn: gold_obt_place_360_profile.place_id
 
 relationship 14b5d270-ce84-bf47-cebf-89ffb56719e8
+	crossFilteringBehavior: bothDirections
 	fromColumn: gold_obt_place_360_profile.province_id
 	toColumn: gold_fct_province_tourism_summary.province_id
 

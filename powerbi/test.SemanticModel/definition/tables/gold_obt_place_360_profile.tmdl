@@ -532,8 +532,11 @@ table gold_obt_place_360_profile
 		mode: import
 		source =
 				let
-				    Source = Parquet.Document(File.Contents("D:\PJ\vietnam-tourism-lakehouse\data\gold_export\gold_obt_place_360_profile.parquet"))
+				    Source = Odbc.DataSource("dsn=Trino_Lakehouse", [HierarchicalNavigation=true]),
+				    iceberg_Database = Source{[Name="iceberg",Kind="Database"]}[Data],
+				    gold_Schema = iceberg_Database{[Name="gold",Kind="Schema"]}[Data],
+				    raw_Table = gold_Schema{[Name="gold_obt_place_360_profile",Kind="Table"]}[Data]
 				in
-				    Source
+				    raw_Table
 
 	annotation PBI_ResultType = Table

@@ -48,6 +48,7 @@ htmlcov/
 Thumbs.db
 desktop.ini
 *.Identifier
+*.msi
 
 /tourism_lakehouse/
 *.msi

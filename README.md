@@ -1,173 +1,249 @@
-# Vietnam Tourism Lakehouse
+# 🏛️ Vietnam Tourism Data Lakehouse: Multi-source Social & Geospatial Analytics
 
-Du an thu thap, luu tru va chuan bi du lieu du lich tu nguon tham chieu va mang xa hoi. Muc tieu hoc thuat la xay dung nen tang lakehouse co the truy vet du lieu ingestion, sau do mo rong thanh cac bang phan tich va bai toan machine learning/deep learning.
+<div align="center">
 
-## Pham vi va trang thai
+[![Docker](https://img.shields.io/badge/Docker-Containers-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Apache Iceberg](https://img.shields.io/badge/Apache_Iceberg-Table_Format-blue?logo=apache&logoColor=white)](https://iceberg.apache.org/)
+[![dbt](https://img.shields.io/badge/dbt-Data_Build_Tool-FF694B?logo=dbt&logoColor=white)](https://www.getdbt.com/)
+[![Apache Airflow](https://img.shields.io/badge/Apache_Airflow-Orchestration-017CEE?logo=apache-airflow&logoColor=white)](https://airflow.apache.org/)
+[![Trino](https://img.shields.io/badge/Trino-Distributed_SQL-DD00A1?logo=trino&logoColor=white)](https://trino.io/)
+[![Power BI](https://img.shields.io/badge/Power_BI-Semantic_Dashboard-F2C811?logo=power-bi&logoColor=black)](https://powerbi.microsoft.com/)
+[![MinIO](https://img.shields.io/badge/MinIO-S3_Storage-C72C48?logo=minio&logoColor=white)](https://min.io/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-In_Process_SQL-FFF000?logo=duckdb&logoColor=black)](https://duckdb.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 
-- Reference pipeline thu thap ranh gioi tinh va dia diem, kiem tra khong gian, phan loai va tao danh muc dia diem.
-- Social ingestion thu thap Google Maps ratings/reviews va YouTube videos/comments theo `place_id`.
-- Bronze ingestion dang duoc trien khai: ghi JSONL append-only o local va MinIO, kem metadata, metrics, checkpoint va quarantine.
-- Silver/Gold cho cac dataset du lich chua duoc noi thanh luong phan tich hoan chinh. DAG `tourism_lakehouse_test` la prototype dbt -> DuckDB -> Iceberg; model dbt hien doc `s3://lakehouse/raw/travel_reviews/*.parquet`, chua doc truc tiep cac partition Bronze du lich.
+**Đề tài:** Xây dựng Data Lakehouse phục vụ lưu trữ và phân tích dữ liệu du lịch từ mạng xã hội  
+*(Building a Data Lakehouse for Ingesting, Storing, and Analyzing Tourism Data from Social Media)*
 
-Chi tiet nhan dinh du lieu, tien do, rui ro va ke hoach tiep theo nam trong [TIEN_DO_VA_DINH_HUONG.md](TIEN_DO_VA_DINH_HUONG.md).
+</div>
 
-## Kien truc hien tai
+---
+
+## 📌 1. Project Overview (Tổng quan Đề tài)
+
+### 1.1. Bối cảnh & Thách thức (Problem Statement)
+Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ về mặt thông tin, tuy nhiên dữ liệu du lịch hiện nay đang đối mặt với các rào cản kỹ thuật lớn:
+- **Phân tán & Dị thể (Siloed & Heterogeneous)**: Dữ liệu tọa độ không gian tĩnh (OpenStreetMap) hoàn toàn tách rời với dữ liệu phản hồi động từ du khách trên mạng xã hội (Google Maps, YouTube).
+- **Rác & Nhiễu ngữ nghĩa (Noisy Data)**: Quá trình thu thập từ mạng xã hội dễ bị xâm nhập bởi nội dung giải trí, video ca nhạc (MV viral), game show không liên quan đến du lịch.
+- **Hạn chế của kiến trúc kho truyền thống**: RDBMS/Data Warehouse truyền thống tốn kém, không tối ưu cho dữ liệu bán cấu trúc (JSONL) và không hỗ trợ Time-Travel hay ACID Transactions trên quy mô lớn.
+
+### 1.2. Giải pháp (Proposed Solution)
+Đề tài xây dựng một nền tảng **Modern Data Lakehouse** toàn diện:
+- **Kiến trúc Medallion (Bronze $\rightarrow$ Silver $\rightarrow$ Gold)** đảm bảo chất lượng dữ liệu qua từng chặng xử lý.
+- **Tách rời hoàn toàn Storage & Compute**: Lưu trữ bảng mở với **Apache Iceberg + MinIO S3**, truy vấn SQL phân tán với **Trino Engine**.
+- **Data Quality Gates 4 lớp**: Cơ chế Hard-Gate chặn đứng video ca nhạc rác, loại bỏ 100% comment mồ côi.
+- **Phục vụ phân tích đa chiều (Serving Layer)**: Trực quan hóa tương tác 360° trên **Power BI PBIR/TMDL** với mô hình Star Schema chuẩn doanh nghiệp.
+
+---
+
+## 🏗️ 2. System Architecture (Kiến trúc Hệ thống)
+
+```mermaid
+flowchart TD
+    subgraph S1["1. INGESTION & DATA SOURCES"]
+        OSM["📍 OpenStreetMap API<br/>(Geo Boundaries & POIs)"]
+        GMR["⭐ Google Maps API/Scraper<br/>(Ratings & Reviews)"]
+        YT["🎥 YouTube Data API v3<br/>(Videos & Comments)"]
+    end
+
+    subgraph S2["2. BRONZE LAYER (MinIO S3 / Object Store)"]
+        B_RAW["Raw JSONL (Append-Only)<br/>Partition: crawl_date=YYYY-MM-DD<br/>Metadata: run_id, record_status, attempt"]
+        B_QUAR["Quarantine Buffer<br/>(Schema Mismatch & Anomalies)"]
+    end
+
+    subgraph S3["3. SILVER LAYER (DuckDB + dbt Core)"]
+        S_CLEAN["Data Cleansing & Deduplication<br/>- Macro is_valid_tourism_youtube_video<br/>- Soft-delete Orphaned Comments<br/>- Place Taxonomy Classification"]
+        S_CONF["Conformed Silver Tables<br/>(silver_places, silver_google_ratings,<br/>silver_youtube_videos, silver_youtube_comments)"]
+    end
+
+    subgraph S4["4. GOLD LAYER (Apache Iceberg + REST Catalog)"]
+        G_OBT["gold_obt_place_360_profile<br/>(7,155 POIs Conformed Profile)"]
+        G_PROV["gold_fct_province_tourism_summary<br/>(34 Provinces Aggregated Mart)"]
+        G_CAT["gold_fct_category_tourism_summary<br/>(19 Taxonomy Groups Mart)"]
+        G_GROWTH["gold_fct_place_monthly_growth<br/>(53,398 Monthly Time-series Records)"]
+        G_TRAJ["gold_fct_place_snapshot_trajectory<br/>(8,581 Trajectory Snapshots)"]
+        G_YT["gold_fct_youtube_video_performance<br/>(30,677 Verified Tourism Videos)"]
+    end
+
+    subgraph S5["5. SERVING & ANALYTICS LAYER"]
+        TRINO["⚡ Trino Distributed SQL Engine<br/>(Port: 8083 / Port: 8082 Bridge)"]
+        PBI["📊 Power BI Semantic Model & PBIR<br/>(VertiPaq In-Memory / Import Mode)"]
+        DASH["4-Page Interactive Dashboard<br/>(Map 360, Reputation, Social Buzz, Seasonality)"]
+    end
+
+    S1 -->|Airflow DAGs| B_RAW
+    B_RAW -.-> B_QUAR
+    B_RAW -->|dbt build + DuckDB| S_CLEAN --> S_CONF
+    S_CONF -->|PyIceberg Writer| S4
+    S4 -->|Distributed Query| TRINO --> PBI --> DASH
+```
+
+---
+
+## 💻 3. Technology Stack (Ngăn xếp Công nghệ)
+
+| Phân tầng | Công nghệ | Phiên bản | Vai trò & Mục đích sử dụng |
+| :--- | :--- | :--- | :--- |
+| **Storage Layer** | **MinIO** | Latest (S3) | Object storage phân tán lưu trữ toàn bộ hồ dữ liệu Bronze, Silver, Gold. |
+| **Table Format** | **Apache Iceberg** | 3.5.0 | Định dạng bảng mở chuẩn ACID, hỗ trợ Time-travel, Schema Evolution và Snapshot Isolation. |
+| **Catalog** | **Lakekeeper** | Latest (Rust) | REST Catalog quản trị bảng Iceberg hiệu năng cao bằng ngôn ngữ Rust. |
+| **Transformation** | **dbt Core + DuckDB** | 1.8+ | Công cụ chuyển đổi dữ liệu (ELT), kiểm thử data quality rules và sinh data lineage tự động. |
+| **Orchestration** | **Apache Airflow** | 2.8+ | Điều phối toàn trình (Scheduling, Retries, Backfill, Ingestion DAGs). |
+| **Query Engine** | **Trino** | 442+ | Engine truy vấn SQL phân tán liên kết trực tiếp vào hồ Iceberg với độ trễ thấp. |
+| **Serving & BI** | **Microsoft Power BI** | PBIR (TMDL) | Xây dựng mô hình Semantic Star Schema, đo lường DAX và trực quan hóa tương tác 360°. |
+| **Data Quality** | **Bayesian Formula** | Custom | Tính toán điểm uy tín có trọng số chống hiện tượng thiên lệch đánh giá (Rating Bias). |
+
+---
+
+## 📊 4. Data Scale & Scope (Quy mô Dữ liệu Dự án)
+
+Hệ thống được vận hành và kiểm thử trên tập dữ liệu du lịch thực tế tại Việt Nam:
+
+- **Phạm vi địa lý**: **34 Tỉnh/Thành phố** trọng điểm du lịch trên cả 3 miền Bắc - Trung - Nam.
+- **Địa điểm du lịch (POIs)**: **7.155 địa điểm** chuẩn hóa từ OpenStreetMap, phân loại vào **19 nhóm danh mục**.
+- **Đánh giá Google Maps**: **4.800.000+ lượt review** phục vụ tính toán chỉ số Bayesian Weighted Rating và ma trận uy tín.
+- **Nội dung Video YouTube**: **30.677 video du lịch chính quy** đã được kiểm định qua bộ lọc Hard-Gate.
+- **Bình luận YouTube**: **156.642 bình luận** đã được lọc sạch ngữ nghĩa, phục vụ phân tích cảm xúc cộng đồng.
+- **Dữ liệu Chu kỳ Mùa vụ**: **53.398 bản ghi chuỗi thời gian hàng tháng** theo dõi động lực tăng trưởng.
+
+---
+
+## 🗄️ 5. Medallion Data Architecture & Modeling
+
+### 5.1. Bronze Layer (Raw & Immutable)
+- Lưu trữ append-only theo định dạng `JSONL` nén trên MinIO:
+  `s3://lakehouse/bronze/{dataset}/crawl_date=YYYY-MM-DD/part-{run_id}.jsonl`
+- Gắn kèm metadata quản trị: `run_id`, `source`, `source_id`, `ingested_at_utc`, `pipeline_version`, `record_status`.
+- Dữ liệu sai cấu trúc hoặc không đạt ngưỡng cơ bản được tự động đưa vào phân vùng `quarantine/`.
+
+### 5.2. Silver Layer (Cleaned & Conformed)
+- Chuẩn hóa kiểu dữ liệu, loại bỏ trùng lặp (deduplication) bằng dbt incremental & snapshot logic.
+- Áp dụng macro `is_valid_tourism_youtube_video.sql` loại bỏ hoàn toàn các video ca nhạc và comment mồ côi (orphaned comments).
+
+### 5.3. Gold Layer (Star Schema Marts)
+
+```mermaid
+erDiagram
+    gold_obt_place_360_profile ||--o{ gold_fct_youtube_video_performance : "has (place_id)"
+    gold_obt_place_360_profile ||--o{ gold_fct_place_monthly_growth : "tracks (place_id)"
+    gold_obt_place_360_profile ||--o{ gold_fct_place_snapshot_trajectory : "records (place_id)"
+    gold_fct_province_tourism_summary ||--o{ gold_obt_place_360_profile : "groups (province_name)"
+    gold_fct_category_tourism_summary ||--o{ gold_obt_place_360_profile : "groups (category)"
+```
+
+1. **`gold_obt_place_360_profile`** *(Dimension / Profile Table - 7,155 rows)*: Bảng One-Big-Table tổng hợp toàn bộ thuộc tính không gian, phân loại, điểm Google Maps, Bayesian Weighted Rating và tổng view YouTube theo từng POI.
+2. **`gold_fct_province_tourism_summary`** *(Aggregated Mart - 34 rows)*: Tổng hợp năng lực du lịch, mật độ địa điểm, độ hài lòng trung bình theo 34 tỉnh thành.
+3. **`gold_fct_category_tourism_summary`** *(Aggregated Mart - 19 rows)*: Thống kê hiệu suất theo 19 nhóm danh mục du lịch.
+4. **`gold_fct_place_monthly_growth`** *(Time-series Fact - 53,398 rows)*: Dữ liệu phân tích tăng trưởng và chu kỳ mùa vụ du lịch theo tháng.
+5. **`gold_fct_place_snapshot_trajectory`** *(Trajectory Fact - 8,581 rows)*: Quỹ đạo dịch chuyển xếp hạng và trạng thái vận hành của các địa điểm.
+6. **`gold_fct_youtube_video_performance`** *(Social Fact - 30,677 rows)*: Hiệu suất truyền thông mạng xã hội (views, likes, comments, sentiment, engagement rate).
+
+---
+
+## 📈 6. Interactive Power BI Dashboard (Phục vụ Phân tích)
+
+Dashboard được thiết kế theo chuẩn **Power BI Project (PBIR / TMDL)** kết nối trực tiếp vào Trino Lakehouse:
+
+| Trang báo cáo | Trọng tâm Phân tích | Các chỉ số & Visual chính |
+| :--- | :--- | :--- |
+| **Page 1: Toàn cảnh Không gian 360°** | Tổng quan địa lý 34 tỉnh thành & cơ cấu loại hình | Bản đồ phân bổ POI, Ma trận năng lực du lịch tỉnh/thành, Tỷ trọng 19 nhóm danh mục. |
+| **Page 2: Uy tín & Mức độ Hài lòng** | Đánh giá thực tế từ 4,8M review Google Maps | Điểm trung bình vs **Bayesian Weighted Rating**, Top địa điểm được đánh giá cao nhất, Phân bố sao (1★ - 5★). |
+| **Page 3: Sức lan tỏa Mạng xã hội** | Truyền thông số từ 30.677 YouTube Vlogs & 156K comments | Tổng lượt xem (views), Tỷ lệ tương tác (Engagement Rate), Phân tích cảm xúc người xem, Date Range Slicer. |
+| **Page 4: Động lực Tăng trưởng & Mùa vụ** | Phân loại điểm đến & nhận diện chu kỳ du lịch | Phân khúc điểm đến (*Leading Hotspots, Rising Stars, Stable Anchors, Hidden Gems*), Dao động mùa vụ theo tháng. |
+
+---
+
+## 📁 7. Repository Directory Structure (Cấu trúc Thư mục)
 
 ```text
-Province boundaries / OSM
-       -> reference pipeline -> validated places
-                                  |
-Google Maps ratings/reviews <--------+
-YouTube videos -> YouTube comments <-+
-       -> Airflow jobs -> JSONL Bronze (local + MinIO)
-       -> checkpoint, metrics, quarantine
-
-dbt -> DuckDB -> Iceberg/Lakekeeper: prototype, chua noi voi Bronze du lich
+vietnam-tourism-lakehouse/
+├── airflow/                        # Cấu hình Apache Airflow & Pipeline DAGs
+│   └── dags/                       # DAGs: reference backfill, social crawl, dbt transformations
+├── data/                           # Hồ dữ liệu cục bộ & Export Parquet (được gitignore)
+│   ├── bronze/                     # Phân vùng Raw JSONL theo ngày cào
+│   ├── duckdb/                     # Tourism Lakehouse DuckDB database
+│   └── gold_export/                # 6 bảng Gold Parquet phục vụ Power BI Offline
+├── docs/                           # Tài liệu thiết kế hệ thống, data dictionary & business questions
+├── iceberg/                        # PyIceberg Catalog & Data Sync scripts
+│   ├── catalog.py                  # Cấu hình REST Catalog kết nối Lakekeeper
+│   ├── check_table.py              # Script kiểm tra snapshot & tính toàn vẹn Iceberg
+│   └── writer.py                   # Ghi dữ liệu từ DuckDB vào Apache Iceberg
+├── powerbi/                        # Mã nguồn báo cáo Power BI PBIR & Semantic Model
+│   ├── test.Report/                # Báo cáo PBIR (JSON visuals, pages, layouts)
+│   ├── test.SemanticModel/         # Mô hình dữ liệu TMDL (Tables, Measures, Relationships)
+│   ├── Vietnam_Tourism_Lakehouse.pbip # Power BI Project File
+│   └── Vietnam_Tourism_Theme.json  # Theme màu sắc chuẩn phong cách Flat Modern
+├── script/                         # Mã nguồn cốt lõi các crawler dữ liệu
+│   ├── alerts/                     # Webhook thông báo lỗi hệ thống qua Discord
+│   └── crawl_data/                 # Trình cào OSM, Google Maps Ratings, Reviews & YouTube Vlogs
+├── tools/                          # Các công cụ vận hành & bảo trì hệ thống (DataOps/DevOps)
+│   ├── export_gold_to_parquet.py   # Xuất 6 bảng Gold ra file .parquet dự phòng
+│   ├── rebuild_lakehouse_after_crawl.py # Pipeline tái tạo tự động toàn trình Lakehouse
+│   ├── trigger_crawl.py            # Tiện ích dòng lệnh kích hoạt nhanh Airflow DAG
+│   └── README.md                   # Hướng dẫn chi tiết sử dụng thư mục tools
+├── tourism_dbt/                    # Project dbt biến đổi dữ liệu (Models, Macros, Tests)
+│   ├── macros/                     # Macro dbt: lọc video du lịch, kiểm tra chất lượng
+│   ├── models/                     # Mô hình Silver và Gold Marts
+│   └── dbt_project.yml             # Cấu hình project dbt
+├── trino/                          # Cấu hình Trino Server & ODBC Bridge
+│   ├── etc/                        # Catalog cấu hình Iceberg connector
+│   └── odbc_bridge.py              # Trino ODBC Bridge service
+├── docker-compose.yml              # Điều phối container (Airflow, MinIO, Trino, Lakekeeper, Postgres)
+├── requirements.txt                # Các thư viện Python phụ thuộc
+└── README.md                       # Tài liệu thuyết minh tổng quan dự án
 ```
 
-Moi partition Bronze co dang:
+---
 
-```text
-data/bronze/<dataset>/crawl_date=YYYY-MM-DD/part-<run_id>.jsonl
+## 🚀 8. Quickstart & Deployment Guide (Hướng dẫn Triển khai)
+
+### 8.1. Yêu cầu Tiền đề (Prerequisites)
+- **Hệ điều hành**: Windows 10/11, macOS, hoặc Ubuntu Linux.
+- **Docker Desktop** (bật WSL2 nếu dùng Windows) & **Docker Compose**.
+- **Python 3.11+** và **Power BI Desktop** (đã bật tính năng *PBIR format*).
+
+### 8.2. Cài đặt & Khởi động Hệ thống
+1. **Clone repository:**
+   ```bash
+   git clone https://github.com/hoangphuonglxag/vietnam-tourism-lakehouse.git
+   cd vietnam-tourism-lakehouse
+   ```
+
+2. **Cấu hình biến môi trường:**
+   ```bash
+   cp .env.example .env
+   # Điền thông tin YouTube API Key và thông tin kết nối MinIO nếu cần
+   ```
+
+3. **Khởi chạy cụm hạ tầng Docker:**
+   ```bash
+   docker compose up -d
+   ```
+
+4. **Kiểm tra trạng thái các dịch vụ:**
+   - **Apache Airflow Webserver**: [http://localhost:8080](http://localhost:8080) (`airflow` / `airflow`)
+   - **MinIO Console (S3 Object Store)**: [http://localhost:9001](http://localhost:9001) (`lakehouse_admin` / `minIO123`)
+   - **Trino Distributed Query UI**: [http://localhost:8083](http://localhost:8083)
+
+### 8.3. Thực thi Pipeline Toàn trình (End-to-End Rebuild)
+Bạn có thể tái tạo toàn bộ dữ liệu từ Silver $\rightarrow$ Gold $\rightarrow$ Iceberg $\rightarrow$ Parquet chỉ với 1 lệnh:
+```bash
+python tools/rebuild_lakehouse_after_crawl.py
 ```
 
-Bronze object duoc dong bo len MinIO theo prefix `s3://lakehouse/bronze/`. Metadata ingestion gom `run_id`, `source`, `source_id`, `ingested_at_utc`, `pipeline_version`, `crawler_version`, `attempt` va `record_status`. Ban ghi khong dat quality rules duoc dua vao `data/bronze/quarantine/`.
+### 8.4. Mở Báo cáo Trực quan trên Power BI
+1. Cài đặt **Trino ODBC Driver 64-bit** (file `TrinoODBC_x64.msi`).
+2. Mở file [powerbi/Vietnam_Tourism_Lakehouse.pbip](file:///D:/PJ/vietnam-tourism-lakehouse/powerbi/Vietnam_Tourism_Lakehouse.pbip) bằng **Power BI Desktop**.
+3. Nhấn nút **Refresh** trên thanh công cụ để đồng bộ dữ liệu mới nhất từ động cơ VertiPaq.
 
-## Cau truc thu muc
+---
 
-```text
-airflow/dags/                  Airflow DAGs cho reference, social va lakehouse test
-script/crawl_data/             crawler, validation, quality gate va BronzeWriter
-data/reference/                danh muc dia diem, taxonomy va chinh sach crawl
-data/historical/               CSV lich su va output tuong thich crawler
-data/bronze/                   JSONL Bronze, checkpoint, metrics va quarantine
-iceberg/                       PyIceberg writer va validator
-tourism_dbt/                   dbt project
-docker-compose.yml             Airflow, PostgreSQL, MinIO va Lakekeeper
-```
+## 👨‍💻 9. Author & Academic Context
 
-## Yeu cau
+Đồ án được thực hiện trong khuôn khổ môn học **Đồ án Tiểu luận Chuyên ngành / Khóa luận Tốt nghiệp ngành Kỹ thuật Dữ liệu (Data Engineering)**.
 
-- Docker Desktop va Docker Compose
-- Git
-- Cac API key/credential chi khi crawler hoac dich vu tuong ung yeu cau
-
-## Cai dat
-
-Tai thu muc goc project, tao `.env` tu file mau va thay cac gia tri placeholder bang gia tri rieng:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Khong commit `.env`; file co the chua credential, API key hoac Discord webhook. Kiem tra cau hinh va khoi dong cac service:
-
-```powershell
-docker compose config --quiet
-docker compose up -d
-docker compose ps
-```
-
-Airflow UI: [http://localhost:8080](http://localhost:8080). MinIO Console: [http://localhost:9001](http://localhost:9001). Thong tin dang nhap duoc cau hinh trong `.env`.
-
-## Chay pipeline
-
-Reference pipeline can chay truoc khi social crawl neu danh muc dia diem chua duoc tao/cap nhat:
-
-```powershell
-docker compose exec -T airflow-scheduler airflow dags unpause tourism_reference_pipeline
-docker compose exec -T airflow-scheduler airflow dags trigger tourism_reference_pipeline
-docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_reference_pipeline -o table
-```
-
-Sau khi reference pipeline thanh cong, chay social ingestion:
-
-```powershell
-docker compose exec -T airflow-scheduler airflow dags unpause tourism_social_ingestion
-docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion
-docker compose exec -T airflow-scheduler airflow dags list-runs -d tourism_social_ingestion -o table
-```
-
-Social DAG lap crawl plan tu danh muc place va freshness, sau do chi crawl cac dataset/item thieu hoac cu. DAG duoc len lich luc `03:00 UTC` moi thu Hai; co the trigger thu cong voi province/category/dataset cu the. DAG social khong chay lai reference validation/classification va khong backfill CSV lich su mac dinh.
-
-Xem truoc ke hoach cho khach san Da Nang, khong crawl:
-
-```powershell
-docker compose exec -T airflow-scheduler airflow dags trigger tourism_social_ingestion --conf '{"province":"Đà Nẵng","category":"hotel","datasets":["ratings","reviews","comments"],"dry_run":true}'
-```
-
-Neu plan dung, bo `dry_run` hoac dat `false` de crawl. `datasets` chap nhan `ratings`, `reviews`, `videos`, `comments`; `freshness_days` co the la so ngay chung hoac map theo dataset. `force_refresh=true` cho phep crawl lai item da `SUCCESS`, bo qua freshness. YouTube comments chi crawl video chua `SUCCESS` theo crawl log/checkpoint, bat ke freshness; neu videos cung duoc cap nhat trong run, comments se lay them video moi sau buoc videos.
-
-Scope co the ket hop:
-
-```json
-{"province":"Đà Nẵng","category":"artwork","datasets":["videos"],"dry_run":true}
-{"provinces":["Đà Nẵng","Huế"],"datasets":["comments"],"dry_run":true}
-{"place_ids":["OSM_node_123","OSM_way_456"],"datasets":["ratings","reviews"],"dry_run":true}
-{"provinces":["Đà Nẵng","Huế"],"category":"artwork","place_ids":["OSM_node_123"],"datasets":["videos","comments"],"dry_run":true}
-```
-
-Dung `place_ids` dung chinh xac ID trong `data/reference/places.csv`; cac bo loc tinh/category/place la giao cua nhau. Planner mac dinh chi chon item chua co crawl thanh cong hoac qua han freshness (30 ngay); `dry_run` bat buoc khong co crawler nao duoc goi. Sau khi kiem tra plan, trigger lai cung JSON nhung bo `dry_run`.
-
-Reference taxonomy can duoc refresh mot lan de them mapping `tourism=hotel`. Neu planner bao taxonomy chua co category `hotel`, chay `tourism_reference_pipeline` co chu dich mot lan truoc. Cac lan trigger social sau khong chay validate/classify.
-
-### Chuyen CSV crawl local vao Bronze/MinIO
-
-`tourism_ingestion_pipeline` van giu task `backfill_historical_to_bronze`, nhung trigger ca DAG se chay ca reference va cac crawler. De chi chuyen file da crawl, copy CSV cua team vao `data/historical/` tren may coordinator (dung ten file trong `script/crawl_data/reference/backfill_historical.py`), sau do chay rieng:
-
-```powershell
-docker compose exec -T airflow-scheduler python -m script.crawl_data.reference.backfill_historical
-```
-
-Lenh nay doc cac CSV historical co mat, ghi Bronze len MinIO, va bo qua file da co marker trong `data/bronze/_backfill/`. Moi may local khong tu dong chia se file hoac MinIO voi may khac; can gom file ve coordinator truoc.
-
-## Chay thu gioi han
-
-Trong `.env`, co the gioi han pham vi smoke test bang cac bien duoc crawler su dung:
-
-```dotenv
-TLCN_TEST_MODE=true
-GOOGLE_MAPS_RATINGS_LIMIT=1
-GOOGLE_MAPS_REVIEWS_LIMIT=1
-YOUTUBE_MAX_PLACES=1
-YOUTUBE_VIDEOS_PER_PLACE=1
-YOUTUBE_COMMENTS_PER_VIDEO=1
-```
-
-`YOUTUBE_COMMENT_VIDEO_LIMIT` gioi han so video xu ly trong job comments; `TLCN_CRAWL_TIERS` loc nhom tinh theo tier. Hanh vi limit co the khac nhau theo tung job, hay xem `.env.example` va `script/crawl_data/jobs/` truoc khi chay full. Sau khi sua `.env`, nap lai env cho Airflow:
-
-```powershell
-docker compose up -d --force-recreate airflow-scheduler airflow-webserver
-```
-
-## Kiem tra du lieu
-
-```powershell
-Get-ChildItem data\bronze -Recurse -Filter *.jsonl
-Get-ChildItem data\bronze\_metrics -Filter *.json
-Get-ChildItem data\bronze\_runs -Filter *.json
-Get-ChildItem data\bronze\_plans -Filter *.json
-Get-ChildItem data\bronze\_state -Filter *.jsonl
-docker compose logs airflow-scheduler --tail=100
-```
-
-Bronze la append-only; moi run tao object moi va khong ghi de partition cu. Checkpoint trong `data/bronze/_state/` cho phep bo qua item da thanh cong khi chay lai. Run manifests nam trong `data/bronze/_runs/`; crawl plan va ly do bo qua nam trong `data/bronze/_plans/`. Khong xoa `data/bronze` hoac `_state` neu can giu du lieu va resume state.
-
-## Lakehouse va phan tich
-
-DAG `tourism_lakehouse_test` gom `dbt_run`, `write_iceberg` va `validate_iceberg`. Day la luong thu nghiem rieng, khong can chay khi chi muon ingest Bronze. Truoc khi dung cho phan tich du lich, can noi dbt voi Bronze hien tai, xay Silver models cho ratings/videos/comments, sau do tao Gold aggregates va kiem thu join/quality.
-
-## Tai lieu
-
-- [TIEN_DO_VA_DINH_HUONG.md](TIEN_DO_VA_DINH_HUONG.md): nhan dinh du lieu va ke hoach tieu luan/khoa luan.
-- [data_contract.md](data_contract.md): schema va quy uoc dataset.
-- [RUNBOOK_INGESTION_BRONZE.txt](RUNBOOK_INGESTION_BRONZE.txt): van hanh, checkpoint, retry va troubleshooting.
-- [tourism_dbt/README.md](tourism_dbt/README.md): huong dan dbt.
-
-## Dung dich vu
-
-```powershell
-docker compose stop
-```
-
-`docker compose down` xoa containers nhung giu volumes. Tranh `docker compose down -v` neu can giu PostgreSQL va MinIO volumes.
+- **Sinh viên thực hiện:**
+  - **Đinh Hoàng Phương** (MSSV: 2280602498)
+  - **Nguyễn Vũ Minh** (MSSV: 2280601931)
+- **Giảng viên hướng dẫn:** **TS. Phan Thị Thể**
+- **Đơn vị đào tạo:** Viện Đào tạo Công nghệ & Kỹ thuật Dữ liệu

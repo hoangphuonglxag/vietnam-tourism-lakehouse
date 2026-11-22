@@ -19,7 +19,7 @@
 
 ---
 
-## 📌 1. Project Overview (Tổng quan Đề tài)
+## 1. Project Overview (Tổng quan Đề tài)
 
 ### 1.1. Bối cảnh & Thách thức (Problem Statement)
 Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ về mặt thông tin, tuy nhiên dữ liệu du lịch hiện nay đang đối mặt với các rào cản kỹ thuật lớn:
@@ -36,14 +36,14 @@ Ngành du lịch Việt Nam đang chứng kiến sự bùng nổ mạnh mẽ v�
 
 ---
 
-## 🏗️ 2. System Architecture (Kiến trúc Hệ thống)
+## 2. System Architecture (Kiến trúc Hệ thống)
 
 ```mermaid
 flowchart TD
     subgraph S1["1. INGESTION & DATA SOURCES"]
-        OSM["📍 OpenStreetMap API<br/>(Geo Boundaries & POIs)"]
-        GMR["⭐ Google Maps API/Scraper<br/>(Ratings & Reviews)"]
-        YT["🎥 YouTube Data API v3<br/>(Videos & Comments)"]
+        OSM["OpenStreetMap API<br/>(Geo Boundaries & POIs)"]
+        GMR["Google Maps API/Scraper<br/>(Ratings & Reviews)"]
+        YT["YouTube Data API v3<br/>(Videos & Comments)"]
     end
 
     subgraph S2["2. BRONZE LAYER (MinIO S3 / Object Store)"]
@@ -66,8 +66,8 @@ flowchart TD
     end
 
     subgraph S5["5. SERVING & ANALYTICS LAYER"]
-        TRINO["⚡ Trino Distributed SQL Engine<br/>(Port: 8083 / Port: 8082 Bridge)"]
-        PBI["📊 Power BI Semantic Model & PBIR<br/>(VertiPaq In-Memory / Import Mode)"]
+        TRINO["Trino Distributed SQL Engine<br/>(Port: 8083 / Port: 8082 Bridge)"]
+        PBI["Power BI Semantic Model & PBIR<br/>(VertiPaq In-Memory / Import Mode)"]
         DASH["4-Page Interactive Dashboard<br/>(Map 360, Reputation, Social Buzz, Seasonality)"]
     end
 
@@ -80,7 +80,7 @@ flowchart TD
 
 ---
 
-## 💻 3. Technology Stack (Ngăn xếp Công nghệ)
+## 3. Technology Stack (Ngăn xếp Công nghệ)
 
 | Phân tầng | Công nghệ | Phiên bản | Vai trò & Mục đích sử dụng |
 | :--- | :--- | :--- | :--- |
@@ -95,7 +95,7 @@ flowchart TD
 
 ---
 
-## 📊 4. Data Scale & Scope (Quy mô Dữ liệu Dự án)
+## 4. Data Scale & Scope (Quy mô Dữ liệu Dự án)
 
 Hệ thống được vận hành và kiểm thử trên tập dữ liệu du lịch thực tế tại Việt Nam:
 
@@ -108,7 +108,7 @@ Hệ thống được vận hành và kiểm thử trên tập dữ liệu du l�
 
 ---
 
-## 🗄️ 5. Medallion Data Architecture & Modeling
+## 5. Medallion Data Architecture & Modeling
 
 ### 5.1. Bronze Layer (Raw & Immutable)
 - Lưu trữ append-only theo định dạng `JSONL` nén trên MinIO:
@@ -140,7 +140,7 @@ erDiagram
 
 ---
 
-## 📈 6. Interactive Power BI Dashboard (Phục vụ Phân tích)
+## 6. Interactive Power BI Dashboard (Phục vụ Phân tích)
 
 Dashboard được thiết kế theo chuẩn **Power BI Project (PBIR / TMDL)** kết nối trực tiếp vào Trino Lakehouse:
 
@@ -153,7 +153,7 @@ Dashboard được thiết kế theo chuẩn **Power BI Project (PBIR / TMDL)** 
 
 ---
 
-## 📁 7. Repository Directory Structure (Cấu trúc Thư mục)
+## 7. Repository Directory Structure (Cấu trúc Thư mục)
 
 ```text
 vietnam-tourism-lakehouse/
@@ -195,7 +195,7 @@ vietnam-tourism-lakehouse/
 
 ---
 
-## 🚀 8. Quickstart & Deployment Guide (Hướng dẫn Triển khai)
+## 8. Quickstart & Deployment Guide (Hướng dẫn Triển khai)
 
 ### 8.1. Yêu cầu Tiền đề (Prerequisites)
 - **Hệ điều hành**: Windows 10/11, macOS, hoặc Ubuntu Linux.
@@ -238,7 +238,7 @@ python tools/rebuild_lakehouse_after_crawl.py
 
 ---
 
-## 👨‍💻 9. Author & Academic Context
+## 9. Author & Academic Context
 
 Đồ án được thực hiện trong khuôn khổ môn học **Đồ án Tiểu luận Chuyên ngành / Khóa luận Tốt nghiệp ngành Kỹ thuật Dữ liệu (Data Engineering)**.
 

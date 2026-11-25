@@ -528,6 +528,16 @@ table gold_obt_place_360_profile
 
 		annotation SummarizationSetBy = Automatic
 
+
+	column primary_category_group_vi = SWITCH('gold_obt_place_360_profile'[primary_category_group], "recreation", "Vui chơi giải trí", "natural", "Danh lam thiên nhiên", "culture", "Văn hóa - Nghệ thuật", "heritage", "Di sản - Lịch sử", "scenic", "Cảnh quan - Thắng cảnh", "other", "Loại hình khác", 'gold_obt_place_360_profile'[primary_category_group])
+		dataType: string
+		lineageTag: a7b1c3d4-e5f6-4789-9012-3456789abcde
+		summarizeBy: none
+
+	column place_development_stage_vi = SWITCH('gold_obt_place_360_profile'[place_development_stage], "Leading Hotspot", "Điểm sáng dẫn đầu", "Established", "Địa danh định hình", "Steady", "Phát triển ổn định", "Emerging", "Điểm đến mới nổi", "Cooling", "Hạ nhiệt / Chững lại", "Rising Star", "Ngôi sao đang lên", 'gold_obt_place_360_profile'[place_development_stage])
+		dataType: string
+		lineageTag: b8c2d3e4-f5a6-4890-a123-456789abcdef
+		summarizeBy: none
 	partition gold_obt_place_360_profile = m
 		mode: import
 		source =

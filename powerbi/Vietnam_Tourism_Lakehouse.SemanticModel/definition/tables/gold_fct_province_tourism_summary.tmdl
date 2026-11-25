@@ -1,6 +1,10 @@
 table gold_fct_province_tourism_summary
 	lineageTag: 9cf8e756-2b0a-446e-8b7d-4c1f7940f8e6
 
+	measure 'Province Count' = DISTINCTCOUNT('gold_fct_province_tourism_summary'[province_id])
+		formatString: #,0
+		lineageTag: 43e740b1-e7f6-46ca-8727-1bf528b02aa8
+
 	column province_id
 		dataType: string
 		lineageTag: 74e46683-4daa-4ff6-aa22-ef35aaaec76e
@@ -157,6 +161,7 @@ table gold_fct_province_tourism_summary
 
 	column province_simple_avg_rating
 		dataType: double
+		formatString: 0.00
 		lineageTag: edced949-61ac-49fe-83da-6d51cc03fa48
 		summarizeBy: none
 		sourceColumn: province_simple_avg_rating

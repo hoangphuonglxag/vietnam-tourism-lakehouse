@@ -1,61 +1,44 @@
 {
-  "name": "Vietnam Tourism Light Executive",
+  "name": "VietnamTourismLight",
   "dataColors": [
     "#0D9488",
     "#0284C7",
     "#EA580C",
     "#D97706",
     "#4F46E5",
+    "#059669",
+    "#DC2626",
+    "#0284C7",
+    "#7C3AED",
+    "#DB2777",
     "#0891B2",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#64748B"
+    "#CA8A04",
+    "#65A30D",
+    "#475569",
+    "#9333EA"
   ],
+  "background": "#F1F5F9",
   "foreground": "#0F172A",
-  "foregroundNeutralSecondary": "#475569",
-  "foregroundNeutralTertiary": "#64748B",
-  "background": "#FFFFFF",
-  "backgroundLight": "#F8FAFC",
-  "backgroundNeutral": "#F1F5F9",
   "tableAccent": "#0D9488",
-  "good": "#0D9488",
-  "neutral": "#D97706",
-  "bad": "#EA580C",
-  "maximum": "#0D9488",
-  "center": "#D97706",
-  "minimum": "#EA580C",
-  "null": "#64748B",
-  "hyperlink": "#0284C7",
-  "visitedHyperlink": "#4F46E5",
-  "textClasses": {
-    "callout": {
-      "fontSize": 30,
-      "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
-    },
-    "title": {
-      "fontSize": 13,
-      "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
-    },
-    "header": {
-      "fontSize": 11,
-      "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
-    },
-    "label": {
-      "fontSize": 10,
-      "fontFace": "Segoe UI",
-      "color": "#334155"
-    }
-  },
   "visualStyles": {
     "*": {
       "*": {
+        "*": [
+          {
+            "fontFamily": "Segoe UI"
+          },
+          {
+            "color": {
+              "solid": {
+                "color": "#0F172A"
+              }
+            }
+          }
+        ],
         "background": [
           {
-            "show": false
+            "show": false,
+            "transparency": 100
           }
         ],
         "border": [
@@ -73,64 +56,42 @@
             "show": false
           }
         ],
-        "categoryAxis": [
+        "subTitle": [
           {
-            "labelColor": {
+            "show": false
+          }
+        ],
+        "header": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#0F172A"
+              }
+            }
+          }
+        ],
+        "labels": [
+          {
+            "color": {
+              "solid": {
+                "color": "#0F172A"
+              }
+            }
+          }
+        ],
+        "categoryLabels": [
+          {
+            "color": {
               "solid": {
                 "color": "#334155"
               }
-            },
-            "titleColor": {
-              "solid": {
-                "color": "#475569"
-              }
-            },
-            "fontFamily": "Segoe UI"
-          }
-        ],
-        "valueAxis": [
-          {
-            "labelColor": {
-              "solid": {
-                "color": "#475569"
-              }
-            },
-            "titleColor": {
-              "solid": {
-                "color": "#475569"
-              }
-            },
-            "gridlineColor": {
-              "solid": {
-                "color": "#E2E8F0"
-              }
-            },
-            "fontFamily": "Segoe UI"
-          }
-        ],
-        "legend": [
-          {
-            "labelColor": {
-              "solid": {
-                "color": "#334155"
-              }
-            },
-            "fontFamily": "Segoe UI"
+            }
           }
         ]
       }
     },
     "page": {
       "*": {
-        "outspace": [
-          {
-            "color": {
-              "solid": {
-                "color": "#F1F5F9"
-              }
-            }
-          }
-        ],
         "background": [
           {
             "color": {
@@ -140,80 +101,12 @@
             },
             "transparency": 0
           }
-        ]
-      }
-    },
-    "tableEx": {
-      "*": {
-        "grid": [
+        ],
+        "outspace": [
           {
-            "gridHorizontal": true,
-            "gridHorizontalColor": {
+            "color": {
               "solid": {
                 "color": "#E2E8F0"
-              }
-            },
-            "gridVertical": false,
-            "outlineColor": {
-              "solid": {
-                "color": "#E2E8F0"
-              }
-            },
-            "rowPadding": 5
-          }
-        ],
-        "columnHeaders": [
-          {
-            "fontColor": {
-              "solid": {
-                "color": "#0F172A"
-              }
-            },
-            "backColor": {
-              "solid": {
-                "color": "#F1F5F9"
-              }
-            },
-            "fontFamily": "Segoe UI Semibold",
-            "fontSize": 10
-          }
-        ],
-        "values": [
-          {
-            "fontColorPrimary": {
-              "solid": {
-                "color": "#1E293B"
-              }
-            },
-            "backColorPrimary": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            },
-            "fontColorSecondary": {
-              "solid": {
-                "color": "#1E293B"
-              }
-            },
-            "backColorSecondary": {
-              "solid": {
-                "color": "#F8FAFC"
-              }
-            },
-            "fontFamily": "Segoe UI",
-            "fontSize": 10
-          }
-        ],
-        "total": [
-          {
-            "fontColor": {
-              "solid": {
-                "color": "#0F172A"
-              }
-            },
-            "backColor": {
-              "solid": {
-                "color": "#F1F5F9"
               }
             }
           }
@@ -222,23 +115,36 @@
     },
     "slicer": {
       "*": {
-        "items": [
+        "general": [
+          {
+            "responsive": true
+          }
+        ],
+        "header": [
           {
             "fontColor": {
+              "solid": {
+                "color": "#334155"
+              }
+            },
+            "textSize": 9
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [
+          {
+            "color": {
               "solid": {
                 "color": "#0F172A"
               }
             },
-            "background": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            },
-            "fontFamily": "Segoe UI",
-            "textSize": 10
+            "fontSize": 28
           }
         ],
-        "header": [
+        "categoryLabels": [
           {
             "show": false
           }

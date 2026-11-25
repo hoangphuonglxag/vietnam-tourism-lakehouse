@@ -65,6 +65,11 @@
       "type": "RegisteredResources",
       "items": [
         {
+          "name": "VietnamTourismLight.json",
+          "path": "VietnamTourismLight.json",
+          "type": "CustomTheme"
+        },
+        {
           "name": "bg_page01_light.png",
           "path": "bg_page01_light.png",
           "type": "Image"
@@ -83,11 +88,6 @@
           "name": "bg_page04_light.png",
           "path": "bg_page04_light.png",
           "type": "Image"
-        },
-        {
-          "name": "VietnamTourismLight.json",
-          "path": "VietnamTourismLight.json",
-          "type": "CustomTheme"
         }
       ]
     }

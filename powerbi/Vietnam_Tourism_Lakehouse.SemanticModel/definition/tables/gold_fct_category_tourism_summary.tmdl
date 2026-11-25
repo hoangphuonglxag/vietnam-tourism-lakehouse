@@ -55,6 +55,7 @@ table gold_fct_category_tourism_summary
 
 	column total_places_count
 		dataType: double
+		formatString: #,0
 		lineageTag: 6bf0d933-1a65-4aba-b49e-bbe0ecfe4ccf
 		summarizeBy: sum
 		sourceColumn: total_places_count
@@ -85,6 +86,7 @@ table gold_fct_category_tourism_summary
 
 	column category_weighted_avg_rating
 		dataType: double
+		formatString: 0.00
 		lineageTag: 859b2f2c-bde9-4141-8a60-d1145664487c
 		summarizeBy: sum
 		sourceColumn: category_weighted_avg_rating
@@ -105,6 +107,7 @@ table gold_fct_category_tourism_summary
 
 	column total_google_review_count
 		dataType: double
+		formatString: #,0
 		lineageTag: bf9c8ccb-aa22-4190-a3e7-30356191d0fc
 		summarizeBy: sum
 		sourceColumn: total_google_review_count
@@ -145,6 +148,7 @@ table gold_fct_category_tourism_summary
 
 	column total_youtube_views
 		dataType: double
+		formatString: #,0
 		lineageTag: eadafc12-02bd-4449-85e0-bae3ab83adf7
 		summarizeBy: sum
 		sourceColumn: total_youtube_views

@@ -132,6 +132,7 @@ table gold_fct_place_monthly_growth
 
 	column new_reviews_count
 		dataType: double
+		formatString: #,0
 		lineageTag: 4a030f40-f668-42c9-a1d6-4dad6900a616
 		summarizeBy: sum
 		sourceColumn: new_reviews_count
@@ -152,6 +153,7 @@ table gold_fct_place_monthly_growth
 
 	column monthly_avg_review_rating
 		dataType: double
+		formatString: 0.00
 		lineageTag: 6b75237b-8723-4914-98bd-6c7f9704e860
 		summarizeBy: sum
 		sourceColumn: monthly_avg_review_rating
@@ -212,6 +214,7 @@ table gold_fct_place_monthly_growth
 
 	column new_videos_published_count
 		dataType: double
+		formatString: #,0
 		lineageTag: dc8d3c1d-1822-4ea3-9b39-0eba5965af8d
 		summarizeBy: sum
 		sourceColumn: new_videos_published_count

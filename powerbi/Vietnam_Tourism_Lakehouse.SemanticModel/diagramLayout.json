@@ -5,13 +5,13 @@
       "ordinal": 0,
       "scrollPosition": {
         "x": 0,
-        "y": 251.40414861748852
+        "y": 307.97008205642339
       },
       "nodes": [
         {
           "location": {
-            "x": 867.529494139587,
-            "y": 353.72586239053749
+            "x": 590.98493066034951,
+            "y": 652.8967992453488
           },
           "nodeIndex": "gold_fct_category_tourism_summary",
           "nodeLineageTag": "c7664ee4-ff7d-40ff-bb9a-da8a49a1f332",
@@ -36,8 +36,8 @@
         },
         {
           "location": {
-            "x": 657.77091590763212,
-            "y": 0
+            "x": 661.54197813689439,
+            "y": 290.37179165319924
           },
           "nodeIndex": "gold_fct_place_snapshot_trajectory",
           "nodeLineageTag": "e7cf48c0-2b53-400b-b43e-41a0be0eabee",
@@ -75,8 +75,8 @@
         },
         {
           "location": {
-            "x": 432.13430589858251,
-            "y": 327.552720086183
+            "x": 351.68497834098616,
+            "y": 289.84209779355973
           },
           "nodeIndex": "gold_obt_place_360_profile",
           "nodeLineageTag": "3eb5179c-545c-4c86-9a52-3d93ed960159",

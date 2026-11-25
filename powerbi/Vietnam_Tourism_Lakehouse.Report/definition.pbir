@@ -3,7 +3,7 @@
   "version": "4.0",
   "datasetReference": {
     "byPath": {
-      "path": "../test.SemanticModel"
+      "path": "../Vietnam_Tourism_Lakehouse.SemanticModel"
     }
   }
 }

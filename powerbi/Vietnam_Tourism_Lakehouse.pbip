@@ -4,7 +4,7 @@
   "artifacts": [
     {
       "report": {
-        "path": "test.Report"
+        "path": "Vietnam_Tourism_Lakehouse.Report"
       }
     }
   ],

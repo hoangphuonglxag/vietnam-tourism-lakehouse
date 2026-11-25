@@ -53,16 +53,27 @@ SLATE_50 = "#F8FAFC"
 # ----------------------------------------------------------------------------
 KPI_Y, KPI_H, KPI_W = 104, 128, 446
 KPI_X = [32, 502, 972, 1442]
-SLOTS_DEFAULT = [
-    (1236, "TỈNH / THÀNH", OBT, "province_name", "dropdown", 310),
-    (1570, "NHÓM LOẠI HÌNH", OBT, "primary_category_group_vi", "dropdown", 310),
+SLOTS_PAGE1_2 = [
+    (960, "TỈNH / THÀNH", OBT, "province_name", 280),
+    (1260, "NHÓM LOẠI HÌNH", OBT, "primary_category_group_vi", 280),
+    (1560, "GIAI ĐOẠN PHÁT TRIỂN", OBT, "place_development_stage_vi", 280),
+]
+SLOTS_PAGE3 = [
+    (960, "TỈNH / THÀNH", OBT, "province_name", 280),
+    (1260, "NHÓM LOẠI HÌNH", OBT, "primary_category_group_vi", 280),
+    (1560, "NĂM XUẤT BẢN", YT, "published_year", 280),
+]
+SLOTS_PAGE4 = [
+    (960, "TỈNH / THÀNH", OBT, "province_name", 280),
+    (1260, "NHÓM LOẠI HÌNH", OBT, "primary_category_group_vi", 280),
+    (1560, "NĂM QUAN SÁT", MON, "activity_year", 280),
 ]
 
 PAGES = [
     {
         "id": "3b4dcee187a4889c3414", "name": "01 Tổng quan", "no": "01",
         "title": "TỔNG QUAN DU LỊCH", "sub": "Tài nguyên · chất lượng · sức hút truyền thông",
-        "slots": SLOTS_DEFAULT,
+        "slots": SLOTS_PAGE1_2,
         "kpis": [
             ("", "ĐIỂM DU LỊCH", "Điểm đến đã kiểm định (OSM)", TEAL, OBT, "Total Places"),
             ("", "ĐÁNH GIÁ GOOGLE", "Tổng lượt đánh giá thực tế", BLUE, OBT, "Total Google Reviews"),
@@ -79,7 +90,7 @@ PAGES = [
     {
         "id": "055bf5eca9e9dca463da", "name": "02 Định vị điểm đến", "no": "02",
         "title": "ĐỊNH VỊ ĐIỂM ĐẾN 360°", "sub": "Trải nghiệm thực tế × sức hút truyền thông số",
-        "slots": SLOTS_DEFAULT,
+        "slots": SLOTS_PAGE1_2,
         "kpis": [
             ("", "ĐIỂM SÁNG DẪN ĐẦU", "Rating ≥ 4.35 · Lượt xem ≥ 50K", TEAL, OBT, "Leading Hotspots"),
             ("", "NGỌC ẨN", "Rating ≥ 4.35 · Lượt xem < 50K", BLUE, OBT, "Hidden Gems"),
@@ -95,10 +106,7 @@ PAGES = [
     {
         "id": "page_social_buzz_2026", "name": "03 Mạng xã hội", "no": "03",
         "title": "SỨC LAN TỎA MẠNG XÃ HỘI", "sub": "Hiệu quả truyền thông YouTube & nhà sáng tạo",
-        "slots": [
-            (1200, "TỈNH / THÀNH", OBT, "province_name", "dropdown", 310),
-            (1530, "KHOẢNG THỜI GIAN", YT, "published_date", "between", 350),
-        ],
+        "slots": SLOTS_PAGE3,
         "kpis": [
             ("", "VIDEO DU LỊCH", "Video gắn với điểm đến", TEAL, YT, "Video Count"),
             ("", "LƯỢT XEM", "Tổng lượt xem mới nhất", BLUE, YT, "Video Views"),
@@ -114,10 +122,7 @@ PAGES = [
     {
         "id": "page_growth_season_2026", "name": "04 Tăng trưởng", "no": "04",
         "title": "TĂNG TRƯỞNG & XU HƯỚNG", "sub": "Đánh giá, chất lượng và nội dung theo thời gian",
-        "slots": [
-            (1200, "TỈNH / THÀNH", OBT, "province_name", "dropdown", 310),
-            (1530, "KHOẢNG THỜI GIAN", MON, "activity_month", "between", 350),
-        ],
+        "slots": SLOTS_PAGE4,
         "kpis": [
             ("", "REVIEW MỚI", "Tổng lượt đánh giá phát sinh", TEAL, MON, "New Reviews"),
             ("", "RATING THEO THÁNG", "Điểm trung bình các tháng", GOLD, MON, "Avg Monthly Rating"),
@@ -147,13 +152,13 @@ body{width:1920px;height:1080px;background:#F1F5F9;overflow:hidden;position:rela
 .brand{position:absolute;left:76px;top:18px;font-size:17.5px;font-weight:800;letter-spacing:.5px;color:#0F172A}
 .brand b{color:#0D9488;font-weight:800}
 .tag{position:absolute;left:76px;top:45px;font-size:11.5px;color:#475569;letter-spacing:.2px}
-.vdiv{position:absolute;left:470px;top:18px;width:1px;height:42px;background:#CBD5E1}
-.pno{position:absolute;left:490px;top:16px;font-size:11px;font-weight:700;letter-spacing:2px;color:#0D9488}
-.ptitle{position:absolute;left:490px;top:34px;font-size:18px;font-weight:700;color:#0F172A;letter-spacing:.3px;white-space:nowrap}
-.ptitle span{font-size:12.5px;font-weight:400;color:#475569;letter-spacing:0;margin-left:10px}
-.slot{position:absolute;top:12px;height:52px;border-radius:10px;
+.vdiv{position:absolute;left:450px;top:16px;width:1px;height:44px;background:#CBD5E1}
+.pno{position:absolute;left:470px;top:13px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#0D9488}
+.ptitle{position:absolute;left:470px;top:27px;font-size:16px;font-weight:700;color:#0F172A;letter-spacing:.2px;white-space:nowrap}
+.psub{position:absolute;left:470px;top:49px;font-size:11.5px;color:#64748B;white-space:nowrap}
+.slot{position:absolute;top:10px;height:56px;border-radius:10px;
  background:#F8FAFC;border:1px solid #CBD5E1}
-.slot i{position:absolute;left:12px;top:5px;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:1.3px;color:#0369A1}
+.slot i{position:absolute;left:10px;top:5px;font-style:normal;font-size:9px;font-weight:700;letter-spacing:1.2px;color:#0369A1}
 .kpi{position:absolute;border-radius:14px;overflow:hidden;background:#FFFFFF;
  border:1px solid #E2E8F0;box-shadow:0 6px 20px rgba(15,23,42,.06)}
 .kpi .bar{position:absolute;left:0;top:0;right:0;height:4px}
@@ -183,14 +188,13 @@ def bg_html(page):
     h.append("<div class='tag'>Vietnam Tourism Data Lakehouse · Trino × Apache Iceberg · Gold Layer</div>")
     h.append("<div class='vdiv'></div>")
     h.append(f"<div class='pno'>TRANG {page['no']} / 04</div>")
-    h.append(f"<div class='ptitle'>{page['title']}<span>{page['sub']}</span></div>")
-    slots = page.get("slots", SLOTS_DEFAULT)
+    h.append(f"<div class='ptitle'>{page['title']}</div>")
+    h.append(f"<div class='psub'>{page['sub']}</div>")
+    slots = page.get("slots", [])
     for slot in slots:
         x, label = slot[0], slot[1]
-        stype = slot[4] if len(slot) > 4 else "dropdown"
-        w = slot[5] if len(slot) > 5 else 310
-        if stype == "dropdown":
-            h.append(f"<div class='slot' style='left:{x}px;width:{w}px'><i>{label}</i></div>")
+        w = slot[4] if len(slot) > 4 else 280
+        h.append(f"<div class='slot' style='left:{x}px;width:{w}px'><i>{label}</i></div>")
     h.append("</div>")
     for i, (icon, label, sub, color, _, _) in enumerate(page["kpis"]):
         x = KPI_X[i]
@@ -524,8 +528,11 @@ def kpi_card(i, entity, measure, display, z):
                    "categoryLabels": [{"properties": {"show": FALSE()}}]})
 
 
-def slicer(slot_x, entity, prop, display, z):
-    return visual("slicer", slot_x + 8, 15 + 18, 294, 34, z,
+def slicer(slot_x, entity, prop, display, z, slot_w=280):
+    vx = 32 + slot_x + 6
+    vy = 43
+    vw = slot_w - 12
+    return visual("slicer", vx, vy, vw, 32, z,
                   {"Values": {"projections": [p_col(entity, prop, display)]}},
                   {"data": [{"properties": {"mode": L("'Dropdown'")}}],
                    "header": [{"properties": {"show": FALSE()}}],
@@ -600,14 +607,11 @@ def common(page):
     vs = []
     for i, (_, label, _, _, ent, m) in enumerate(page["kpis"]):
         vs.append(kpi_card(i, ent, m, label.title(), 1000 + i * 100))
-    slots = page.get("slots", SLOTS_DEFAULT)
+    slots = page.get("slots", [])
     for j, s in enumerate(slots):
         sx, label, ent, prop = s[:4]
-        stype = s[4] if len(s) > 4 else "dropdown"
-        if stype == "dropdown":
-            vs.append(slicer(sx, ent, prop, label.title(), 9000 + j * 100))
-        elif stype == "between":
-            vs.append(date_slicer(sx, ent, prop, label.title(), 9000 + j * 100))
+        sw = s[4] if len(s) > 4 else 280
+        vs.append(slicer(sx, ent, prop, label.title(), 9000 + j * 100, slot_w=sw))
     return vs
 
 

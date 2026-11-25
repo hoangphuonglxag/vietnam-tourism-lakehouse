@@ -113,7 +113,7 @@ table gold_fct_place_monthly_growth
 		dataType: double
 		formatString: 0
 		lineageTag: a9391085-c400-4086-8f2a-3724420fbb05
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: activity_year
 
 		annotation SummarizationSetBy = Automatic
